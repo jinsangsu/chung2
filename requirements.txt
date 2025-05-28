@@ -1,0 +1,5 @@
+
+fastapi[all]
+uvicorn
+gspread
+oauth2client
