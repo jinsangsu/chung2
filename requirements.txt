@@ -1,6 +1,0 @@
-streamlit
-fastapi
-uvicorn
-openai
-requests
-pillow
