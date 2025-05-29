@@ -14,7 +14,7 @@ st.markdown(
         @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap');
 
         html, body, [class*="css"]  {
-            font-family: 'Nanum Gothic', sans-serif;
+            font-family: 'Nanum Gothic', sans-serif !important;
         }
 
         div.block-container {
@@ -23,11 +23,12 @@ st.markdown(
         .aeson-container {
             display: flex;
             align-items: flex-start;
+            gap: 2rem;
         }
         .aeson-text {
-            margin-left: 3rem;
+            margin-top: 0.5rem;
             font-size: 1.1rem;
-            line-height: 1.6;
+            line-height: 1.7;
         }
         .aeson-img {
             flex-shrink: 0;
@@ -42,17 +43,17 @@ st.image("managerbot_character.webp", width=180)
 st.markdown(
     """
     <div class='aeson-text'>
-    ### 사장님, 안녕하세요!  
-    저는 앞으로 사장님들 업무를 도와드리는  
-    **충청호남본부 매니저봇 ‘애순’**이에요.  
+    <h3>사장님, 안녕하세요!</h3>
+    저는 앞으로 사장님들 업무를 도와드리는<br>
+    <b>충청호남본부 매니저봇 ‘애순’</b>이에요.<br><br>
 
-    매니저님께 여쭤보시기 전에  
-    저 애순이한테 먼저 물어봐 주세요!  
-    제가 아는 건 바로, 친절하게 알려드릴게요!  
+    매니저님께 여쭤보시기 전에<br>
+    저 애순이한테 먼저 물어봐 주세요!<br>
+    제가 아는 건 바로, 친절하게 알려드릴게요!<br><br>
 
-    사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록  
-    늘 옆에서 든든하게 함께하겠습니다.  
-    **잘 부탁드려요! 😊**
+    사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
+    늘 옆에서 든든하게 함께하겠습니다.<br>
+    <b>잘 부탁드려요! 😊</b>
     </div>
     """, unsafe_allow_html=True
 )
