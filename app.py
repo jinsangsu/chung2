@@ -16,13 +16,7 @@ st.markdown(
         div.block-container {
             padding-top: 3rem;
         }
-        .aeson-container {
-            display: flex;
-            align-items: flex-start;
-            gap: 2.5rem;
-        }
         .aeson-text {
-            max-width: 600px;
             font-size: 1.05rem;
             line-height: 1.8;
         }
@@ -35,11 +29,17 @@ st.markdown(
             margin: 0.3rem 0;
         }
     </style>
+    """, unsafe_allow_html=True
+)
 
-    <div class='aeson-container'>
-        <div class='aeson-img'>
-            <img src='managerbot_character.webp' width='180'>
-        </div>
+# 2단 컬럼 구성 (이미지 왼쪽, 텍스트 오른쪽)
+col1, col2 = st.columns([1, 3])
+with col1:
+    st.image("managerbot_character.webp", width=180)
+
+with col2:
+    st.markdown(
+        """
         <div class='aeson-text'>
             <h2>사장님, 안녕하세요!</h2>
             <p>저는 앞으로 사장님들 업무를 도와드리는</p>
@@ -53,11 +53,10 @@ st.markdown(
             늘 옆에서 든든하게 함께하겠습니다.</p>
             <p><span style="font-weight:bold">잘 부탁드려요!</span></p>
         </div>
-    </div>
-    """, unsafe_allow_html=True
-)
+        """, unsafe_allow_html=True
+    )
 
-# 구글 시트 연동 및 응답 로직
+# 구글시트 연동 및 응답 로직
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_name("singular-citron-459308-q0-5120c3914ca5.json", scope)
 gc = gspread.authorize(credentials)
