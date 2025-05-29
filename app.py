@@ -35,30 +35,29 @@ st.markdown(
             margin: 0.3rem 0;
         }
     </style>
+
+    <div class='aeson-container'>
+        <div class='aeson-img'>
+            <img src='managerbot_character.webp' width='180'>
+        </div>
+        <div class='aeson-text'>
+            <h2>사장님, 안녕하세요!</h2>
+            <p>저는 앞으로 사장님들 업무를 도와드리는</p>
+            <p><span style="font-weight:bold">충청호남본부 매니저봇 '애순'</span>이에요.</p>
+            <br>
+            <p>매니저님께 여쭤보시기 전에<br>
+            저 애순이한테 먼저 물어봐 주세요!<br>
+            제가 아는 건 바로, 친절하게 알려드릴게요!</p>
+            <br>
+            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
+            늘 옆에서 든든하게 함께하겠습니다.</p>
+            <p><span style="font-weight:bold">잘 부탁드려요!</span></p>
+        </div>
+    </div>
     """, unsafe_allow_html=True
 )
 
-welcome_html = """
-<div class='aeson-container'>
-    <img src="managerbot_character.webp" width="180"/>
-    <div class='aeson-text'>
-        <h2>사장님, 안녕하세요!</h2>
-        <p>저는 앞으로 사장님들 업무를 도와드리는</p>
-        <p><span style="font-weight:bold">충청호남본부 매니저봇 '애순'</span>이에요.</p>
-        <br>
-        <p>매니저님께 여쭤보시기 전에<br>
-        저 애순이한테 먼저 물어봐 주세요!<br>
-        제가 아는 건 바로, 친절하게 알려드릴게요!</p>
-        <br>
-        <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
-        늘 옆에서 든든하게 함께하겠습니다.</p>
-        <p><span style="font-weight:bold">잘 부탁드려요!</span></p>
-    </div>
-</div>
-"""
-
-st.markdown(welcome_html, unsafe_allow_html=True)
-
+# 구글 시트 연동 및 응답 로직
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = ServiceAccountCredentials.from_json_keyfile_name("singular-citron-459308-q0-5120c3914ca5.json", scope)
 gc = gspread.authorize(credentials)
