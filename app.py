@@ -2,12 +2,12 @@
 import streamlit as st
 import pandas as pd
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 
-# 설정
+# 페이지 설정
 st.set_page_config(page_title="애순이 매니저봇", page_icon="💛", layout="wide")
 
-# 스타일 적용
+# 스타일 정의
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap');
@@ -37,7 +37,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 상단 UI - col 구조
+# 상단 인사 UI 구성
 col1, col2 = st.columns([1, 3])
 with col1:
     st.image("managerbot_character.webp", width=180)
@@ -56,14 +56,15 @@ with col2:
         </div>
     """, unsafe_allow_html=True)
 
-# 구글 시트 연동
+# 구글시트 인증 및 연결
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_name("singular-citron-459308-q0-5120c3914ca5.json", scope)
+credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
 gc = gspread.authorize(credentials)
+
 sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
 df = pd.DataFrame(sheet.get_all_records())
 
-# 질문 입력창 고정
+# 입력창 UI
 st.markdown("---")
 user_input = st.text_input("궁금한 내용을 입력해 주세요", key="question_input", placeholder="예: 자동이체 방법", label_visibility="visible")
 
