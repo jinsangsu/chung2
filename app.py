@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import gspread
@@ -10,6 +11,12 @@ st.set_page_config(page_title="애순이 매니저봇", page_icon="💛", layout
 st.markdown(
     """
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap');
+
+        html, body, [class*="css"]  {
+            font-family: 'Nanum Gothic', sans-serif;
+        }
+
         div.block-container {
             padding-top: 3rem;
         }
@@ -19,6 +26,8 @@ st.markdown(
         }
         .aeson-text {
             margin-left: 3rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
         }
         .aeson-img {
             flex-shrink: 0;
@@ -33,7 +42,7 @@ st.image("managerbot_character.webp", width=180)
 st.markdown(
     """
     <div class='aeson-text'>
-    ### 사장님, 안녕하세요!
+    ### 사장님, 안녕하세요!  
     저는 앞으로 사장님들 업무를 도와드리는  
     **충청호남본부 매니저봇 ‘애순’**이에요.  
 
@@ -62,12 +71,17 @@ user_input = st.text_input("궁금한 내용을 입력해 주세요", placeholde
 
 # 질문에 포함된 단어가 있는지 확인 후 응답
 if user_input:
-    found = False
+    matched = []
     for _, row in df.iterrows():
         if row["질문"] and str(row["질문"]).strip() != "":
-            if str(row["질문"]) in user_input:
-                st.success(row["답변"])
-                found = True
-                break
-    if not found:
+            if str(row["질문"]) in user_input or user_input in str(row["질문"]):
+                matched.append(row)
+
+    if len(matched) == 0:
         st.warning("애순이가 이해하지 못했어요. 다른 표현으로 다시 물어봐 주세요 😊")
+    elif len(matched) == 1:
+        st.success(matched[0]["답변"])
+    else:
+        st.info("다음 중 어떤 질문을 말씀하신 건가요?")
+        for i, row in enumerate(matched, 1):
+            st.write(f"{i}. {row['질문']}")
