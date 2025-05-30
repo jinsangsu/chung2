@@ -1,47 +1,40 @@
+
 import streamlit as st
+import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
-from PIL import Image
 import os
 
-# Google Sheets 인증
+# 경로 설정
+json_key_path = os.path.join(os.getcwd(), 'singular-citron-459308-q0-5120c3914ca5.json')
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+
+# 인증 및 구글시트 연동
+credentials = Credentials.from_service_account_file(json_key_path, scopes=scope)
 gc = gspread.authorize(credentials)
+sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
 
-# 구글 시트 불러오기
-try:
-    sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
-    records = sheet.get_all_records()
-    st.session_state["sheet_loaded"] = True
-except Exception as e:
-    st.session_state["sheet_loaded"] = False
-    error_message = f"❌ 구글 시트 연결에 실패했습니다. 입력창은 비활성화됩니다.\n\n{e}"
-    st.error(error_message)
+# 데이터 로드
+data = sheet.get_all_records()
+df = pd.DataFrame(data)
 
-# 앱 타이틀 및 캐릭터
-st.markdown("<h1 style='text-align: center;'>🧑‍💼 애순이 매니저봇</h1>", unsafe_allow_html=True)
+# Streamlit UI
+st.set_page_config(page_title="애순이 매니저봇", page_icon="💛", layout="centered")
+st.title("💛 애순이 매니저봇")
+st.markdown("사장님, 궁금한 내용을 입력해 주세요. 제가 도와드릴게요!")
 
-# 캐릭터 이미지 출력
-col1, col2 = st.columns([1, 4])
-with col1:
-    try:
-        image = Image.open("managerbot_character.png")
-        st.image(image, width=120)
-    except:
-        st.warning("⚠️ 캐릭터 이미지(managerbot_character.png)가 없습니다.")
-with col2:
-    st.write("")
+# 사용자 질문 입력
+question = st.text_input("질문을 입력하세요:")
 
-# 질문 입력창
-st.markdown("---")
-if not st.session_state["sheet_loaded"]:
-    st.text_input("💬 설계사 질문을 입력하세요", placeholder="예: 자동차 이체 방법 알려줘", disabled=True)
-else:
-    user_question = st.text_input("💬 설계사 질문을 입력하세요", placeholder="예: 자동차 이체 방법 알려줘")
-    if user_question:
-        matched = [r for r in records if user_question.strip() in r["질문 내용"]]
-        if matched:
-            st.success("🤖 " + matched[0]["답변 내용"])
-        else:
-            st.info("🔎 정확히 일치하는 질문이 없습니다. 다시 입력해주세요.")
+if question:
+    matched = df[df["질문 내용"].str.contains(question, case=False, na=False)]
+
+    if len(matched) == 1:
+        st.success(matched["답변 내용"].values[0])
+    elif len(matched) > 1:
+        st.info("여러 개의 유사한 질문이 있습니다. 아래에서 선택해 주세요:")
+        selected = st.selectbox("유사 질문 목록", matched["질문 내용"].values)
+        if selected:
+            st.success(matched[matched["질문 내용"] == selected]["답변 내용"].values[0])
+    else:
+        st.warning("죄송해요. 해당 질문에 대한 답변을 찾을 수 없어요.")
