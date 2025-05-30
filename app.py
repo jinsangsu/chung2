@@ -56,11 +56,13 @@ with col2:
         </div>
     """, unsafe_allow_html=True)
 
-# 구글시트 인증 및 연결
+# 🔐 구글시트 인증 (JSON 키 파일 직접 로드 방식)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+json_key_path = "aesoonkey.json"  # 이 파일이 앱 폴더에 있어야 함
+credentials = Credentials.from_service_account_file(json_key_path, scopes=scope)
 gc = gspread.authorize(credentials)
 
+# 구글 시트 열기
 sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
 df = pd.DataFrame(sheet.get_all_records())
 
