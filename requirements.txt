@@ -1,4 +1,5 @@
-
-streamlit
+fastapi
+uvicorn
 gspread
-google-auth
+oauth2client
+python-dotenv
