@@ -1,40 +1,42 @@
-
 import streamlit as st
-import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
 import os
 
-# 경로 설정
-json_key_path = os.path.join(os.getcwd(), 'singular-citron-459308-q0-5120c3914ca5.json')
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# 현재 실행 경로 기준 service_account 키 파일 위치 설정
+json_key_path = os.path.join(os.path.dirname(__file__), "aesoonkey.json")
 
-# 인증 및 구글시트 연동
+# Google Sheets API 범위 설정
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 credentials = Credentials.from_service_account_file(json_key_path, scopes=scope)
 gc = gspread.authorize(credentials)
-sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
 
-# 데이터 로드
-data = sheet.get_all_records()
-df = pd.DataFrame(data)
+# 시트 열기
+spreadsheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ")
+sheet = spreadsheet.worksheet("질의응답시트")
 
 # Streamlit UI
-st.set_page_config(page_title="애순이 매니저봇", page_icon="💛", layout="centered")
-st.title("💛 애순이 매니저봇")
-st.markdown("사장님, 궁금한 내용을 입력해 주세요. 제가 도와드릴게요!")
+st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
-# 사용자 질문 입력
-question = st.text_input("질문을 입력하세요:")
+st.title("💬 애순이 설계사 Q&A")
+st.markdown("설계사님이 자주 묻는 질문과 답변을 확인하거나, 새로운 질문을 입력해보세요.")
 
-if question:
-    matched = df[df["질문 내용"].str.contains(question, case=False, na=False)]
+question = st.text_input("질문을 입력해주세요:")
 
-    if len(matched) == 1:
-        st.success(matched["답변 내용"].values[0])
-    elif len(matched) > 1:
-        st.info("여러 개의 유사한 질문이 있습니다. 아래에서 선택해 주세요:")
-        selected = st.selectbox("유사 질문 목록", matched["질문 내용"].values)
-        if selected:
-            st.success(matched[matched["질문 내용"] == selected]["답변 내용"].values[0])
+if st.button("질문하기"):
+    if question.strip() == "":
+        st.warning("질문을 입력해주세요.")
     else:
-        st.warning("죄송해요. 해당 질문에 대한 답변을 찾을 수 없어요.")
+        # 시트에서 질문 열 검색
+        records = sheet.get_all_records()
+        matched = [r for r in records if question.strip() in r["질문"]]
+
+        if len(matched) == 1:
+            st.success(f"답변: {matched[0]['답변']}")
+        elif len(matched) > 1:
+            st.info("해당 질문과 유사한 질문이 여러 개 있습니다. 아래에서 선택해주세요.")
+            for i, r in enumerate(matched):
+                st.markdown(f"**{i+1}. 질문:** {r['질문']}")
+                st.markdown(f"👉 답변: {r['답변']}")
+        else:
+            st.error("해당 질문에 대한 답변을 찾을 수 없습니다.")
