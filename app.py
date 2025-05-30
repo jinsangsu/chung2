@@ -3,87 +3,38 @@ import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
+import os
 
-# 페이지 설정
-st.set_page_config(page_title="애순이 매니저봇", page_icon="💛", layout="wide")
-
-# 스타일 정의
-st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap');
-        html, body, [class*="css"] {
-            font-family: 'Nanum Gothic', sans-serif !important;
-        }
-        div.block-container {
-            padding-top: 2rem;
-        }
-        .aeson-text {
-            font-size: 1.05rem;
-            line-height: 1.8;
-        }
-        .aeson-text h2 {
-            font-size: 1.6rem;
-            font-weight: bold;
-        }
-        .aeson-text p {
-            margin: 0.4rem 0;
-        }
-        .response-box {
-            background-color: #f9f9f9;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# 상단 인사 UI 구성
-col1, col2 = st.columns([1, 3])
-with col1:
-    st.image("managerbot_character.webp", width=180)
-with col2:
-    st.markdown("""
-        <div class='aeson-text'>
-            <h2>사장님, 안녕하세요!</h2>
-            <p>저는 앞으로 사장님들 업무를 도와드리는</p>
-            <p><span style="font-weight:bold">충청호남본부 매니저봇 '애순'</span>이에요.</p>
-            <p>매니저님께 여쭤보시기 전에<br>
-            저 애순이한테 먼저 물어봐 주세요!<br>
-            제가 아는 건 바로, 친절하게 알려드릴게요!</p>
-            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
-            늘 옆에서 든든하게 함께하겠습니다.</p>
-            <p><span style="font-weight:bold">잘 부탁드려요!</span></p>
-        </div>
-    """, unsafe_allow_html=True)
-
-# 🔐 구글시트 인증 (JSON 키 파일 직접 로드 방식)
+# 경로 설정
+json_key_path = os.path.join(os.getcwd(), 'singular-citron-459308-q0-5120c3914ca5.json')
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-json_key_path = "aesoonkey.json"  # 이 파일이 앱 폴더에 있어야 함
+
+# 인증 및 구글시트 연동
 credentials = Credentials.from_service_account_file(json_key_path, scopes=scope)
 gc = gspread.authorize(credentials)
-
-# 구글 시트 열기
 sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
-df = pd.DataFrame(sheet.get_all_records())
 
-# 입력창 UI
-st.markdown("---")
-user_input = st.text_input("궁금한 내용을 입력해 주세요", key="question_input", placeholder="예: 자동이체 방법", label_visibility="visible")
+# 데이터 로드
+data = sheet.get_all_records()
+df = pd.DataFrame(data)
 
-# 응답 처리
-if user_input:
-    matched = []
-    for _, row in df.iterrows():
-        if str(row["질문"]).strip() and (row["질문"] in user_input or user_input in row["질문"]):
-            matched.append(row)
+# Streamlit UI
+st.set_page_config(page_title="애순이 매니저봇", page_icon="💛", layout="centered")
+st.title("💛 애순이 매니저봇")
+st.markdown("사장님, 궁금한 내용을 입력해 주세요. 제가 도와드릴게요!")
 
-    st.markdown("<div class='response-box'>", unsafe_allow_html=True)
-    if len(matched) == 0:
-        st.warning("애순이가 이해하지 못했어요. 다른 표현으로 다시 물어봐 주세요.")
-    elif len(matched) == 1:
-        st.success(matched[0]["답변"])
+# 사용자 질문 입력
+question = st.text_input("질문을 입력하세요:")
+
+if question:
+    matched = df[df["질문 내용"].str.contains(question, case=False, na=False)]
+
+    if len(matched) == 1:
+        st.success(matched["답변 내용"].values[0])
+    elif len(matched) > 1:
+        st.info("여러 개의 유사한 질문이 있습니다. 아래에서 선택해 주세요:")
+        selected = st.selectbox("유사 질문 목록", matched["질문 내용"].values)
+        if selected:
+            st.success(matched[matched["질문 내용"] == selected]["답변 내용"].values[0])
     else:
-        st.info("다음 중 어떤 질문을 말씀하신 건가요?")
-        for i, row in enumerate(matched, 1):
-            st.write(f"{i}. {row['질문']}")
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.warning("죄송해요. 해당 질문에 대한 답변을 찾을 수 없어요.")
