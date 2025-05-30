@@ -1,26 +1,13 @@
 import streamlit as st
-import gspread
-from google.oauth2.service_account import Credentials
-import os
+import requests
 
-# 🔐 Google Sheets 인증
-json_key_path = os.path.join(os.path.dirname(__file__), "aesoonkey.json")
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = Credentials.from_service_account_file(json_key_path, scopes=scope)
-gc = gspread.authorize(credentials)
+# 📌 FastAPI 서버 주소 설정
+API_URL = "http://localhost:8000/chat"  # 필요 시 fly.io 주소로 교체 가능
 
-try:
-    sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
-    columns = sheet.row_values(1)
-    if "질문" not in columns or "답변" not in columns:
-        raise Exception("시트에 '질문' 또는 '답변' 열이 없습니다.")
-except Exception as e:
-    sheet = None
-    sheet_error = str(e)
-
-# 🖼️ Streamlit UI
+# 🖼️ 페이지 구성
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
+# 💬 Welcoming 메시지 + 캐릭터
 col1, col2 = st.columns([1, 4])
 with col1:
     try:
@@ -40,25 +27,18 @@ with col2:
         <strong>잘 부탁드려요! 😊</strong>
     """, unsafe_allow_html=True)
 
+# 📥 질문 입력
 st.markdown("### 💬 궁금한 내용을 입력해 주세요")
 question = st.text_input("")
 
-if sheet is None:
-    st.error(f"🚨 구글 시트를 불러올 수 없습니다: {sheet_error}")
-elif question:
+# 📤 FastAPI에 요청 전송
+if question:
     try:
-        records = sheet.get_all_records()
-        q_input = question.lower().replace(" ", "")
-        matched = [r for r in records if q_input in r["질문"].lower().replace(" ", "")]
-
-        if len(matched) == 1:
-            st.success(f"🧾 애순이의 답변: {matched[0]['답변']}")
-        elif len(matched) > 1:
-            st.info("🔎 유사한 질문이 여러 개 있습니다:")
-            for i, r in enumerate(matched):
-                st.markdown(f"**{i+1}. 질문:** {r['질문']}")
-                st.markdown(f"👉 답변: {r['답변']}")
+        response = requests.post(API_URL, json={"message": question}, timeout=5)
+        if response.status_code == 200:
+            reply = response.json().get("reply", "")
+            st.success(f"🧾 애순이의 답변: {reply}")
         else:
-            st.warning("❌ 해당 질문에 대한 답변을 찾을 수 없습니다. 구글 시트 내 키워드를 다시 확인해 주세요.")
+            st.error("❌ 애순이 응답을 받지 못했어요. 서버 상태를 확인해 주세요.")
     except Exception as e:
-        st.error(f"❌ 검색 중 오류 발생: {e}")
+        st.error(f"🚨 서버 통신 오류: {e}")
