@@ -3,15 +3,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import os
 
-# 🔐 키 파일 경로를 직접 지정
-json_key_path = "aesoonkey.json"  # 또는 os.path.abspath("aesoonkey.json") 도 가능
-
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = Credentials.from_service_account_file(json_key_path, scopes=scope)
-gc = gspread.authorize(credentials)
-sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
-
-# 🖼️ UI 구성
+# 🖼️ Streamlit UI는 항상 먼저 구성
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
 col1, col2 = st.columns([1, 4])
@@ -36,7 +28,19 @@ with col2:
 st.markdown("### 💬 궁금한 내용을 입력해 주세요")
 question = st.text_input("")
 
-if question:
+# 🔐 Google Sheets 연동 (UI 이후 처리)
+sheet = None
+try:
+    json_key_path = "aesoonkey.json"
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    credentials = Credentials.from_service_account_file(json_key_path, scopes=scope)
+    gc = gspread.authorize(credentials)
+    sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
+except Exception as e:
+    st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
+
+# 📥 질문에 따라 검색 실행
+if sheet and question:
     try:
         records = sheet.get_all_records()
         q_input = question.lower().replace(" ", "")
