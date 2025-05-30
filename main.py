@@ -1,14 +1,14 @@
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 from fastapi.responses import JSONResponse
+import gspread
+from google.oauth2.service_account import Credentials
 
 app = FastAPI()
 
-# CORS 허용 설정
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,17 +17,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 구글 시트 연동 설정
+# 구글 시트 연결
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("gspread_key.json", scope)
-client = gspread.authorize(creds)
-
-worksheet = None
 try:
-    sheet = client.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ")
-    worksheet = sheet.sheet1
+    creds = Credentials.from_service_account_file("aesoonkey.json", scopes=scope)
+    client = gspread.authorize(creds)
+    worksheet = client.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
 except Exception as e:
     print("❌ Google Sheet 연결 실패:", e)
+    worksheet = None
 
 class ChatRequest(BaseModel):
     message: str
@@ -37,10 +35,9 @@ async def chat(request: ChatRequest):
     if worksheet is None:
         return JSONResponse(content={"reply": "시트를 불러올 수 없습니다. 관리자에게 문의해주세요."})
 
-    message = request.message.strip()
-
+    message = request.message.strip().lower()
     records = worksheet.get_all_records()
-    matched = [r for r in records if message in r['질문']]
+    matched = [r for r in records if message in r["질문"].lower()]
 
     if len(matched) == 0:
         return {"reply": "질문에 해당하는 답변을 찾을 수 없습니다."}

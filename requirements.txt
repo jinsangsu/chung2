@@ -1,7 +1,6 @@
 streamlit
-pandas
-requests
-openai
 gspread==5.7.2
-oauth2client
+google-auth
 pillow
+fastapi
+uvicorn
