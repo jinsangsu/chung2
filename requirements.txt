@@ -1,5 +1,7 @@
-fastapi
-uvicorn
-gspread
+streamlit
+pandas
+requests
+openai
+gspread==5.7.2
 oauth2client
-python-dotenv
+pillow
