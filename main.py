@@ -22,7 +22,7 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 try:
     creds = Credentials.from_service_account_file("aesoonkey.json", scopes=scope)
     client = gspread.authorize(creds)
-    worksheet = client.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
+    worksheet = client.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
 except Exception as e:
     print("❌ Google Sheet 연결 실패:", e)
     worksheet = None

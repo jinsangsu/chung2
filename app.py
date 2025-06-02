@@ -1,11 +1,13 @@
+
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-import os
+import streamlit.components.v1 as components
 
-# 🖼️ Streamlit UI는 항상 먼저 구성
+# 기본 설정
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
+# 캐릭터 영역
 col1, col2 = st.columns([1, 4])
 with col1:
     try:
@@ -25,35 +27,111 @@ with col2:
         <strong>잘 부탁드려요! 😊</strong>
     """, unsafe_allow_html=True)
 
-st.markdown("### 💬 궁금한 내용을 입력해 주세요")
-question = st.text_input("")
-
-# 🔐 Google Sheets 연동 (UI 이후 처리)
+# 구글 시트 연결
 sheet = None
 try:
     json_key_path = "aesoonkey.json"
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     credentials = Credentials.from_service_account_file(json_key_path, scopes=scope)
     gc = gspread.authorize(credentials)
-    sheet = gc.open_by_key("1rJdNc_cYw3iOkOWCItjgRLw-EqjqImkZ").worksheet("질의응답시트")
+    sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
 except Exception as e:
     st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
 
-# 📥 질문에 따라 검색 실행
-if sheet and question:
+# 세션 상태에 채팅 기록 저장
+if "chat_log" not in st.session_state:
+    st.session_state.chat_log = []
+
+# ✅ 질문 처리 함수
+def handle_question(question_input):
     try:
         records = sheet.get_all_records()
-        q_input = question.lower().replace(" ", "")
+        q_input = question_input.lower().replace(" ", "")
         matched = [r for r in records if q_input in r["질문"].lower().replace(" ", "")]
 
         if len(matched) == 1:
-            st.success(f"🧾 애순이의 답변: {matched[0]['답변']}")
+            st.session_state.chat_log.append({
+                "type": "single",
+                "question": question_input,
+                "answer": matched[0]["답변"]
+            })
         elif len(matched) > 1:
-            st.info("🔎 유사한 질문이 여러 개 있습니다:")
-            for i, r in enumerate(matched):
-                st.markdown(f"**{i+1}. 질문:** {r['질문']}")
-                st.markdown(f"👉 답변: {r['답변']}")
+            st.session_state.chat_log.append({
+                "type": "multi",
+                "question": question_input,
+                "matches": [{"q": r["질문"], "a": r["답변"]} for r in matched]
+            })
         else:
-            st.warning("❌ 해당 질문에 대한 답변을 찾을 수 없습니다.")
+            st.session_state.chat_log.append({
+                "type": "single",
+                "question": question_input,
+                "answer": "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
+            })
     except Exception as e:
-        st.error(f"❌ 검색 중 오류 발생: {e}")
+        st.session_state.chat_log.append({
+            "type": "single",
+            "question": question_input,
+            "answer": f"❌ 오류 발생: {e}"
+        })
+
+# ✅ 질문 처리
+if "input_submitted" not in st.session_state:
+    st.session_state.input_submitted = False
+if "input_text" not in st.session_state:
+    st.session_state.input_text = ""
+
+if st.session_state.input_submitted:
+    handle_question(st.session_state.input_text)
+    st.session_state.input_submitted = False
+
+
+# 💬 채팅 내용 HTML로 출력
+chat_html = """
+<div id="chatbox" style="
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    scroll-behavior: smooth;
+">
+"""
+for qa in st.session_state.chat_log:
+    chat_html += f"<p><strong>❓ 질문:</strong> {qa['question']}</p>"
+    if qa["type"] == "single":
+        chat_html += f"<p style='background-color:#e0f7fa; padding:8px; border-radius:5px;'>🧾 <strong>답변:</strong> {qa['answer']}</p>"
+    elif qa["type"] == "multi":
+        chat_html += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+        for i, pair in enumerate(qa["matches"]):
+            chat_html += f"<p><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
+
+chat_html += """
+</div>
+<script>
+  const chatbox = document.getElementById("chatbox");
+  chatbox.scrollTop = chatbox.scrollHeight;
+</script>
+"""
+
+components.html(chat_html, height=420)
+
+# ✅ 입력 폼
+with st.form("input_form", clear_on_submit=True):
+    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+    submitted = st.form_submit_button("질문하기")
+    if submitted and question_input:
+         handle_question(question_input)
+         st.rerun()
+
+# ✅ 자동 스크롤
+components.html("""
+<script>
+setTimeout(function() {
+    const chatbox = window.parent.document.getElementById("chatbox");
+    if (chatbox) {
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+}, 100);
+</script>
+""", height=0)
