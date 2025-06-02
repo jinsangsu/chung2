@@ -114,7 +114,7 @@ chat_html += """
 </script>
 """
 
-components.html(chat_html, height=420)
+components.html(chat_html, height=300)
 
 # ✅ 입력 폼
 with st.form("input_form", clear_on_submit=True):
