@@ -3,6 +3,8 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
+import json
+from io import StringIO
 
 # 기본 설정
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
@@ -30,9 +32,9 @@ with col2:
 # 구글 시트 연결
 sheet = None
 try:
-    json_key_path = "aesoonkey.json"
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    credentials = Credentials.from_service_account_file(json_key_path, scopes=scope)
+    json_key_dict = st.secrets["gcp_service_account"]
+    credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
     gc = gspread.authorize(credentials)
     sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
 except Exception as e:
