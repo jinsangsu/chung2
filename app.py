@@ -5,6 +5,7 @@ from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
 import json
 from io import StringIO
+import difflib
 
 # 기본 설정
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
@@ -45,11 +46,19 @@ if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
 
 # ✅ 질문 처리 함수
+def get_similarity_score(a, b):
+    return difflib.SequenceMatcher(None, a, b).ratio()
+
 def handle_question(question_input):
     try:
         records = sheet.get_all_records()
-        q_input = question_input.lower().replace(" ", "")
-        matched = [r for r in records if q_input in r["질문"].lower().replace(" ", "")]
+        q_input = question_input.lower()
+        SIMILARITY_THRESHOLD = 0.4
+        matched = []
+        for r in records:
+            q = r["질문"].lower()
+            if q_input in q or get_similarity_score(q_input, q) >= SIMILARITY_THRESHOLD:
+                matched.append(r)
 
         if len(matched) == 1:
             st.session_state.chat_log.append({

@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 import gspread
 from google.oauth2.service_account import Credentials
 
+import difflib
 app = FastAPI()
 
 # CORS 설정
@@ -30,6 +31,11 @@ except Exception as e:
 class ChatRequest(BaseModel):
     message: str
 
+def get_similarity_score(a, b):
+    return difflib.SequenceMatcher(None, a, b).ratio()
+
+SIMILARITY_THRESHOLD = 0.4
+
 @app.post("/chat")
 async def chat(request: ChatRequest):
     if worksheet is None:
@@ -37,7 +43,11 @@ async def chat(request: ChatRequest):
 
     message = request.message.strip().lower()
     records = worksheet.get_all_records()
-    matched = [r for r in records if message in r["질문"].lower()]
+    matched = []
+    for r in records:
+        q = r["질문"].lower()
+        if message in q or get_similarity_score(message, q) >= SIMILARITY_THRESHOLD:
+            matched.append(r)
 
     if len(matched) == 0:
         return {"reply": "질문에 해당하는 답변을 찾을 수 없습니다."}
