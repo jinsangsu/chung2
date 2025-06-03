@@ -111,7 +111,7 @@ for qa in st.session_state.chat_log:
 st.markdown(
     f"""
     <div id="chatbox" style="
-        height: 60vh;
+        height: 50vh;
         overflow-y: auto;
         padding: 10px;
         border: 1px solid #ccc;
@@ -130,7 +130,18 @@ st.markdown(
 )
 
 # 🔻 채팅 입력창과 확실히 분리
-st.markdown("<hr style='margin-top: 0;'>", unsafe_allow_html=True)
+st.markdown("""
+<style>
+#input-container {
+    position: sticky;
+    bottom: 0;
+    background-color: white;
+    padding-top: 10px;
+    z-index: 100;
+}
+</style>
+<div id="input-container">
+""", unsafe_allow_html=True)
 # ✅ 입력 폼
 input_container = st.container()
 with input_container:
@@ -140,13 +151,5 @@ with input_container:
         if submitted and question_input:
             handle_question(question_input)
             st.rerun()
-# ✅ 자동 스크롤
-components.html("""
-<script>
-window.onload = function() {
-    setTimeout(function() {
-        window.scrollTo(0, document.body.scrollHeight);
-    }, 300);
-}
-</script>
-""", height=0)
+st.markdown("</div>", unsafe_allow_html=True)
+
