@@ -127,7 +127,7 @@ st.markdown(
 components.html("""
 <script>
 setTimeout(() => {
-  const chatbox = window.parent.document.getElementById("chatbox");
+  const chatbox = document.getElementById("chatbox");
   if (chatbox) {
     chatbox.scrollTop = chatbox.scrollHeight;
   }
