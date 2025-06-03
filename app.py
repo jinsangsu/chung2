@@ -122,13 +122,16 @@ st.markdown(
         {chat_html}
     </div>
     <script>
-      const chatbox = document.getElementById("chatbox");
-      chatbox.scrollTop = chatbox.scrollHeight;
+      setTimeout(() => {{
+        const chatbox = document.getElementById("chatbox");
+        if (chatbox) {{
+          chatbox.scrollTop = chatbox.scrollHeight;
+        }}
+      }}, 100);
     </script>
     """,
     unsafe_allow_html=True
 )
-
 # 🔻 채팅 입력창과 확실히 분리
 st.markdown("""
 <style>
