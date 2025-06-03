@@ -90,7 +90,7 @@ if st.session_state.input_submitted:
 # 💬 채팅 내용 HTML로 출력
 chat_html = """
 <div id="chatbox" style="
-    max-height: 400px;
+    max-height: 500px;
     overflow-y: auto;
     padding: 10px;
     border: 1px solid #ccc;
@@ -116,7 +116,10 @@ chat_html += """
 </script>
 """
 
-components.html(chat_html, height=300)
+components.html(chat_html, height=500)
+
+# 🔻 채팅 입력창과 확실히 분리
+st.markdown("---") 
 
 # ✅ 입력 폼
 with st.form("input_form", clear_on_submit=True):
@@ -129,11 +132,10 @@ with st.form("input_form", clear_on_submit=True):
 # ✅ 자동 스크롤
 components.html("""
 <script>
-setTimeout(function() {
-    const chatbox = window.parent.document.getElementById("chatbox");
-    if (chatbox) {
-        chatbox.scrollTop = chatbox.scrollHeight;
-    }
-}, 100);
+window.onload = function() {
+    setTimeout(function() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }, 300);
+}
 </script>
 """, height=0)
