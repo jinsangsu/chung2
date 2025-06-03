@@ -97,17 +97,8 @@ if st.session_state.input_submitted:
 
 
 # 💬 채팅 내용 HTML로 출력
-chat_html = """
-<div id="chatbox" style="
-    max-height: 500px;
-    overflow-y: auto;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    scroll-behavior: smooth;
-">
-"""
+chat_html = ""
+
 for qa in st.session_state.chat_log:
     chat_html += f"<p><strong>❓ 질문:</strong> {qa['question']}</p>"
     if qa["type"] == "single":
@@ -117,27 +108,38 @@ for qa in st.session_state.chat_log:
         for i, pair in enumerate(qa["matches"]):
             chat_html += f"<p><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
 
-chat_html += """
-</div>
-<script>
-  const chatbox = document.getElementById("chatbox");
-  chatbox.scrollTop = chatbox.scrollHeight;
-</script>
-"""
-
-components.html(chat_html, height=500)
+st.markdown(
+    f"""
+    <div id="chatbox" style="
+        height: 60vh;
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        scroll-behavior: smooth;
+    ">
+        {chat_html}
+    </div>
+    <script>
+      const chatbox = document.getElementById("chatbox");
+      chatbox.scrollTop = chatbox.scrollHeight;
+    </script>
+    """,
+    unsafe_allow_html=True
+)
 
 # 🔻 채팅 입력창과 확실히 분리
-st.markdown("---") 
-
+st.markdown("<hr style='margin-top: 0;'>", unsafe_allow_html=True)
 # ✅ 입력 폼
-with st.form("input_form", clear_on_submit=True):
-    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
-    submitted = st.form_submit_button("질문하기")
-    if submitted and question_input:
-         handle_question(question_input)
-         st.rerun()
-
+input_container = st.container()
+with input_container:
+    with st.form("input_form", clear_on_submit=True):
+        question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+        submitted = st.form_submit_button("질문하기")
+        if submitted and question_input:
+            handle_question(question_input)
+            st.rerun()
 # ✅ 자동 스크롤
 components.html("""
 <script>
