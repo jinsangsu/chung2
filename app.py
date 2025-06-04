@@ -1,7 +1,7 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-import streamlit.components.v1 as components
+import streamlit.components.v1 as components # Make sure this is imported
 import json
 import difflib
 
@@ -31,15 +31,15 @@ st.markdown("""
         display: flex;
         flex-direction: column;
     }
-    /* Streamlit의 .block-container는 중앙 정렬의 주 요소이므로, 
-       여기에 flex-grow를 주어 남은 수직 공간을 차지하게 하고 
+    /* Streamlit의 .block-container는 중앙 정렬의 주 요소이므로,
+       여기에 flex-grow를 주어 남은 수직 공간을 차지하게 하고
        내부 콘텐츠를 수직으로 배열 */
-    .block-container { 
+    .block-container {
         padding-top: 1rem;
         padding-bottom: 0rem;
         padding-left: 1rem;
         padding-right: 1rem;
-        flex-grow: 1; 
+        flex-grow: 1;
         display: flex;
         flex-direction: column;
         max-width: 700px; /* block-container의 최대 너비를 명시적으로 제한 */
@@ -66,7 +66,7 @@ st.markdown("""
         margin-left: auto; /* 중앙 정렬 */
         margin-right: auto; /* 중앙 정렬 */
         position: sticky; /* 하단 고정 시도 (Streamlit 환경에서 불안정할 수 있음) */
-        bottom: 0; 
+        bottom: 0;
     }
     .stTextInput > div > div > input {
         border-radius: 20px;
@@ -115,8 +115,7 @@ except Exception as e:
 # 세션 상태에 채팅 기록 저장
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
-if "scroll_to_bottom" not in st.session_state:
-    st.session_state.scroll_to_bottom = False
+# st.session_state.scroll_to_bottom 플래그는 더 이상 필요 없으므로 삭제
 
 # ✅ 질문 처리 함수
 def get_similarity_score(a, b):
@@ -150,7 +149,7 @@ def handle_question(question_input):
         else:
             bot_answer_content = "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
             bot_display_type = "single_answer"
-        
+
         st.session_state.chat_log.append({
             "role": "bot",
             "content": bot_answer_content,
@@ -164,9 +163,6 @@ def handle_question(question_input):
             "content": f"❌ 오류 발생: {e}",
             "display_type": "single_answer"
         })
-
-# 채팅 기록을 표시할 placeholder (st.empty() 사용)
-chat_history_placeholder = st.empty()
 
 # 채팅 내용을 HTML로 출력하는 함수
 def display_chat_html_content():
@@ -192,20 +188,20 @@ def display_chat_html_content():
                 for i, pair in enumerate(entry["content"]): # content가 리스트이므로
                     chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
             chat_html_content += "</div></div>"
-    
-    # 스크롤 타겟 마커
-    chat_html_content += "<div id='scroll_to_here'></div>"
-    chat_html_content += """
-<script>
-setTimeout(function() {
-    const chatScrollArea = document.getElementById("chat-content-scroll-area");
-    if (chatScrollArea) {
-        chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-    }
-}, 300);
-</script>
-"""            
-    # 이제 이 HTML을 iframe 내부에서 렌더링할 때 사용할 CSS를 포함
+
+    # JavaScript to scroll to the bottom, this will be executed when the iframe content loads/updates
+    # setTimeout을 DOMContentLoaded로 변경하여 더 안정적으로 스크롤
+    scroll_script = """
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatScrollArea = document.getElementById("chat-content-scroll-area");
+            if (chatScrollArea) {
+                chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+            }
+        });
+    </script>
+    """
+
     return f"""
     <!DOCTYPE html>
     <html>
@@ -216,11 +212,10 @@ setTimeout(function() {
             font-family: sans-serif;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* 내용을 아래에서부터 채움 (스크롤 시 위로) */
             min-height: 100%; /* iframe 높이에 맞춤 */
             overflow-y: hidden; /* iframe 자체 스크롤바 숨김 */
         }}
-        
+
         /* 채팅 내용 스크롤 영역 (iframe 내부에서 스크롤될 실제 영역) */
         #chat-content-scroll-area {{
             flex-grow: 1; /* 남은 공간을 모두 차지 */
@@ -269,22 +264,25 @@ setTimeout(function() {
             margin-bottom: 5px;
         }}
     </style>
+    </head>
     <body>
         <div id="chat-content-scroll-area">
             {chat_html_content}
         </div>
+        {scroll_script}
     </body>
     </html>
     """
 
-# 채팅 기록을 chat_history_placeholder에 표시
-# st.components.v1.html을 사용하여 HTML을 iframe 내에 렌더링
+# 채팅 기록을 표시할 placeholder (st.empty() 사용) 이 부분은 이제 필요 없습니다.
+# chat_history_placeholder = st.empty()
 
-    components.html(
-        display_chat_html_content(),
-        height=400, # 채팅창의 고정 높이 설정 (조절 가능)
-        scrolling=True # iframe 자체에 스크롤바 허용
-    )
+# 채팅 기록을 직접 렌더링
+components.html(
+    display_chat_html_content(),
+    height=400, # 채팅창의 고정 높이 설정 (조절 가능)
+    scrolling=True # iframe 자체에 스크롤바 허용
+)
 
 
 # 입력 폼
@@ -293,5 +291,20 @@ with st.form("input_form", clear_on_submit=True):
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
         handle_question(question_input)
-        st.rerun()
+        # st.session_state.scroll_to_bottom = True # 이 줄은 더 이상 필요 없음
+        st.rerun() # 중요: 채팅 기록 업데이트 후 앱을 다시 실행하여 UI 업데이트
 
+# 새로운 답변이 추가될 때마다 자동으로 스크롤 (iframe 내부 스크롤)
+# 이 블록 전체는 더 이상 필요 없으므로 삭제합니다.
+# if st.session_state.get("scroll_to_bottom"):
+#     components.html("""
+#     <script>
+#   setTimeout(() => {
+#       const chatScrollArea = document.getElementById("chat-content-scroll-area");
+#       if (chatScrollArea) {
+#           chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+#       }
+#   }, 300);
+# </script>
+#     """, height=0, scrolling=False)
+#     st.session_state.scroll_to_bottom = False # 스크롤 플래그 초기화
