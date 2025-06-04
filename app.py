@@ -284,6 +284,12 @@ def display_chat_html_content():
 # 채팅 기록을 표시할 placeholder (st.empty() 사용) 이 부분은 이제 필요 없습니다.
 # chat_history_placeholder = st.empty()
 
+# 채팅 기록을 직접 렌더링
+components.html(
+    display_chat_html_content(),
+    height=400, # 채팅창의 고정 높이 설정 (조절 가능)
+    scrolling=True # iframe 자체에 스크롤바 허용
+)
 
 
 # 입력 폼
@@ -295,12 +301,6 @@ with st.form("input_form", clear_on_submit=True):
         # st.session_state.scroll_to_bottom = True # 이 줄은 더 이상 필요 없음
         st.rerun() # 중요: 채팅 기록 업데이트 후 앱을 다시 실행하여 UI 업데이트
 
-# 채팅 기록을 직접 렌더링
-components.html(
-    display_chat_html_content(),
-    height=400, # 채팅창의 고정 높이 설정 (조절 가능)
-    scrolling=True # iframe 자체에 스크롤바 허용
-)
 
 # 새로운 답변이 추가될 때마다 자동으로 스크롤 (iframe 내부 스크롤)
 # 이 블록 전체는 더 이상 필요 없으므로 삭제합니다.
