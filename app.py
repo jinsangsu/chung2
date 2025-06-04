@@ -10,7 +10,7 @@ import difflib
 # 기본 설정
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
-# 캐릭터 영역
+# 캐릭터 영역 (기존과 동일)
 col1, col2 = st.columns([1, 4])
 with col1:
     try:
@@ -30,7 +30,7 @@ with col2:
         <strong>잘 부탁드려요! 😊</strong>
     """, unsafe_allow_html=True)
 
-# 구글 시트 연결
+# 구글 시트 연결 (기존과 동일)
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -85,31 +85,38 @@ def handle_question(question_input):
             "answer": f"❌ 오류 발생: {e}"
         })
 
-# ✅ 질문 처리
-if "input_submitted" not in st.session_state:
-    st.session_state.input_submitted = False
-if "input_text" not in st.session_state:
-    st.session_state.input_text = ""
+# 💬 채팅 내용을 표시할 placeholder
+chat_placeholder = st.empty()
 
-if st.session_state.input_submitted:
-    handle_question(st.session_state.input_text)
-    st.session_state.input_submitted = False
+# 🔻 채팅 입력창을 항상 하단에 고정하기 위한 컨테이너
+input_area_container = st.container()
 
+with input_area_container:
+    with st.form("input_form", clear_on_submit=True):
+        question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+        submitted = st.form_submit_button("질문하기")
+        if submitted and question_input:
+            handle_question(question_input)
+            # 질문 처리 후 채팅 기록 업데이트 및 스크롤을 위해 rerun 호출
+            st.session_state.scroll_to_bottom = True # 스크롤을 위한 플래그 설정
+            st.rerun()
 
-# 💬 채팅 내용 HTML로 출력
-chat_html = ""
-
-for qa in st.session_state.chat_log:
-    chat_html += f"<p><strong>❓ 질문:</strong> {qa['question']}</p>"
-    if qa["type"] == "single":
-        chat_html += f"<p style='background-color:#e0f7fa; padding:8px; border-radius:5px;'>🧾 <strong>답변:</strong> {qa['answer']}</p>"
-    elif qa["type"] == "multi":
-        chat_html += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
-        for i, pair in enumerate(qa["matches"]):
-            chat_html += f"<p><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
-chat_html += "<div id='latest'></div>"
-st.markdown(
-    f"""
+# 채팅 내용을 HTML로 출력하는 함수
+def display_chat_log():
+    chat_html = ""
+    for qa in st.session_state.chat_log:
+        chat_html += f"<p><strong>❓ 질문:</strong> {qa['question']}</p>"
+        if qa["type"] == "single":
+            chat_html += f"<p style='background-color:#e0f7fa; padding:8px; border-radius:5px;'>🧾 <strong>답변:</strong> {qa['answer']}</p>"
+        elif qa["type"] == "multi":
+            chat_html += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+            for i, pair in enumerate(qa["matches"]):
+                chat_html += f"<p><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
+    
+    # 최신 답변으로 스크롤하기 위한 마커 추가
+    chat_html += "<div id='latest_answer_marker'></div>" 
+    
+    return f"""
     <div id="chatbox" style="
         height: 50vh;
         overflow-y: auto;
@@ -121,40 +128,22 @@ st.markdown(
     ">
         {chat_html}
     </div>
-        """,
-    unsafe_allow_html=True
-)
-components.html("""
-<script>
-  setTimeout(() => {
-    const latest = document.getElementById("latest");
-    if (latest) {
-      latest.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, 300);
-</script>
-""", height=0)
-#🔻 채팅 입력창과 확실히 분리
-st.markdown("""
-<style>
-#input-container {
-    position: sticky;
-    bottom: 0;
-    background-color: white;
-    padding-top: 10px;
-    z-index: 100;
-}
-</style>
-<div id="input-container">
-""", unsafe_allow_html=True)
-# ✅ 입력 폼
-input_container = st.container()
-with input_container:
-    with st.form("input_form", clear_on_submit=True):
-        question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
-        submitted = st.form_submit_button("질문하기")
-        if submitted and question_input:
-            handle_question(question_input)
-            st.rerun()
-st.markdown("</div>", unsafe_allow_html=True)
+    """
 
+# 채팅 기록을 chat_placeholder에 표시
+with chat_placeholder.container():
+    st.markdown(display_chat_log(), unsafe_allow_html=True)
+
+# 새로운 답변이 추가될 때마다 자동으로 스크롤
+if st.session_state.get("scroll_to_bottom"):
+    components.html("""
+    <script>
+      setTimeout(() => {
+        const latestMarker = document.getElementById("latest_answer_marker");
+        if (latestMarker) {
+          latestMarker.scrollIntoView({ behavior: "smooth", block: "end" }); // 'end'로 변경하여 마커가 화면 하단에 오도록
+        }
+      }, 100); // 딜레이를 줄여 더 빠르게 스크롤
+    </script>
+    """, height=0)
+    st.session_state.scroll_to_bottom = False # 스크롤 플래그 초기화
