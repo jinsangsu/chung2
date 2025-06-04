@@ -135,26 +135,26 @@ def handle_question(question_input):
 
         # 사용자 질문 먼저 추가
         st.session_state.chat_log.append({
-            "role": "user", # 역할 추가
-            "content": question_input, # 질문 내용
-            "type": "question" # 사용자 질문 타입
+            "role": "user",
+            "content": question_input,
+            "display_type": "question" # 사용자 질문은 항상 'question' 타입으로 표시
         })
 
         # 봇 답변 생성 및 추가
         if len(matched) == 1:
             bot_answer_content = matched[0]["답변"]
-            bot_answer_type = "single_answer"
+            bot_display_type = "single_answer"
         elif len(matched) > 1:
             bot_answer_content = [{"q": r["질문"], "a": r["답변"]} for r in matched]
-            bot_answer_type = "multi_answer"
+            bot_display_type = "multi_answer"
         else:
             bot_answer_content = "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
-            bot_answer_type = "single_answer"
+            bot_display_type = "single_answer"
         
         st.session_state.chat_log.append({
-            "role": "bot", # 역할 추가
-            "content": bot_answer_content, # 답변 내용
-            "type": bot_answer_type
+            "role": "bot",
+            "content": bot_answer_content,
+            "display_type": bot_display_type # 봇 답변 타입
         })
 
     except Exception as e:
@@ -163,7 +163,7 @@ def handle_question(question_input):
         st.session_state.chat_log.append({
             "role": "bot",
             "content": f"❌ 오류 발생: {e}",
-            "type": "single_answer"
+            "display_type": "single_answer"
         })
 
 # 채팅 기록을 표시할 placeholder (st.empty() 사용)
@@ -186,9 +186,9 @@ def display_chat_html_content():
             <div class="message-row bot-message-row">
                 <div class="message-bubble bot-bubble">
             """
-            if entry["type"] == "single_answer":
+            if entry["display_type"] == "single_answer":
                 chat_html_content += f"<p>🧾 <strong>답변:</strong> {entry['content']}</p>"
-            elif entry["type"] == "multi_answer":
+            elif entry["display_type"] == "multi_answer":
                 chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
                 for i, pair in enumerate(entry["content"]): # content가 리스트이므로
                     chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
