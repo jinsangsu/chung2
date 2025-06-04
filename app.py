@@ -188,7 +188,16 @@ def display_chat_html_content():
                 for i, pair in enumerate(entry["content"]): # content가 리스트이므로
                     chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
             chat_html_content += "</div></div>"
+scroll_script = """
+        <script>
+            var anchor = document.getElementById("bottom-anchor");
+            if (anchor) {
+                anchor.scrollIntoView({behavior: "smooth", block: "end"});
+            }
+        </script>
+    """
 
+    return chat_html + scroll_script
     # JavaScript to scroll to the bottom, this will be executed when the iframe content loads/updates
     # setTimeout을 DOMContentLoaded로 변경하여 더 안정적으로 스크롤
     scroll_script = """
@@ -284,12 +293,6 @@ def display_chat_html_content():
 # 채팅 기록을 표시할 placeholder (st.empty() 사용) 이 부분은 이제 필요 없습니다.
 # chat_history_placeholder = st.empty()
 
-# 채팅 기록을 직접 렌더링
-components.html(
-    display_chat_html_content(),
-    height=400, # 채팅창의 고정 높이 설정 (조절 가능)
-    scrolling=True # iframe 자체에 스크롤바 허용
-)
 
 
 # 입력 폼
