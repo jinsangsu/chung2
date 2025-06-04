@@ -194,8 +194,15 @@ def display_chat_html_content():
             chat_html_content += "</div></div>"
     
     # 스크롤 타겟 마커
-    chat_html_content += "<div id='scroll_to_here' style='height:1px;'></div>"
-    
+    chat_html_content += "<div id='scroll_to_here'></div>"
+    chat_html_content += """
+    <script>
+            setTimeout(() => {
+        const chatScrollArea = document.getElementById("chat-content-scroll-area");
+        chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+    }, 100);
+</script>
+"""            
     # 이제 이 HTML을 iframe 내부에서 렌더링할 때 사용할 CSS를 포함
     return f"""
     <!DOCTYPE html>
@@ -291,15 +298,12 @@ with st.form("input_form", clear_on_submit=True):
 if st.session_state.get("scroll_to_bottom"):
     components.html("""
     <script>
-        // iframe 내부의 document에 접근하여 스크롤 제어
-        // iframe의 title을 사용하여 정확한 iframe을 찾음
-        const iframe = window.parent.document.querySelector('iframe[title*="Streamlit Component"]');
-        if (iframe && iframe.contentWindow && iframe.contentWindow.document) {
-            const chatScrollArea = iframe.contentWindow.document.getElementById("chat-content-scroll-area");
-            if (chatScrollArea) {
-                chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-            }
-        }
-    </script>
+  setTimeout(() => {
+      const chatScrollArea = document.getElementById("chat-content-scroll-area");
+      if (chatScrollArea) {
+          chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+      }
+  }, 300);
+</script>
     """, height=0, scrolling=False)
     st.session_state.scroll_to_bottom = False # 스크롤 플래그 초기화
