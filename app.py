@@ -9,7 +9,8 @@ import difflib
 # 기본 설정
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="wide")
 
-# CSS 스타일 주입
+# CSS 스타일 주입 (변경된 부분)
+# 이 CSS는 전체 Streamlit 앱의 기본 스타일을 조작합니다.
 st.markdown("""
 <style>
     /* Streamlit 기본 여백 제거 및 전체 페이지 레이아웃 조정 */
@@ -27,13 +28,16 @@ st.markdown("""
     }
     .stApp > .main { /* 메인 콘텐츠 영역 여백 제거 */
         padding: 0 !important;
+        flex-grow: 1; /* 남은 공간을 차지하도록 설정 */
+        display: flex;
+        flex-direction: column;
     }
     .block-container { /* 컨테이너 내부 여백 조정 */
         padding-top: 1rem;
         padding-bottom: 0rem;
         padding-left: 1rem;
         padding-right: 1rem;
-        flex-grow: 1; /* 남은 공간을 차지하도록 설정 (채팅 기록이 이 안에서 스크롤됨) */
+        flex-grow: 1; /* 남은 공간을 차지하도록 설정 */
         display: flex;
         flex-direction: column;
     }
@@ -44,41 +48,7 @@ st.markdown("""
         margin-bottom: 15px; /* 캐릭터 아래 간격 */
     }
 
-    /* 채팅 기록 컨테이너 (스크롤 가능한 부분) */
-    #chat-history-scroll-area {
-        flex-grow: 1; /* 남은 공간을 모두 차지하도록 설정 */
-        overflow-y: auto; /* 이 부분만 스크롤되도록 */
-        padding: 10px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        background-color: #f9f9f9;
-        display: flex; /* 내용을 아래에서부터 채우기 위함 */
-        flex-direction: column;
-        justify-content: flex-end; /* 내용이 아래에 붙도록 */
-        margin-bottom: 10px; /* 입력창과의 간격 */
-    }
-    
-    /* 각 질문-답변 블록 */
-    .chat-message-block {
-        margin-bottom: 10px;
-    }
-    .chat-question {
-        margin-bottom: 2px;
-    }
-    .chat-answer {
-        background-color: #e0f7fa;
-        padding: 8px;
-        border-radius: 5px;
-    }
-    .chat-multi-prompt {
-        margin-bottom: 5px;
-    }
-    .chat-multi-item {
-        margin-left: 25px; /* 유사 질문 들여쓰기 조정 */
-        margin-bottom: 5px; /* 유사 질문 항목 간 간격 */
-    }
-
-    /* 입력 폼 컨테이너 (하단에 고정) */
+    /* 입력 폼 컨테이너 (하단에 고정 시도) */
     .stForm {
         flex-shrink: 0; /* 입력 폼은 줄어들지 않도록 */
         background-color: white;
@@ -90,6 +60,8 @@ st.markdown("""
         max-width: 700px; /* Streamlit main 컨테이너의 기본 최대 너비에 맞춤 */
         margin-left: auto; /* 중앙 정렬 */
         margin-right: auto; /* 중앙 정렬 */
+        /* position: sticky; bottom: 0; 는 Streamlit 내에서 제한적일 수 있으므로 제거 */
+        /* 대신, flexbox를 통해 하단에 배치되도록 유도 */
     }
     .stTextInput > div > div > input {
         border-radius: 20px;
@@ -100,6 +72,7 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
 
 # 캐릭터 영역
 col1, col2 = st.columns([1, 4])
@@ -184,7 +157,7 @@ def handle_question(question_input):
 chat_history_placeholder = st.empty()
 
 # 채팅 내용을 HTML로 출력하는 함수
-def display_chat_log():
+def display_chat_html_content():
     chat_html_content = ""
     for qa in st.session_state.chat_log:
         chat_html_content += f"""
@@ -196,44 +169,85 @@ def display_chat_log():
         elif qa["type"] == "multi":
             chat_html_content += "<p class='chat-multi-prompt'>🔎 유사한 질문이 여러 개 있습니다:</p>"
             for i, pair in enumerate(qa["matches"]):
-                # '카도 정렬'을 위한 들여쓰기 클래스 적용
                 chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
         chat_html_content += "</div>"
     
     # 스크롤 타겟 마커
     chat_html_content += "<div id='scroll_to_here' style='height:1px;'></div>"
     
-    return chat_html_content
+    # 이제 이 HTML을 iframe 내부에서 렌더링할 때 사용할 CSS를 포함
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body {{
+            margin: 0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 내용을 아래에서부터 채움 */
+            min-height: 100%; /* iframe 높이에 맞춤 */
+        }}
+        .chat-message-block {{
+            margin-bottom: 10px;
+        }}
+        .chat-question {{
+            margin-bottom: 2px;
+        }}
+        .chat-answer {{
+            background-color: #e0f7fa;
+            padding: 8px;
+            border-radius: 5px;
+        }}
+        .chat-multi-prompt {{
+            margin-bottom: 5px;
+        }}
+        .chat-multi-item {{
+            margin-left: 25px; /* 유사 질문 들여쓰기 조정 */
+            margin-bottom: 5px; /* 유사 질문 항목 간 간격 */
+        }}
+    </style>
+    </head>
+    <body>
+        {chat_html_content}
+    </body>
+    </html>
+    """
 
 # 채팅 기록을 chat_history_placeholder에 표시
-# 이제 chat_history_placeholder를 사용하여 동적으로 내용 업데이트
+# st.components.v1.html을 사용하여 HTML을 iframe 내에 렌더링
 with chat_history_placeholder.container():
-    # 이 div가 CSS의 #chat-history-scroll-area 스타일을 받음
-    st.markdown(f"""
-    <div id="chat-history-scroll-area">
-        {display_chat_log()}
-    </div>
-    """, unsafe_allow_html=True)
+    # chat-history-scroll-area는 이제 iframe 내부에서만 CSS가 적용됨
+    # iframe 자체의 높이를 설정하여 스크롤 가능한 영역을 만듬
+    components.html(
+        display_chat_html_content(),
+        height=400, # 채팅창의 고정 높이 설정 (조절 가능)
+        scrolling=True # iframe 자체에 스크롤바 허용
+    )
 
 
 # 입력 폼
-# 이 폼은 CSS의 .stForm 스타일에 의해 하단에 고정되도록 시도
+# 이 폼은 Streamlit의 기본 플로우에 따라 하단에 위치합니다.
+# 완전한 고정은 어려울 수 있습니다.
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
         handle_question(question_input)
-        st.session_state.scroll_to_bottom = True # 스크롤을 위한 플래그 설정
+        st.session_state.scroll_to_bottom = True
         st.rerun()
 
-# 새로운 답변이 추가될 때마다 자동으로 스크롤
+# 새로운 답변이 추가될 때마다 자동으로 스크롤 (iframe 내부 스크롤)
 if st.session_state.get("scroll_to_bottom"):
     components.html("""
     <script>
-        const chatContainer = document.getElementById("chat-history-scroll-area");
-        if (chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+        // iframe 내부의 document에 접근하여 스크롤 제어
+        const iframe = window.parent.document.querySelector('iframe[title="Streamlit Component"]');
+        if (iframe && iframe.contentWindow && iframe.contentWindow.document) {
+            const chatBody = iframe.contentWindow.document.body;
+            chatBody.scrollTop = chatBody.scrollHeight;
         }
     </script>
     """, height=0, scrolling=False)
-    st.session_state.scroll_to_bottom = False # 스크롤 플래그 초기화
+    st.session_state.scroll_to_bottom = False
