@@ -232,14 +232,12 @@ def display_chat_html_content():
     if st.session_state.scroll_to_bottom_flag: # <--- 이 부분 추가
         scroll_iframe_script = """
         <script>
-window.onload = function () {
-    setTimeout(function() {
-        const chatScrollArea = document.getElementById("chat-content-scroll-area");
-        if (chatScrollArea) {
-            chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-        }
-    }, 200);  // DOM 렌더링 완료 후 스크롤 지연 보장
-};
+setTimeout(function () {
+    const el = document.getElementById("chat-content-scroll-area");
+    if (el) {
+        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
+}, 100);
 </script>
         """
         # 스크롤이 실행된 후 플래그를 초기화하여 불필요한 반복 스크롤을 방지합니다.
@@ -322,7 +320,7 @@ window.onload = function () {
 components.html(
     display_chat_html_content(),
     height=600, # 채팅창의 고정 높이 설정 (조절 가능)
-    scrolling=True # iframe 자체에 스크롤바 허용
+    scrolling=False # iframe 자체에 스크롤바 허용
 )
 
 
