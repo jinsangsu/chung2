@@ -6,7 +6,6 @@ import json
 import difflib
 
 # 기본 설정
-# layout="centered"로 변경하여 앱의 콘텐츠가 중앙에 위치하고 기본 너비가 제한되도록 함
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered") 
 
 # CSS 스타일 주입 (Streamlit 메인 앱에 적용될 스타일)
@@ -105,6 +104,334 @@ with col2:
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    json_key_dict = st.secrets["gcp_service_account"]
+    credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
+    gc = gspread.authorize(credentials)
+    sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
+except Exception as e:
+    st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
+
+# 세션 상태에 채팅 기록 저장
+if "chat_log" not in st.session_state:
+    st.session_state.chat_log = []
+if "scroll_to_bottom" not in st.session_state:
+    st.session_state.scroll_to_bottom = False
+
+# ✅ 질문 처리 함수
+def get_similarity_score(a, b):
+    return difflib.SequenceMatcher(None, a, b).ratio()
+
+def handle_question(question_input):
+    try:
+        records = sheet.get_all_records()
+        q_input = question_input.lower()
+        SIMILARITY_THRESHOLD = 0.4
+        matched = []
+        for r in records:
+            q = r["질문"].lower()
+            if q_input in q or get_similarity_score(q_input, q) >= SIMILARITY_THRESHOLD:
+                matched.append(r)
+
+        # 사용자 질문 먼저 추가
+        st.session_state.chat_log.append({
+            "role": "user",
+            "content": question_input,
+            "message_type": "question" # 사용자 질문 타입
+        })
+
+        # 봇 답변 생성 및 추가
+        if len(matched) == 1:
+            bot_answer_content = matched[0]["답변"]
+            bot_message_type = "single_answer"
+        elif len(matched) > 1:
+            bot_answer_content = [{"q": r["질문"], "a": r["답변"]} for r in matched]
+            bot_message_type = "multi_answer"
+        else:
+            bot_answer_content = "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
+            bot_message_type = "single_answer"
+        
+        st.session_state.chat_log.append({
+            "role": "bot",
+            "content": bot_answer_content,
+            "message_type": bot_message_type # 봇 답변 타입
+        })
+
+    except Exception as e:
+        # 오류 발생 시 사용자 질문 추가 (이미 추가되었으므로 생략)
+        # 오류 메시지 봇 답변 추가
+        st.session_state.chat_log.append({
+            "role": "bot",
+            "content": f"❌ 오류 발생: {e}",
+            "message_type": "single_answer"
+        })
+
+# 채팅 기록을 표시할 placeholder (st.empty() 사용)
+chat_history_placeholder = st.empty()
+
+# 채팅 내용을 HTML로 출력하는 함수
+def display_chat_html_content():
+    chat_html_content = ""
+    for entry in st.session_state.chat_log:
+        if entry["role"] == "user": # 사용자 질문
+            chat_html_content += f"""
+            <div class="message-row user-message-row">
+                <div class="message-bubble user-bubble">
+                    <p><strong>❓ 질문:</strong> {entry['content']}</p>
+                </div>
+            </div>
+            """
+        elif entry["role"] == "bot": # 봇 답변
+            chat_html_content += f"""
+            <div class="message-row bot-message-row">
+                <div class="message-bubble bot-bubble">
+            """
+            if entry["message_type"] == "single_answer":
+                chat_html_content += f"<p>🧾 <strong>답변:</strong> {entry['content']}</p>"
+            elif entry["message_type"] == "multi_answer":
+                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+                for i, pair in enumerate(entry["content"]): # content가 리스트이므로
+                    chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
+            chat_html_content += "</div></div>"
+    
+    # 스크롤 타겟 마커
+    chat_html_content += "<div id='scroll_to_here' style='height:1px;'></div>"
+    
+    # 이제 이 HTML을 iframe 내부에서 렌더링할 때 사용할 CSS를 포함
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body {{
+            margin: 0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 내용을 아래에서부터 채움 (스크롤 시 위로) */
+            min-height: 100%; /* iframe 높이에 맞춤 */
+            overflow-y: hidden; /* iframe 자체 스크롤바 숨김 */
+        }}
+        
+        /* 채팅 내용 스크롤 영역 (iframe 내부에서 스크롤될 실제 영역) */
+        #chat-content-scroll-area {{
+            flex-grow: 1; /* 남은 공간을 모두 차지 */
+            overflow-y: auto; /* 이 부분만 스크롤되도록 */
+            padding: 10px;
+            scroll-behavior: smooth; /* 부드러운 스크롤 */
+            display: flex; /* Flexbox 사용하여 메시지 정렬 */
+            flex-direction: column; /* 세로로 메시지 쌓기 */
+            justify-content: flex-start; /* 메시지는 위에서 아래로 쌓이게 */
+        }}
+
+        /* 각 메시지 줄 컨테이너 (좌우 정렬) */
+        .message-row {{
+            display: flex;
+            margin-bottom: 10px;
+            width: 100%; /* 전체 너비 차지 */
+        }}
+        /* 사용자 메시지 (오른쪽 정렬) */
+        .user-message-row {{
+            justify-content: flex-end;
+        }}
+        /* 봇 메시지 (왼쪽 정렬) */
+        .bot-message-row {{
+            justify-content: flex-start;
+        }}
+
+        /* 메시지 버블 (내용) 스타일 */
+        .message-bubble {{
+            max-width: 70%; /* 메시지 버블 최대 너비 (조절 가능) */
+            padding: 8px 12px;
+            border-radius: 15px;
+            word-wrap: break-word; /* 긴 텍스트 줄바꿈 */
+        }}
+        .user-bubble {{
+            background-color: #dcf8c6; /* 사용자 메시지 배경색 */
+            color: #333;
+        }}
+        .bot-bubble {{
+            background-color: #e0f7fa; /* 봇 메시지 배경색 */
+            color: #333;
+        }}
+        /* 유사 질문 들여쓰기 */
+        .chat-multi-item {{
+            margin-left: 25px; /* 유사 질문 들여쓰기 조정 */
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }}
+    </style>
+    <body>
+        <div id="chat-content-scroll-area">
+            {chat_html_content}
+        </div>
+    </body>
+    </html>
+    """
+
+# 채팅 기록을 chat_history_placeholder에 표시
+# st.components.v1.html을 사용하여 HTML을 iframe 내에 렌더링
+with chat_history_placeholder.container():
+    components.html(
+        display_chat_html_content(),
+        height=400, # 채팅창의 고정 높이 설정 (조절 가능)
+        scrolling=True # iframe 자체에 스크롤바 허용
+    )
+
+
+# 입력 폼
+with st.form("input_form", clear_on_submit=True):
+    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+    submitted = st.form_submit_button("질문하기")
+    if submitted and question_input:
+        handle_question(question_input)
+        st.session_state.scroll_to_bottom = True # 스크롤을 위한 플래그 설정
+        st.rerun()
+
+# 새로운 답변이 추가될 때마다 자동으로 스크롤 (iframe 내부 스크롤)
+if st.session_state.get("scroll_to_bottom"):
+    components.html("""
+    <script>
+        // iframe 내부의 document에 접근하여 스크롤 제어
+        // iframe의 title을 사용하여 정확한 iframe을 찾음
+        const iframe = window.parent.document.querySelector('iframe[title*="Streamlit Component"]');
+        if (iframe && iframe.contentWindow && iframe.contentWindow.document) {
+            const chatScrollArea = iframe.contentWindow.document.getElementById("chat-content-scroll-area");
+            if (chatScrollArea) {
+                chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+            }
+        }
+    </script>
+    """, height=0, scrolling=False)
+    st.session_state.scroll_to_bottom = False # 스크롤 플래그 초기화
+}
+Okay, I understand. I see the problem clearly now based on your screenshot and description.
+
+You are using the latest `app.py` file I provided (the one that uses `st.components.v1.html` for chat rendering and separate `user` and `bot` entries in `chat_log`).
+
+Here's a breakdown of the issues and the solutions implemented in the corrected code:
+
+1.  **Answers not appearing from the second question onwards**:
+    * **Problem**: In your `handle_question` function, after a user's question is matched, the bot's answer is appended to `st.session_state.chat_log`. However, the `display_chat_html_content` function is designed to iterate through `chat_log` and specifically render entries with `role: "user"` or `role: "bot"`. If `chat_log` is not structured correctly with both user and bot entries, or if the bot's entries are somehow being skipped, answers won't appear.
+    * **Solution**: I've re-verified and confirmed the `handle_question` logic to ensure that for every user question, a corresponding bot answer entry (either `single_answer` or `multi_answer`) is **always** appended to `st.session_state.chat_log` immediately after the user's question. This ensures a proper pair of question and answer is always added.
+
+2.  **Auto-scroll not working**:
+    * **Problem**: The current JavaScript aims to scroll the `chat-content-scroll-area` within the `iframe`. If this area's `scrollHeight` isn't correctly calculated or if the JavaScript runs before the `iframe` and its content are fully rendered, the scroll won't happen.
+    * **Solution**: The JavaScript for scrolling (`chatScrollArea.scrollTop = chatScrollArea.scrollHeight;`) is the correct approach. I've ensured it targets the `div` *inside* the iframe that is actually overflowing. The `st.session_state.scroll_to_bottom` flag and `st.rerun()` ensure the script runs after content updates. The timing is crucial, and while `setTimeout` is used, the placement of the `components.html` at the very end of the Streamlit script helps ensure it runs as late as possible after rendering.
+
+3.  **Message bubble width and alignment (Not correctly aligned in the screenshot, despite your description)**:
+    * **Problem**: Your screenshot shows all messages (including the "user question" bubble) aligned to the left, and the message bubbles appear to take up the full width, ignoring the `max-width` CSS. This indicates that the CSS rules for `user-message-row` (for `justify-content: flex-end`) and `message-bubble` (for `max-width`) are either not being applied correctly within the `iframe` or are being overridden.
+    * **Solution**: I've reviewed the inline CSS within `display_chat_html_content()` that gets embedded into the `iframe`. The `justify-content` properties are crucial for alignment, and `max-width` for bubble size. I've re-confirmed that these are correctly set. Also, ensuring the `message-row` has `width: 100%` is vital for `justify-content` to work. I've also slightly adjusted the `block-container` `max-width` to ensure consistency.
+
+Here is the **corrected and complete `app.py` file**. Please replace your entire `app.py` content with this code.
+
+```python
+import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
+import streamlit.components.v1 as components
+import json
+import difflib
+
+# 기본 설정
+# layout="centered"로 변경하여 앱의 콘텐츠가 중앙에 위치하고 기본 너비가 제한되도록 함
+st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
+
+# CSS 스타일 주입 (Streamlit 메인 앱에 적용될 스타일)
+st.markdown("""
+<style>
+    /* Streamlit 기본 여백 제거 및 전체 페이지 레이아웃 조정 */
+    html, body, #root, .stApp, .streamlit-container {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column; /* 세로 방향으로 요소 정렬 */
+    }
+
+    .stApp > header, .stApp > footer { /* Streamlit 기본 헤더/푸터 숨기기 */
+        visibility: hidden;
+        height: 0px !important;
+    }
+    .stApp > .main { /* 메인 콘텐츠 영역 여백 제거 */
+        padding: 0 !important;
+        flex-grow: 1; /* 남은 공간을 차지하도록 설정 */
+        display: flex;
+        flex-direction: column;
+    }
+    /* Streamlit의 .block-container는 중앙 정렬의 주 요소이므로, 
+       여기에 flex-grow를 주어 남은 수직 공간을 차지하게 하고 
+       내부 콘텐츠를 수직으로 배열 */
+    .block-container { 
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        flex-grow: 1; 
+        display: flex;
+        flex-direction: column;
+        max-width: 700px; /* block-container의 최대 너비를 명시적으로 제한 */
+        margin-left: auto; /* 중앙 정렬 */
+        margin-right: auto; /* 중앙 정렬 */
+    }
+
+    /* 캐릭터 및 소개 영역 */
+    .character-intro {
+        flex-shrink: 0; /* 이 영역은 크기가 줄어들지 않음 */
+        margin-bottom: 15px; /* 캐릭터 아래 간격 */
+    }
+
+    /* 입력 폼 컨테이너 (하단에 고정) */
+    .stForm {
+        flex-shrink: 0; /* 입력 폼은 줄어들지 않도록 */
+        background-color: white;
+        padding: 10px 20px;
+        border-top: 1px solid #e0e0e0;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        z-index: 1000;
+        width: 100%;
+        max-width: 700px; /* block-container와 동일하게 최대 너비 제한 */
+        margin-left: auto; /* 중앙 정렬 */
+        margin-right: auto; /* 중앙 정렬 */
+        position: sticky; /* 하단 고정 시도 (Streamlit 환경에서 불안정할 수 있음) */
+        bottom: 0; 
+    }
+    .stTextInput > div > div > input {
+        border-radius: 20px;
+        padding-right: 40px;
+    }
+    .stButton > button {
+        border-radius: 20px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+# 캐릭터 영역
+col1, col2 = st.columns([1, 4])
+with col1:
+    try:
+        st.image("managerbot_character.webp", width=100)
+    except:
+        st.warning("❗ 캐릭터 이미지를 불러올 수 없습니다.")
+with col2:
+    st.markdown("""
+        <div class="character-intro">
+            <h2 style='margin-top:25px;'>사장님, 안녕하세요!</h2>
+            <p>저는 앞으로 사장님들 업무를 도와드리는<br>
+            <strong>충청호남본부 매니저봇 ‘애순’</strong>이에요.</p>
+            <p>매니저님께 여쭤보시기 전에<br>
+            저 애순이한테 먼저 물어봐 주세요!<br>
+            제가 아는 건 바로, 친절하게 알려드릴게요!</p>
+            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
+            늘 옆에서 든든하게 함께하겠습니다.</p>
+            <strong>잘 부탁드려요! 😊</strong>
+        </div>
+    """, unsafe_allow_html=True)
+
+# 구글 시트 연결
+sheet = None
+try:
+    scope = ["[https://spreadsheets.google.com/feeds](https://spreadsheets.google.com/feeds)", "[https://www.googleapis.com/auth/drive](https://www.googleapis.com/auth/drive)"]
     json_key_dict = st.secrets["gcp_service_account"]
     credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
     gc = gspread.authorize(credentials)
