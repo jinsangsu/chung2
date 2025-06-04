@@ -5,8 +5,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import gspread
 from google.oauth2.service_account import Credentials
-
 import difflib
+from sentence_transformers import SentenceTransformer, util
+import torch
+model = SentenceTransformer('paraphrase-MiniLM-L6-v2')  # 모델 캐싱
+
+def get_semantic_similarity(q1, q2):
+    emb1 = model.encode(q1, convert_to_tensor=True)
+    emb2 = model.encode(q2, convert_to_tensor=True)
+    return float(util.pytorch_cos_sim(emb1, emb2))
+
 app = FastAPI()
 
 # CORS 설정
@@ -43,16 +51,19 @@ async def chat(request: ChatRequest):
 
     message = request.message.strip().lower()
     records = worksheet.get_all_records()
-    matched = []
+    best_match = None
+    best_score = 0.0
+    threshold = 0.7  # 의미 유사도 기준
+    
     for r in records:
         q = r["질문"].lower()
-        if message in q or get_similarity_score(message, q) >= SIMILARITY_THRESHOLD:
-            matched.append(r)
-
-    if len(matched) == 0:
-        return {"reply": "질문에 해당하는 답변을 찾을 수 없습니다."}
-    elif len(matched) == 1:
-        return {"reply": matched[0]['답변']}
+        score = get_semantic_similarity(message, q)
+        if score > threshold and score > best_score:
+           best_match = r
+           best_score = score
+         
+    if best_match:
+        return {"reply": best_match["답변"]}
     else:
-        numbered_list = "\n".join([f"{i+1}. {r['질문']}" for i, r in enumerate(matched)])
-        return {"reply": f"다음 중 어떤 질문에 대한 답변을 원하시나요?\n{numbered_list}"}
+        return {"reply": "❌ 질문에 해당하는 답변을 찾을 수 없습니다."}
+    
