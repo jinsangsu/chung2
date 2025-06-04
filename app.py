@@ -296,7 +296,7 @@ with st.form("input_form", clear_on_submit=True):
 
 # 새로운 답변이 추가될 때마다 자동으로 스크롤 (iframe 내부 스크롤)
 if st.session_state.get("scroll_to_bottom"):
-    components.html("""
+    <div id="scroll_to_here"></div>
     <script>
   setTimeout(() => {
       const chatScrollArea = document.getElementById("chat-content-scroll-area");
