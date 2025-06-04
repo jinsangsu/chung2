@@ -145,7 +145,7 @@ def handle_question(question_input):
             bot_answer_content = matched[0]["답변"]
             bot_display_type = "single_answer"
         elif len(matched) > 1:
-            bot_answer_content = [{"q": r["질문"], "a": r["답답"]} for r in matched] # '답변'으로 수정
+            bot_answer_content = [{"q": r["질문"], "a": r["답변"]} for r in matched]
             bot_display_type = "multi_answer"
         else:
             bot_answer_content = "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
