@@ -223,11 +223,10 @@ def display_chat_html_content():
                 chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
                 for i, pair in enumerate(entry["content"]):
                     chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
-            chat_html_content += """
+          
 
-    # iframe 내부 스크롤 스크립트: iframe 콘텐츠가 로드될 때만 실행됩니다.
-    # 이 스크립트는 iframe 자체의 스크롤을 담당합니다.
-    # **핵심 변경: scroll_to_bottom_flag를 사용하여 스크롤 필요 시에만 스크립트 실행**
+    
+    
     scroll_iframe_script = ""
     if st.session_state.scroll_to_bottom_flag:
         scroll_iframe_script = """
