@@ -1,12 +1,11 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-import streamlit.components.v1 as components # Make sure this is imported
+import streamlit.components.v1 as components # components를 다시 임포트합니다.
 import json
 import difflib
 
 # 기본 설정
-# layout="centered"로 변경하여 앱의 콘텐츠가 중앙에 위치하고 기본 너비가 제한되도록 함
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
 # CSS 스타일 주입 (Streamlit 메인 앱에 적용될 스타일)
@@ -65,7 +64,7 @@ st.markdown("""
         max-width: 700px; /* block-container와 동일하게 최대 너비 제한 */
         margin-left: auto; /* 중앙 정렬 */
         margin-right: auto; /* 중앙 정렬 */
-        position: sticky; /* 하단 고정 시도 (Streamlit 환경에서 불안정할 수 있음) */
+        position: sticky; /* 하단 고정 (Streamlit 환경에서 더 잘 작동) */
         bottom: 0;
     }
     .stTextInput > div > div > input {
@@ -74,6 +73,38 @@ st.markdown("""
     }
     .stButton > button {
         border-radius: 20px;
+    }
+
+    /* 채팅 메시지 스타일 */
+    .message-row {
+        display: flex;
+        margin-bottom: 10px;
+        width: 100%;
+    }
+    .user-message-row {
+        justify-content: flex-end;
+    }
+    .bot-message-row {
+        justify-content: flex-start;
+    }
+    .message-bubble {
+        max-width: 70%;
+        padding: 8px 12px;
+        border-radius: 15px;
+        word-wrap: break-word;
+    }
+    .user-bubble {
+        background-color: #dcf8c6;
+        color: #333;
+    }
+    .bot-bubble {
+        background-color: #e0f7fa;
+        color: #333;
+    }
+    .chat-multi-item {
+        margin-left: 25px;
+        font-size: 0.9em;
+        margin-bottom: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -115,7 +146,10 @@ except Exception as e:
 # 세션 상태에 채팅 기록 저장
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
-# st.session_state.scroll_to_bottom 플래그는 더 이상 필요 없으므로 삭제
+# 세션 상태에 스크롤 플래그 초기화
+if "scroll_to_bottom_flag" not in st.session_state: #
+    st.session_state.scroll_to_bottom_flag = False #
+
 
 # ✅ 질문 처리 함수
 def get_similarity_score(a, b):
@@ -136,7 +170,7 @@ def handle_question(question_input):
         st.session_state.chat_log.append({
             "role": "user",
             "content": question_input,
-            "display_type": "question" # 사용자 질문은 항상 'question' 타입으로 표시
+            "display_type": "question"
         })
 
         # 봇 답변 생성 및 추가
@@ -153,8 +187,10 @@ def handle_question(question_input):
         st.session_state.chat_log.append({
             "role": "bot",
             "content": bot_answer_content,
-            "display_type": bot_display_type # 봇 답변 타입
+            "display_type": bot_display_type
         })
+        # 새로운 메시지가 추가되면 스크롤 플래그 설정
+        st.session_state.scroll_to_bottom_flag = True #
 
     except Exception as e:
         # 오류 발생 시 오류 메시지 봇 답변 추가
@@ -163,56 +199,124 @@ def handle_question(question_input):
             "content": f"❌ 오류 발생: {e}",
             "display_type": "single_answer"
         })
+        st.session_state.scroll_to_bottom_flag = True # 오류 메시지도 스크롤
 
 # 채팅 내용을 HTML로 출력하는 함수
 def display_chat_html_content():
-    chat_html = ""
+    chat_html_content = ""
     for entry in st.session_state.chat_log:
-        if entry["role"] == "user":
-            chat_html += f"""
-            <div style="text-align:right; color:#333; margin-bottom:5px;">
-                <b>❓ 질문:</b> {entry['content']}
+        if entry["role"] == "user": # 사용자 질문
+            chat_html_content += f"""
+            <div class="message-row user-message-row">
+                <div class="message-bubble user-bubble">
+                    <p><strong>❓ 질문:</strong> {entry['content']}</p>
+                </div>
             </div>
             """
-        elif entry["role"] == "bot":
+        elif entry["role"] == "bot": # 봇 답변
+            chat_html_content += f"""
+            <div class="message-row bot-message-row">
+                <div class="message-bubble bot-bubble">
+            """
             if entry["display_type"] == "single_answer":
-                chat_html += f"""
-                <div style="text-align:left; background:#eef; padding:8px; border-radius:10px; margin-bottom:10px;">
-                    <b>🧾 답변:</b> {entry['content']}
-                </div>
-                """
+                chat_html_content += f"<p>🧾 <strong>답변:</strong> {entry['content']}</p>"
             elif entry["display_type"] == "multi_answer":
-                chat_html += """
-                <div style="text-align:left; background:#eef; padding:8px; border-radius:10px; margin-bottom:10px;">
-                    <b>🔎 유사한 질문이 여러 개 있습니다:</b><br>
-                """
-                for i, pair in enumerate(entry["content"]):
-                    chat_html += f"""
-                    <div style="margin-left:15px;">{i+1}. <b>{pair['q']}</b><br>👉 {pair['a']}</div><br>
-                    """
-                chat_html += "</div>"
+                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+                for i, pair in enumerate(entry["content"]): # content가 리스트이므로
+                    chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
+            chat_html_content += "</div></div>"
 
-    # 마지막 앵커
-    chat_html += "<div id='bottom-anchor'></div>"
+    # iframe 내부 스크롤 스크립트: iframe 콘텐츠가 로드될 때만 실행됩니다.
+    # 이 스크립트는 iframe 자체의 스크롤을 담당합니다.
+    scroll_iframe_script = """
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatScrollArea = document.getElementById("chat-content-scroll-area");
+            if (chatScrollArea) {
+                chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+            }
+        });
+    </script>
+    """
 
-    # 스크롤 스크립트
-    chat_html += """
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const anchor = document.getElementById("bottom-anchor");
-        if (anchor) {
-            anchor.scrollIntoView({ behavior: "smooth", block: "end" });
-        }
-    });
-</script>
-"""
-    return chat_html
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        body {{
+            margin: 0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100%; /* iframe 높이에 맞춤 */
+            overflow-y: hidden; /* iframe 자체 스크롤바 숨김 */
+        }}
 
-st.markdown(display_chat_html_content(), unsafe_allow_html=True)
+        /* 채팅 내용 스크롤 영역 (iframe 내부에서 스크롤될 실제 영역) */
+        #chat-content-scroll-area {{
+            flex-grow: 1; /* 남은 공간을 모두 차지 */
+            overflow-y: auto; /* 이 부분만 스크롤되도록 */
+            padding: 10px;
+            scroll-behavior: smooth; /* 부드러운 스크롤 */
+            display: flex; /* Flexbox 사용하여 메시지 정렬 */
+            flex-direction: column; /* 세로로 메시지 쌓기 */
+            justify-content: flex-start; /* 메시지는 위에서 아래로 쌓이게 */
+        }}
 
-# 채팅 기록을 표시할 placeholder (st.empty() 사용) 이 부분은 이제 필요 없습니다.
-# chat_history_placeholder = st.empty()
+        /* 각 메시지 줄 컨테이너 (좌우 정렬) */
+        .message-row {{
+            display: flex;
+            margin-bottom: 10px;
+            width: 100%; /* 전체 너비 차지 */
+        }}
+        /* 사용자 메시지 (오른쪽 정렬) */
+        .user-message-row {{
+            justify-content: flex-end;
+        }}
+        /* 봇 메시지 (왼쪽 정렬) */
+        .bot-message-row {{
+            justify-content: flex-start;
+        }}
 
+        /* 메시지 버블 (내용) 스타일 */
+        .message-bubble {{
+            max-width: 70%; /* 메시지 버블 최대 너비 (조절 가능) */
+            padding: 8px 12px;
+            border-radius: 15px;
+            word-wrap: break-word; /* 긴 텍스트 줄바꿈 */
+        }}
+        .user-bubble {{
+            background-color: #dcf8c6; /* 사용자 메시지 배경색 */
+            color: #333;
+        }}
+        .bot-bubble {{
+            background-color: #e0f7fa; /* 봇 메시지 배경색 */
+            color: #333;
+        }}
+        /* 유사 질문 들여쓰기 */
+        .chat-multi-item {{
+            margin-left: 25px; /* 유사 질문 들여쓰기 조정 */
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }}
+    </style>
+    </head>
+    <body>
+        <div id="chat-content-scroll-area">
+            {chat_html_content}
+        </div>
+        {scroll_iframe_script}
+    </body>
+    </html>
+    """
+
+# 채팅 기록을 직접 렌더링
+components.html(
+    display_chat_html_content(),
+    height=400, # 채팅창의 고정 높이 설정 (조절 가능)
+    scrolling=True # iframe 자체에 스크롤바 허용
+)
 
 
 # 입력 폼
@@ -221,7 +325,31 @@ with st.form("input_form", clear_on_submit=True):
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
         handle_question(question_input)
-        # st.session_state.scroll_to_bottom = True # 이 줄은 더 이상 필요 없음
         st.rerun() # 중요: 채팅 기록 업데이트 후 앱을 다시 실행하여 UI 업데이트
 
-
+# --- 자동 스크롤 JavaScript 주입 (메인 Streamlit 페이지 스크롤) ---
+# 새로운 답변이 추가될 때만 스크롤을 시도합니다.
+if st.session_state.scroll_to_bottom_flag:
+    # Streamlit 앱의 메인 콘텐츠 영역을 찾아 스크롤합니다.
+    # '.stApp .main'은 Streamlit 앱의 주요 콘텐츠 영역을 나타내는 CSS 클래스입니다.
+    # 이 요소를 스크롤하여 페이지 전체가 내려가도록 합니다.
+    scroll_main_page_script = """
+    <script>
+        function scrollToMainContentBottom() {
+            const mainContent = document.querySelector('.stApp .main');
+            if (mainContent) {
+                mainContent.scrollTop = mainContent.scrollHeight;
+            } else {
+                // Fallback: .stApp .main이 없으면 window 전체 스크롤 시도
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+        }
+        // 페이지 로드 및 DOM 업데이트 후 스크롤을 위해 짧은 지연을 줌
+        // Streamlit의 렌더링 사이클이 완료될 시간을 주는 것이 중요합니다.
+        setTimeout(scrollToMainContentBottom, 150); // 150ms 지연
+    </script>
+    """
+    # height=0, width=0으로 설정하여 이 components.html 요소 자체가 화면에 보이지 않게 합니다.
+    components.html(scroll_main_page_script, height=0, width=0) #
+    # 스크롤이 실행된 후 플래그를 초기화하여 불필요한 반복 스크롤을 방지합니다.
+    st.session_state.scroll_to_bottom_flag = False #
