@@ -6,7 +6,8 @@ import json
 import difflib
 
 # 기본 설정
-st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="wide") # layout="wide"로 더 넓은 공간 확보
+# layout="centered"로 변경하여 앱의 콘텐츠가 중앙에 위치하고 기본 너비가 제한되도록 함
+st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered") 
 
 # CSS 스타일 주입 (Streamlit 메인 앱에 적용될 스타일)
 st.markdown("""
@@ -30,14 +31,20 @@ st.markdown("""
         display: flex;
         flex-direction: column;
     }
-    .block-container { /* 컨테이너 내부 여백 조정 */
+    /* Streamlit의 .block-container는 중앙 정렬의 주 요소이므로, 
+       여기에 flex-grow를 주어 남은 수직 공간을 차지하게 하고 
+       내부 콘텐츠를 수직으로 배열 */
+    .block-container { 
         padding-top: 1rem;
         padding-bottom: 0rem;
         padding-left: 1rem;
         padding-right: 1rem;
-        flex-grow: 1; /* 남은 공간을 차지하도록 설정 */
+        flex-grow: 1; 
         display: flex;
         flex-direction: column;
+        max-width: 700px; /* block-container의 최대 너비를 명시적으로 제한 */
+        margin-left: auto; /* 중앙 정렬 */
+        margin-right: auto; /* 중앙 정렬 */
     }
 
     /* 캐릭터 및 소개 영역 */
@@ -55,7 +62,7 @@ st.markdown("""
         box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
         z-index: 1000;
         width: 100%;
-        max-width: 700px; /* Streamlit main 컨테이너의 기본 최대 너비와 맞춤 */
+        max-width: 700px; /* block-container와 동일하게 최대 너비 제한 */
         margin-left: auto; /* 중앙 정렬 */
         margin-right: auto; /* 중앙 정렬 */
         position: sticky; /* 하단 고정 시도 (Streamlit 환경에서 불안정할 수 있음) */
@@ -128,36 +135,35 @@ def handle_question(question_input):
 
         # 사용자 질문 먼저 추가
         st.session_state.chat_log.append({
-            "type": "user_question", # 사용자 질문 타입
-            "question": question_input
+            "role": "user", # 역할 추가
+            "content": question_input, # 질문 내용
+            "type": "question" # 사용자 질문 타입
         })
 
-        # 봇 답변 추가
+        # 봇 답변 생성 및 추가
         if len(matched) == 1:
-            st.session_state.chat_log.append({
-                "type": "bot_answer_single", # 봇 단일 답변 타입
-                "answer": matched[0]["답변"]
-            })
+            bot_answer_content = matched[0]["답변"]
+            bot_answer_type = "single_answer"
         elif len(matched) > 1:
-            st.session_state.chat_log.append({
-                "type": "bot_answer_multi", # 봇 다중 답변 타입
-                "matches": [{"q": r["질문"], "a": r["답변"]} for r in matched]
-            })
+            bot_answer_content = [{"q": r["질문"], "a": r["답변"]} for r in matched]
+            bot_answer_type = "multi_answer"
         else:
-            st.session_state.chat_log.append({
-                "type": "bot_answer_single", # 봇 답변 찾을 수 없음 타입
-                "answer": "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
-            })
-    except Exception as e:
-        # 오류 발생 시 사용자 질문 추가
+            bot_answer_content = "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
+            bot_answer_type = "single_answer"
+        
         st.session_state.chat_log.append({
-            "type": "user_question",
-            "question": question_input
+            "role": "bot", # 역할 추가
+            "content": bot_answer_content, # 답변 내용
+            "type": bot_answer_type
         })
+
+    except Exception as e:
+        # 오류 발생 시 사용자 질문 추가 (이미 추가되었으므로 생략)
         # 오류 메시지 봇 답변 추가
         st.session_state.chat_log.append({
-            "type": "bot_answer_single",
-            "answer": f"❌ 오류 발생: {e}"
+            "role": "bot",
+            "content": f"❌ 오류 발생: {e}",
+            "type": "single_answer"
         })
 
 # 채팅 기록을 표시할 placeholder (st.empty() 사용)
@@ -167,33 +173,28 @@ chat_history_placeholder = st.empty()
 def display_chat_html_content():
     chat_html_content = ""
     for entry in st.session_state.chat_log:
-        if entry["type"] == "user_question":
+        if entry["role"] == "user": # 사용자 질문
             chat_html_content += f"""
             <div class="message-row user-message-row">
                 <div class="message-bubble user-bubble">
-                    <p><strong>❓ 질문:</strong> {entry['question']}</p>
+                    <p><strong>❓ 질문:</strong> {entry['content']}</p>
                 </div>
             </div>
             """
-        elif entry["type"] == "bot_answer_single":
+        elif entry["role"] == "bot": # 봇 답변
             chat_html_content += f"""
             <div class="message-row bot-message-row">
                 <div class="message-bubble bot-bubble">
-                    <p>🧾 <strong>답변:</strong> {entry['answer']}</p>
-                </div>
-            </div>
             """
-        elif entry["type"] == "bot_answer_multi":
-            chat_html_content += f"""
-            <div class="message-row bot-message-row">
-                <div class="message-bubble bot-bubble">
-                    <p>🔎 유사한 질문이 여러 개 있습니다:</p>
-            """
-            for i, pair in enumerate(entry["matches"]):
-                chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
+            if entry["type"] == "single_answer":
+                chat_html_content += f"<p>🧾 <strong>답변:</strong> {entry['content']}</p>"
+            elif entry["type"] == "multi_answer":
+                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+                for i, pair in enumerate(entry["content"]): # content가 리스트이므로
+                    chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
             chat_html_content += "</div></div>"
     
-    # 스크롤 타겟 마커 (JavaScript에서 이 ID를 사용하여 스크롤)
+    # 스크롤 타겟 마커
     chat_html_content += "<div id='scroll_to_here' style='height:1px;'></div>"
     
     # 이제 이 HTML을 iframe 내부에서 렌더링할 때 사용할 CSS를 포함
@@ -293,7 +294,6 @@ if st.session_state.get("scroll_to_bottom"):
     <script>
         // iframe 내부의 document에 접근하여 스크롤 제어
         // iframe의 title을 사용하여 정확한 iframe을 찾음
-        // 'Streamlit Component'는 기본값으로 붙는 title의 일부.
         const iframe = window.parent.document.querySelector('iframe[title*="Streamlit Component"]');
         if (iframe && iframe.contentWindow && iframe.contentWindow.document) {
             const chatScrollArea = iframe.contentWindow.document.getElementById("chat-content-scroll-area");
