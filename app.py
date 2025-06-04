@@ -209,7 +209,7 @@ def display_chat_html_content():
             chat_html_content += f"""
             <div class="message-row user-message-row">
                 <div class="message-bubble user-bubble">
-                    <p><strong>❓ 질문:</strong><br>{user_question}</p>
+                      {user_question}
                 </div>
             </div>
             """
@@ -297,8 +297,8 @@ def display_chat_html_content():
 
         /* 메시지 버블 (내용) 스타일 */
         .message-bubble {{
-            max-width: 70%; /* 메시지 버블 최대 너비 (조절 가능) */
-            padding: 8px 12px;
+            max-width: 90%; /* 메시지 버블 최대 너비 (조절 가능) */
+            padding: 10px 14px;
             border-radius: 15px;
             word-wrap: break-word; /* 긴 텍스트 줄바꿈 */
         }}
