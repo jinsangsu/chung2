@@ -64,24 +64,28 @@ def handle_question(question_input):
         if len(matched) == 1:
             st.session_state.chat_log.append({
                 "type": "single",
+                "role": "user", # 역할 추가
                 "question": question_input,
                 "answer": matched[0]["답변"]
             })
         elif len(matched) > 1:
             st.session_state.chat_log.append({
                 "type": "multi",
+                "role": "user", # 역할 추가
                 "question": question_input,
                 "matches": [{"q": r["질문"], "a": r["답변"]} for r in matched]
             })
         else:
             st.session_state.chat_log.append({
                 "type": "single",
+                "role": "user", # 역할 추가
                 "question": question_input,
                 "answer": "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
             })
     except Exception as e:
         st.session_state.chat_log.append({
             "type": "single",
+            "role": "user", # 역할 추가
             "question": question_input,
             "answer": f"❌ 오류 발생: {e}"
         })
@@ -93,27 +97,88 @@ chat_placeholder = st.empty()
 def display_chat_log():
     chat_html = ""
     for qa in st.session_state.chat_log:
-        chat_html += f"<p><strong>❓ 질문:</strong> {qa['question']}</p>"
+        # 메시지 컨테이너에 role에 따른 클래스 추가
+        if qa["role"] == "user": # 사용자 메시지
+            message_class = "user-message-container"
+            question_icon = "❓"
+            answer_icon = "👉" # 사용자 답변에 대한 아이콘 변경
+        else: # 봇 메시지 (여기서는 애순이봇)
+            message_class = "bot-message-container"
+            question_icon = "💬" # 봇의 질문 아이콘 (애순이봇이 질문하지는 않으므로 사용 안될 수 있음)
+            answer_icon = "🧾" # 봇 답변 아이콘
+
+        chat_html += f"""
+        <div class="message-row {message_class}">
+            <div class="message-bubble">
+                <p><strong>{question_icon} 질문:</strong> {qa['question']}</p>
+        """
         if qa["type"] == "single":
-            chat_html += f"<p style='background-color:#e0f7fa; padding:8px; border-radius:5px;'>🧾 <strong>답변:</strong> {qa['answer']}</p>"
+            chat_html += f"<p class='bot-answer-bubble'> {answer_icon} <strong>답변:</strong> {qa['answer']}</p>"
         elif qa["type"] == "multi":
             chat_html += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
             for i, pair in enumerate(qa["matches"]):
-                chat_html += f"<p style='margin-left: 15px;'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>" # 들여쓰기 추가
+                chat_html += f"<p style='margin-left: 15px;'><strong>{i+1}. 질문:</strong> {pair['q']}<br>{answer_icon} 답변: {pair['a']}</p>"
+        chat_html += "</div></div>" # message-bubble, message-row 닫기
     
-    # 더 이상 'latest' 마커를 사용하지 않으므로 제거하거나, 빈 div로만 둠
+    # 더 이상 'latest_answer_marker' 마커를 사용하지 않음.
     # chat_html += "<div id='latest_answer_marker'></div>"
     
     return f"""
-    <div id="chatbox" style="
-        height: 50vh;
-        overflow-y: auto;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        scroll-behavior: smooth;
-    ">
+    <style>
+        /* 채팅창 스타일 */
+        #chatbox {{
+            height: 50vh; /* 고정 높이 */
+            overflow-y: auto; /* 스크롤 가능 */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            scroll-behavior: smooth;
+            display: flex; /* Flexbox 사용하여 메시지 정렬 */
+            flex-direction: column; /* 세로로 메시지 쌓기 */
+        }}
+
+        /* 각 메시지 줄 컨테이너 */
+        .message-row {{
+            display: flex;
+            margin-bottom: 10px;
+        }}
+        /* 사용자 메시지 (오른쪽 정렬) */
+        .user-message-container {{
+            justify-content: flex-end;
+        }}
+        /* 봇 메시지 (왼쪽 정렬) */
+        .bot-message-container {{
+            justify-content: flex-start;
+        }}
+
+        /* 메시지 버블 (내용) 스타일 */
+        .message-bubble {{
+            max-width: 70%; /* 메시지 버블 최대 너비 */
+            padding: 8px 12px;
+            border-radius: 15px;
+            word-wrap: break-word; /* 긴 텍스트 줄바꿈 */
+        }}
+        .user-message-container .message-bubble {{
+            background-color: #dcf8c6; /* 사용자 메시지 배경색 */
+            color: #333;
+        }}
+        .bot-message-container .message-bubble {{
+            background-color: #e0f7fa; /* 봇 메시지 배경색 */
+            color: #333;
+        }}
+        .bot-answer-bubble {{ /* 봇 답변 (단일) 버블 */
+            background-color: #e0f7fa;
+            padding: 8px;
+            border-radius: 5px;
+        }}
+        /* 유사 질문 들여쓰기 */
+        .chat-multi-item {{
+            margin-left: 15px;
+            font-size: 0.9em;
+        }}
+    </style>
+    <div id="chatbox">
         {chat_html}
     </div>
     """
