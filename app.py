@@ -218,8 +218,7 @@ def display_chat_html_content():
         });
     </script>
     """
-
-   st.markdown(display_chat_html_content(), unsafe_allow_html=True)
+st.markdown(display_chat_html_content(), unsafe_allow_html=True)
 
 # 채팅 기록을 표시할 placeholder (st.empty() 사용) 이 부분은 이제 필요 없습니다.
 # chat_history_placeholder = st.empty()
