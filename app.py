@@ -43,7 +43,7 @@ except Exception as e:
 # 세션 상태에 채팅 기록 저장
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
-if "scroll_to_bottom" not in st.session_state: # 스크롤 플래그 초기화
+if "scroll_to_bottom" not in st.session_state:
     st.session_state.scroll_to_bottom = False
 
 # ✅ 질문 처리 함수
@@ -86,67 +86,121 @@ def handle_question(question_input):
             "answer": f"❌ 오류 발생: {e}"
         })
 
-# 💬 채팅 내용을 표시할 placeholder
-chat_placeholder = st.empty()
+# CSS 스타일 주입 (채팅창 고정 및 입력창 고정을 위한 시도)
+# Streamlit의 기본 레이아웃 위에 CSS를 덮어씌우는 방식
+st.markdown("""
+<style>
+    /* 전체 페이지 레이아웃 조정 (Streamlit 기본 마진 제거 등) */
+    .main {
+        padding-top: 0rem;
+        padding-bottom: 0rem;
+    }
+    .block-container {
+        padding-top: 0rem;
+        padding-bottom: 0rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    header {
+        visibility: hidden; /* Streamlit 헤더 숨기기 */
+        height: 0px;
+    }
+    footer {
+        visibility: hidden; /* Streamlit 푸터 숨기기 */
+        height: 0px;
+    }
 
-# 🔻 채팅 입력창을 항상 하단에 고정하기 위한 컨테이너 (이전과 동일)
-input_area_container = st.container()
+    /* 채팅 컨테이너 고정 (Chat UI의 본질적인 부분) */
+    #chat-container {
+        height: calc(100vh - 200px); /* 화면 높이에서 입력창 높이 등을 제외 */
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column; /* 내용을 위에서 아래로 쌓이게 */
+        justify-content: flex-end; /* 내용을 아래에 붙이고, 스크롤하면 위로 올라가게 */
+    }
 
-with input_area_container:
-    with st.form("input_form", clear_on_submit=True):
-        question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
-        submitted = st.form_submit_button("질문하기")
-        if submitted and question_input:
-            handle_question(question_input)
-            st.session_state.scroll_to_bottom = True # 스크롤을 위한 플래그 설정
-            st.rerun()
+    /* 입력창 컨테이너 고정 (하단에 항상 보이게) */
+    .stForm { /* Streamlit 폼에 적용되는 기본 클래스 */
+        position: fixed; /* 화면에 고정 */
+        bottom: 0; /* 화면 하단에 붙임 */
+        left: 50%; /* 중앙 정렬을 위한 초기 위치 */
+        transform: translateX(-50%); /* 중앙 정렬 */
+        width: 100%; /* 너비 100% */
+        max-width: 700px; /* main 컨테이너의 최대 너비와 맞춤 */
+        background-color: white; /* 배경색 지정 */
+        padding: 10px 20px; /* 패딩 */
+        border-top: 1px solid #eee; /* 상단 구분선 */
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* 그림자 효과 */
+        z-index: 1000; /* 다른 요소 위에 오도록 */
+    }
+    /* Streamlit 텍스트 입력과 버튼도 CSS를 통해 조정 */
+    .stTextInput > div > div > input {
+        border-radius: 20px;
+        padding-right: 40px; /* 버튼 공간 확보 */
+    }
+    .stButton > button {
+        border-radius: 20px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 
 # 채팅 내용을 HTML로 출력하는 함수
 def display_chat_log():
     chat_html = ""
     for qa in st.session_state.chat_log:
-        chat_html += f"<p><strong>❓ 질문:</strong> {qa['question']}</p>"
+        chat_html += f"""
+        <div style="margin-bottom: 10px;">
+            <p><strong>❓ 질문:</strong> {qa['question']}</p>
+        """
         if qa["type"] == "single":
             chat_html += f"<p style='background-color:#e0f7fa; padding:8px; border-radius:5px;'>🧾 <strong>답변:</strong> {qa['answer']}</p>"
         elif qa["type"] == "multi":
             chat_html += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
             for i, pair in enumerate(qa["matches"]):
                 chat_html += f"<p><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
+        chat_html += "</div>" # 각 대화 단위 div 닫기
     
-    # 최신 답변으로 스크롤하기 위한 마커 추가
-    # 이 마커가 가장 마지막에 추가되도록 함으로써, 마커가 화면 하단에 보일 때 최신 답변이 보장됨
-    chat_html += "<div id='latest_answer_marker' style='height:1px;'></div>" # 높이를 1px로 줄여 공간 차지 최소화
+    # 이 마커는 실제 스크롤 타겟이 아니라, 단순히 채팅 내용의 끝을 나타냄
+    # 스크롤은 #chat-container의 scrollHeight를 이용
+    chat_html += "<div id='end_of_chat_marker' style='height:1px;'></div>" 
     
-    return f"""
-    <div id="chatbox" style="
-        height: 50vh;
-        overflow-y: auto;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        scroll-behavior: smooth;
-    ">
-        {chat_html}
-    </div>
-    """
+    return chat_html
 
-# 채팅 기록을 chat_placeholder에 표시
-# ✅ st.empty()를 사용하여 chat_placeholder 컨테이너를 동적으로 업데이트
-with chat_placeholder.container():
-    st.markdown(display_chat_log(), unsafe_allow_html=True)
+# ✅ 채팅 기록을 표시할 컨테이너 (이전에 chat_placeholder로 사용했던 부분)
+# 이제 이 컨테이너에 직접적인 CSS ID를 부여하여 JavaScript에서 제어
+# 채팅 내용이 쌓이는 div의 id를 'chat-container'로 지정
+st.markdown(f"""
+<div id="chat-container">
+    {display_chat_log()}
+</div>
+""", unsafe_allow_html=True)
+
+
+# ✅ 입력 폼 (이전에 input_area_container로 사용했던 부분)
+# 이제 form 자체가 CSS로 고정되므로 별도의 st.container() 래핑 불필요
+with st.form("input_form", clear_on_submit=True):
+    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+    submitted = st.form_submit_button("질문하기")
+    if submitted and question_input:
+        handle_question(question_input)
+        st.session_state.scroll_to_bottom = True # 스크롤을 위한 플래그 설정
+        st.rerun()
 
 # 새로운 답변이 추가될 때마다 자동으로 스크롤
-# ✅ `st.rerun()` 직후가 아닌, 모든 요소가 렌더링된 후 실행되도록 components.html을 마지막에 위치
 if st.session_state.get("scroll_to_bottom"):
     components.html("""
     <script>
       setTimeout(() => {
-        const chatbox = document.getElementById("chatbox");
-        if (chatbox) {
-          chatbox.scrollTop = chatbox.scrollHeight; // 채팅창의 가장 아래로 스크롤
+        const chatContainer = document.getElementById("chat-container");
+        if (chatContainer) {
+          chatContainer.scrollTop = chatContainer.scrollHeight; // 채팅창의 가장 아래로 스크롤
         }
-      }, 50); // 딜레이를 더 줄여 거의 즉시 스크롤되도록 시도
+      }, 100); // 딜레이를 더 줄여 거의 즉시 스크롤되도록 시도
     </script>
-    """, height=0, scrolling=False) # scrolling=False 추가하여 불필요한 스크롤바 방지
+    """, height=0, scrolling=False)
     st.session_state.scroll_to_bottom = False # 스크롤 플래그 초기화
