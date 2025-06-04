@@ -7,51 +7,75 @@ import json
 import difflib
 
 # 기본 설정
-st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="wide") # layout="wide"로 변경하여 더 넓은 공간 확보
+st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="wide")
 
-# CSS 스타일 주입 (수정된 부분)
-# Streamlit의 기본 레이아웃 위에 CSS를 덮어씌우는 방식
+# CSS 스타일 주입
 st.markdown("""
 <style>
-    /* Streamlit 기본 여백 제거 */
-    .stApp {
-        padding: 0px !important;
-    }
-    .main {
-        padding: 0px !important;
-    }
-    .block-container {
-        padding-top: 1rem; /* 상단 여백 최소화 */
-        padding-bottom: 0rem; /* 하단 여백 제거 */
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-    header, footer {
-        visibility: hidden; /* Streamlit 기본 헤더/푸터 숨기기 */
-        height: 0px !important;
-    }
-
-    /* 전체 레이아웃 (캐릭터, 채팅창, 입력창을 포함하는 가장 큰 컨테이너) */
+    /* Streamlit 기본 여백 제거 및 전체 페이지 레이아웃 조정 */
     html, body, #root, .stApp, .streamlit-container {
         height: 100%;
         margin: 0;
         padding: 0;
         display: flex;
-        flex-direction: column; /* 세로 방향으로 정렬 */
+        flex-direction: column; /* 세로 방향으로 요소 정렬 */
     }
 
-    /* 채팅 컨테이너 스타일 */
-    #chat-history-container {
+    .stApp > header, .stApp > footer { /* Streamlit 기본 헤더/푸터 숨기기 */
+        visibility: hidden;
+        height: 0px !important;
+    }
+    .stApp > .main { /* 메인 콘텐츠 영역 여백 제거 */
+        padding: 0 !important;
+    }
+    .block-container { /* 컨테이너 내부 여백 조정 */
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        flex-grow: 1; /* 남은 공간을 차지하도록 설정 (채팅 기록이 이 안에서 스크롤됨) */
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 캐릭터 및 소개 영역 */
+    .character-intro {
+        flex-shrink: 0; /* 이 영역은 크기가 줄어들지 않음 */
+        margin-bottom: 15px; /* 캐릭터 아래 간격 */
+    }
+
+    /* 채팅 기록 컨테이너 (스크롤 가능한 부분) */
+    #chat-history-scroll-area {
         flex-grow: 1; /* 남은 공간을 모두 차지하도록 설정 */
         overflow-y: auto; /* 이 부분만 스크롤되도록 */
         padding: 10px;
         border: 1px solid #e0e0e0;
         border-radius: 8px;
-        margin-bottom: 10px; /* 입력창과의 간격 */
         background-color: #f9f9f9;
-        display: flex; /* flexbox를 사용하여 내용을 아래로 밀어넣음 */
+        display: flex; /* 내용을 아래에서부터 채우기 위함 */
         flex-direction: column;
-        justify-content: flex-end; /* 내용이 아래에서부터 채워지도록 */
+        justify-content: flex-end; /* 내용이 아래에 붙도록 */
+        margin-bottom: 10px; /* 입력창과의 간격 */
+    }
+    
+    /* 각 질문-답변 블록 */
+    .chat-message-block {
+        margin-bottom: 10px;
+    }
+    .chat-question {
+        margin-bottom: 2px;
+    }
+    .chat-answer {
+        background-color: #e0f7fa;
+        padding: 8px;
+        border-radius: 5px;
+    }
+    .chat-multi-prompt {
+        margin-bottom: 5px;
+    }
+    .chat-multi-item {
+        margin-left: 25px; /* 유사 질문 들여쓰기 조정 */
+        margin-bottom: 5px; /* 유사 질문 항목 간 간격 */
     }
 
     /* 입력 폼 컨테이너 (하단에 고정) */
@@ -62,13 +86,10 @@ st.markdown("""
         border-top: 1px solid #e0e0e0;
         box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
         z-index: 1000;
-        width: 100%; /* 부모 너비에 맞춤 */
+        width: 100%;
+        max-width: 700px; /* Streamlit main 컨테이너의 기본 최대 너비에 맞춤 */
         margin-left: auto; /* 중앙 정렬 */
         margin-right: auto; /* 중앙 정렬 */
-        max-width: 700px; /* Streamlit main 컨테이너의 기본 최대 너비에 맞춤 */
-        position: -webkit-sticky; /* For Safari */
-        position: sticky;
-        bottom: 0;
     }
     .stTextInput > div > div > input {
         border-radius: 20px;
@@ -80,8 +101,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-# 캐릭터 영역 (기존과 동일)
+# 캐릭터 영역
 col1, col2 = st.columns([1, 4])
 with col1:
     try:
@@ -90,18 +110,20 @@ with col1:
         st.warning("❗ 캐릭터 이미지를 불러올 수 없습니다.")
 with col2:
     st.markdown("""
-        <h2 style='margin-top:25px;'>사장님, 안녕하세요!</h2>
-        <p>저는 앞으로 사장님들 업무를 도와드리는<br>
-        <strong>충청호남본부 매니저봇 ‘애순’</strong>이에요.</p>
-        <p>매니저님께 여쭤보시기 전에<br>
-        저 애순이한테 먼저 물어봐 주세요!<br>
-        제가 아는 건 바로, 친절하게 알려드릴게요!</p>
-        <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
-        늘 옆에서 든든하게 함께하겠습니다.</p>
-        <strong>잘 부탁드려요! 😊</strong>
+        <div class="character-intro">
+            <h2 style='margin-top:25px;'>사장님, 안녕하세요!</h2>
+            <p>저는 앞으로 사장님들 업무를 도와드리는<br>
+            <strong>충청호남본부 매니저봇 ‘애순’</strong>이에요.</p>
+            <p>매니저님께 여쭤보시기 전에<br>
+            저 애순이한테 먼저 물어봐 주세요!<br>
+            제가 아는 건 바로, 친절하게 알려드릴게요!</p>
+            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
+            늘 옆에서 든든하게 함께하겠습니다.</p>
+            <strong>잘 부탁드려요! 😊</strong>
+        </div>
     """, unsafe_allow_html=True)
 
-# 구글 시트 연결 (기존과 동일)
+# 구글 시트 연결
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -158,36 +180,37 @@ def handle_question(question_input):
             "answer": f"❌ 오류 발생: {e}"
         })
 
-# 채팅 기록을 표시할 placeholder
-# st.empty()를 사용하되, CSS ID를 부여하여 JavaScript에서 쉽게 접근하도록 함
+# 채팅 기록을 표시할 placeholder (st.empty() 사용)
 chat_history_placeholder = st.empty()
 
 # 채팅 내용을 HTML로 출력하는 함수
 def display_chat_log():
-    chat_html = ""
+    chat_html_content = ""
     for qa in st.session_state.chat_log:
-        chat_html += f"""
-        <div style="margin-bottom: 10px;">
-            <p style="margin-bottom: 2px;"><strong>❓ 질문:</strong> {qa['question']}</p>
+        chat_html_content += f"""
+        <div class="chat-message-block">
+            <p class="chat-question"><strong>❓ 질문:</strong> {qa['question']}</p>
         """
         if qa["type"] == "single":
-            chat_html += f"<p style='background-color:#e0f7fa; padding:8px; border-radius:5px;'>🧾 <strong>답변:</strong> {qa['answer']}</p>"
+            chat_html_content += f"<p class='chat-answer'>🧾 <strong>답변:</strong> {qa['answer']}</p>"
         elif qa["type"] == "multi":
-            chat_html += "<p style='margin-bottom: 5px;'>🔎 유사한 질문이 여러 개 있습니다:</p>"
+            chat_html_content += "<p class='chat-multi-prompt'>🔎 유사한 질문이 여러 개 있습니다:</p>"
             for i, pair in enumerate(qa["matches"]):
-                chat_html += f"<p style='margin-left: 15px;'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
-        chat_html += "</div>" # 각 대화 단위 div 닫기
+                # '카도 정렬'을 위한 들여쓰기 클래스 적용
+                chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
+        chat_html_content += "</div>"
     
     # 스크롤 타겟 마커
-    chat_html += "<div id='scroll_to_here' style='height:1px;'></div>" 
+    chat_html_content += "<div id='scroll_to_here' style='height:1px;'></div>"
     
-    return chat_html
+    return chat_html_content
 
 # 채팅 기록을 chat_history_placeholder에 표시
+# 이제 chat_history_placeholder를 사용하여 동적으로 내용 업데이트
 with chat_history_placeholder.container():
-    # 이제 이 div가 CSS의 #chat-history-container 스타일을 받음
+    # 이 div가 CSS의 #chat-history-scroll-area 스타일을 받음
     st.markdown(f"""
-    <div id="chat-history-container">
+    <div id="chat-history-scroll-area">
         {display_chat_log()}
     </div>
     """, unsafe_allow_html=True)
@@ -207,7 +230,7 @@ with st.form("input_form", clear_on_submit=True):
 if st.session_state.get("scroll_to_bottom"):
     components.html("""
     <script>
-        const chatContainer = document.getElementById("chat-history-container");
+        const chatContainer = document.getElementById("chat-history-scroll-area");
         if (chatContainer) {
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
