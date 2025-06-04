@@ -232,13 +232,15 @@ def display_chat_html_content():
     if st.session_state.scroll_to_bottom_flag: # <--- 이 부분 추가
         scroll_iframe_script = """
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const chatScrollArea = document.getElementById("chat-content-scroll-area");
-                if (chatScrollArea) {
-                    chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-                }
-            });
-        </script>
+window.onload = function () {
+    setTimeout(function() {
+        const chatScrollArea = document.getElementById("chat-content-scroll-area");
+        if (chatScrollArea) {
+            chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+        }
+    }, 200);  // DOM 렌더링 완료 후 스크롤 지연 보장
+};
+</script>
         """
         # 스크롤이 실행된 후 플래그를 초기화하여 불필요한 반복 스크롤을 방지합니다.
         st.session_state.scroll_to_bottom_flag = False # <--- 이 부분 추가 (주의: iframe 안에서 플래그 초기화)
@@ -308,8 +310,8 @@ def display_chat_html_content():
     </style>
     </head>
     <body>
-        <div id="chat-content-scroll-area">
-            {chat_html_content}
+        <div id="chat-content-scroll-area" style="height: 100%; overflow-y: auto;">
+              {chat_html_content}
         </div>
         {scroll_iframe_script}
     </body>
@@ -319,7 +321,7 @@ def display_chat_html_content():
 # 채팅 기록을 직접 렌더링
 components.html(
     display_chat_html_content(),
-    height=400, # 채팅창의 고정 높이 설정 (조절 가능)
+    height=600, # 채팅창의 고정 높이 설정 (조절 가능)
     scrolling=True # iframe 자체에 스크롤바 허용
 )
 
