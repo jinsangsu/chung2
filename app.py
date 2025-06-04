@@ -1,7 +1,7 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-import streamlit.components.v1 as components # components를 다시 임포트합니다.
+import streamlit.components.v1 as components
 import json
 import difflib
 
@@ -146,10 +146,9 @@ except Exception as e:
 # 세션 상태에 채팅 기록 저장
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
-# 세션 상태에 스크롤 플래그 초기화
-if "scroll_to_bottom_flag" not in st.session_state: #
-    st.session_state.scroll_to_bottom_flag = False #
-
+# 세션 상태에 스크롤 플래그 초기화 - 이 플래그는 이제 메인 페이지 스크롤 대신 iframe 스크롤에만 집중
+if "scroll_to_bottom_flag" not in st.session_state:
+    st.session_state.scroll_to_bottom_flag = False
 
 # ✅ 질문 처리 함수
 def get_similarity_score(a, b):
@@ -190,7 +189,7 @@ def handle_question(question_input):
             "display_type": bot_display_type
         })
         # 새로운 메시지가 추가되면 스크롤 플래그 설정
-        st.session_state.scroll_to_bottom_flag = True #
+        st.session_state.scroll_to_bottom_flag = True
 
     except Exception as e:
         # 오류 발생 시 오류 메시지 봇 답변 추가
@@ -199,13 +198,13 @@ def handle_question(question_input):
             "content": f"❌ 오류 발생: {e}",
             "display_type": "single_answer"
         })
-        st.session_state.scroll_to_bottom_flag = True # 오류 메시지도 스크롤
+        st.session_state.scroll_to_bottom_flag = True
 
 # 채팅 내용을 HTML로 출력하는 함수
 def display_chat_html_content():
     chat_html_content = ""
     for entry in st.session_state.chat_log:
-        if entry["role"] == "user": # 사용자 질문
+        if entry["role"] == "user":
             chat_html_content += f"""
             <div class="message-row user-message-row">
                 <div class="message-bubble user-bubble">
@@ -213,7 +212,7 @@ def display_chat_html_content():
                 </div>
             </div>
             """
-        elif entry["role"] == "bot": # 봇 답변
+        elif entry["role"] == "bot":
             chat_html_content += f"""
             <div class="message-row bot-message-row">
                 <div class="message-bubble bot-bubble">
@@ -222,22 +221,28 @@ def display_chat_html_content():
                 chat_html_content += f"<p>🧾 <strong>답변:</strong> {entry['content']}</p>"
             elif entry["display_type"] == "multi_answer":
                 chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
-                for i, pair in enumerate(entry["content"]): # content가 리스트이므로
+                for i, pair in enumerate(entry["content"]):
                     chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
             chat_html_content += "</div></div>"
 
     # iframe 내부 스크롤 스크립트: iframe 콘텐츠가 로드될 때만 실행됩니다.
     # 이 스크립트는 iframe 자체의 스크롤을 담당합니다.
-    scroll_iframe_script = """
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const chatScrollArea = document.getElementById("chat-content-scroll-area");
-            if (chatScrollArea) {
-                chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-            }
-        });
-    </script>
-    """
+    # **핵심 변경: scroll_to_bottom_flag를 사용하여 스크롤 필요 시에만 스크립트 실행**
+    scroll_iframe_script = ""
+    if st.session_state.scroll_to_bottom_flag: # <--- 이 부분 추가
+        scroll_iframe_script = """
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const chatScrollArea = document.getElementById("chat-content-scroll-area");
+                if (chatScrollArea) {
+                    chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+                }
+            });
+        </script>
+        """
+        # 스크롤이 실행된 후 플래그를 초기화하여 불필요한 반복 스크롤을 방지합니다.
+        st.session_state.scroll_to_bottom_flag = False # <--- 이 부분 추가 (주의: iframe 안에서 플래그 초기화)
+
 
     return f"""
     <!DOCTYPE html>
@@ -328,28 +333,20 @@ with st.form("input_form", clear_on_submit=True):
         st.rerun() # 중요: 채팅 기록 업데이트 후 앱을 다시 실행하여 UI 업데이트
 
 # --- 자동 스크롤 JavaScript 주입 (메인 Streamlit 페이지 스크롤) ---
-# 새로운 답변이 추가될 때만 스크롤을 시도합니다.
-if st.session_state.scroll_to_bottom_flag:
-    # Streamlit 앱의 메인 콘텐츠 영역을 찾아 스크롤합니다.
-    # '.stApp .main'은 Streamlit 앱의 주요 콘텐츠 영역을 나타내는 CSS 클래스입니다.
-    # 이 요소를 스크롤하여 페이지 전체가 내려가도록 합니다.
-    scroll_main_page_script = """
-    <script>
-        function scrollToMainContentBottom() {
-            const mainContent = document.querySelector('.stApp .main');
-            if (mainContent) {
-                mainContent.scrollTop = mainContent.scrollHeight;
-            } else {
-                // Fallback: .stApp .main이 없으면 window 전체 스크롤 시도
-                window.scrollTo(0, document.body.scrollHeight);
-            }
-        }
-        // 페이지 로드 및 DOM 업데이트 후 스크롤을 위해 짧은 지연을 줌
-        // Streamlit의 렌더링 사이클이 완료될 시간을 주는 것이 중요합니다.
-        setTimeout(scrollToMainContentBottom, 150); // 150ms 지연
-    </script>
-    """
-    # height=0, width=0으로 설정하여 이 components.html 요소 자체가 화면에 보이지 않게 합니다.
-    components.html(scroll_main_page_script, height=0, width=0) #
-    # 스크롤이 실행된 후 플래그를 초기화하여 불필요한 반복 스크롤을 방지합니다.
-    st.session_state.scroll_to_bottom_flag = False #
+# 기존의 이 부분을 제거하거나 주석 처리합니다.
+# if st.session_state.scroll_to_bottom_flag:
+#     scroll_main_page_script = """
+#     <script>
+#         function scrollToMainContentBottom() {
+#             const mainContent = document.querySelector('.stApp .main');
+#             if (mainContent) {
+#                 mainContent.scrollTop = mainContent.scrollHeight;
+#             } else {
+#                 window.scrollTo(0, document.body.scrollHeight);
+#             }
+#         }
+#         setTimeout(scrollToMainContentBottom, 150);
+#     </script>
+#     """
+#     components.html(scroll_main_page_script, height=0, width=0)
+#     st.session_state.scroll_to_bottom_flag = False
