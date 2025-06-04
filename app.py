@@ -107,7 +107,7 @@ for qa in st.session_state.chat_log:
         chat_html += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
         for i, pair in enumerate(qa["matches"]):
             chat_html += f"<p><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
-
+chat_html += "<div id='latest'></div>"
 st.markdown(
     f"""
     <div id="chatbox" style="
