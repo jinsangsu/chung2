@@ -269,7 +269,14 @@ def display_chat_html_content():
         <div id="chat-content-scroll-area">
             {chat_html_content}
         </div>
-        {scroll_script}
+        <script>
+            window.onload = function() {{
+                const chatScrollArea = document.getElementById("chat-content-scroll-area");
+                if (chatScrollArea) {{
+                    chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+                }}
+            }};
+        </script>
     </body>
     </html>
     """
