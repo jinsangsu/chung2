@@ -197,27 +197,17 @@ def display_chat_html_content():
 
     # 스크롤 스크립트
     chat_html += """
-    <script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
         const anchor = document.getElementById("bottom-anchor");
         if (anchor) {
             anchor.scrollIntoView({ behavior: "smooth", block: "end" });
         }
-    </script>
-    """
+    });
+</script>
+"""
     return chat_html
 
-    # JavaScript to scroll to the bottom, this will be executed when the iframe content loads/updates
-    # setTimeout을 DOMContentLoaded로 변경하여 더 안정적으로 스크롤
-    scroll_script = """
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const chatScrollArea = document.getElementById("chat-content-scroll-area");
-            if (chatScrollArea) {
-                chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-            }
-        });
-    </script>
-    """
 st.markdown(display_chat_html_content(), unsafe_allow_html=True)
 
 # 채팅 기록을 표시할 placeholder (st.empty() 사용) 이 부분은 이제 필요 없습니다.
