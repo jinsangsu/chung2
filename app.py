@@ -126,15 +126,17 @@ st.markdown(
 )
 components.html("""
 <script>
-setTimeout(() => {
   const chatbox = document.getElementById("chatbox");
   if (chatbox) {
-    chatbox.scrollTop = chatbox.scrollHeight;
+    const observer = new MutationObserver(() => {
+      chatbox.scrollTop = chatbox.scrollHeight;
+    });
+    observer.observe(chatbox, { childList: true });
   }
-}, 300);
 </script>
 """, height=0)
-# 🔻 채팅 입력창과 확실히 분리
+
+#🔻 채팅 입력창과 확실히 분리
 st.markdown("""
 <style>
 #input-container {
