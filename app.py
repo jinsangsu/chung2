@@ -166,38 +166,46 @@ def handle_question(question_input):
 
 # 채팅 내용을 HTML로 출력하는 함수
 def display_chat_html_content():
-    chat_html_content = ""
+    chat_html = ""
     for entry in st.session_state.chat_log:
-        if entry["role"] == "user": # 사용자 질문
-            chat_html_content += f"""
-            <div class="message-row user-message-row">
-                <div class="message-bubble user-bubble">
-                    <p><strong>❓ 질문:</strong> {entry['content']}</p>
-                </div>
+        if entry["role"] == "user":
+            chat_html += f"""
+            <div style="text-align:right; color:#333; margin-bottom:5px;">
+                <b>❓ 질문:</b> {entry['content']}
             </div>
             """
-        elif entry["role"] == "bot": # 봇 답변
-            chat_html_content += f"""
-            <div class="message-row bot-message-row">
-                <div class="message-bubble bot-bubble">
-            """
+        elif entry["role"] == "bot":
             if entry["display_type"] == "single_answer":
-                chat_html_content += f"<p>🧾 <strong>답변:</strong> {entry['content']}</p>"
+                chat_html += f"""
+                <div style="text-align:left; background:#eef; padding:8px; border-radius:10px; margin-bottom:10px;">
+                    <b>🧾 답변:</b> {entry['content']}
+                </div>
+                """
             elif entry["display_type"] == "multi_answer":
-                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
-                for i, pair in enumerate(entry["content"]): # content가 리스트이므로
-                    chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
-            chat_html_content += "</div></div>"
-scroll_script = """
-        <script>
-            var anchor = document.getElementById("bottom-anchor");
-            if (anchor) {
-                anchor.scrollIntoView({behavior: "smooth", block: "end"});
-            }
-        </script>
-    """
+                chat_html += """
+                <div style="text-align:left; background:#eef; padding:8px; border-radius:10px; margin-bottom:10px;">
+                    <b>🔎 유사한 질문이 여러 개 있습니다:</b><br>
+                """
+                for i, pair in enumerate(entry["content"]):
+                    chat_html += f"""
+                    <div style="margin-left:15px;">{i+1}. <b>{pair['q']}</b><br>👉 {pair['a']}</div><br>
+                    """
+                chat_html += "</div>"
 
-    return chat_html + scroll_script
+    # 마지막 앵커
+    chat_html += "<div id='bottom-anchor'></div>"
+
+    # 스크롤 스크립트
+    chat_html += """
+    <script>
+        const anchor = document.getElementById("bottom-anchor");
+        if (anchor) {
+            anchor.scrollIntoView({ behavior: "smooth", block: "end" });
+        }
+    </script>
+    """
+    return chat_html
+
     # JavaScript to scroll to the bottom, this will be executed when the iframe content loads/updates
     # setTimeout을 DOMContentLoaded로 변경하여 더 안정적으로 스크롤
     scroll_script = """
@@ -289,6 +297,7 @@ scroll_script = """
     </body>
     </html>
     """
+st.markdown(display_chat_html_content(), unsafe_allow_html=True)
 
 # 채팅 기록을 표시할 placeholder (st.empty() 사용) 이 부분은 이제 필요 없습니다.
 # chat_history_placeholder = st.empty()
@@ -305,17 +314,3 @@ with st.form("input_form", clear_on_submit=True):
         st.rerun() # 중요: 채팅 기록 업데이트 후 앱을 다시 실행하여 UI 업데이트
 
 
-# 새로운 답변이 추가될 때마다 자동으로 스크롤 (iframe 내부 스크롤)
-# 이 블록 전체는 더 이상 필요 없으므로 삭제합니다.
-# if st.session_state.get("scroll_to_bottom"):
-#     components.html("""
-#     <script>
-#   setTimeout(() => {
-#       const chatScrollArea = document.getElementById("chat-content-scroll-area");
-#       if (chatScrollArea) {
-#           chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-#       }
-#   }, 300);
-# </script>
-#     """, height=0, scrolling=False)
-#     st.session_state.scroll_to_bottom = False # 스크롤 플래그 초기화
