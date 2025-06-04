@@ -197,10 +197,12 @@ def display_chat_html_content():
     chat_html_content += "<div id='scroll_to_here'></div>"
     chat_html_content += """
     <script>
-            setTimeout(() => {
+    document.addEventListener('DOMContentLoaded', function() {
         const chatScrollArea = document.getElementById("chat-content-scroll-area");
-        chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-    }, 100);
+        if (chatScrollArea) {
+            chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+        }
+    });
 </script>
 """            
     # 이제 이 HTML을 iframe 내부에서 렌더링할 때 사용할 CSS를 포함
@@ -277,7 +279,7 @@ def display_chat_html_content():
 
 # 채팅 기록을 chat_history_placeholder에 표시
 # st.components.v1.html을 사용하여 HTML을 iframe 내에 렌더링
-with chat_history_placeholder.container():
+
     components.html(
         display_chat_html_content(),
         height=400, # 채팅창의 고정 높이 설정 (조절 가능)
@@ -291,7 +293,6 @@ with st.form("input_form", clear_on_submit=True):
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
         handle_question(question_input)
-        st.session_state.scroll_to_bottom = True # 스크롤을 위한 플래그 설정
         st.rerun()
 
 # 새로운 답변이 추가될 때마다 자동으로 스크롤 (iframe 내부 스크롤)
