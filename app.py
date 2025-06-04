@@ -127,16 +127,11 @@ st.markdown(
 components.html("""
 <script>
   setTimeout(() => {
-    const chatbox = document.getElementById("chatbox");
-    if (chatbox) {
-      const observer = new MutationObserver(() => {
-        chatbox.scrollTop = chatbox.scrollHeight;
-      });
-      observer.observe(chatbox, { childList: true, subtree: true });
-      // 최초에도 한 번 내리기
-      chatbox.scrollTop = chatbox.scrollHeight;
+    const latest = document.getElementById("latest");
+    if (latest) {
+      latest.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  }, 300);  // DOM 렌더링 이후 실행
+  }, 300);
 </script>
 """, height=0)
 #🔻 채팅 입력창과 확실히 분리
