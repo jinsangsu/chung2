@@ -196,13 +196,13 @@ def display_chat_html_content():
     # 스크롤 타겟 마커
     chat_html_content += "<div id='scroll_to_here'></div>"
     chat_html_content += """
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const chatScrollArea = document.getElementById("chat-content-scroll-area");
-        if (chatScrollArea) {
-            chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-        }
-    });
+<script>
+setTimeout(function() {
+    const chatScrollArea = document.getElementById("chat-content-scroll-area");
+    if (chatScrollArea) {
+        chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+    }
+}, 300);
 </script>
 """            
     # 이제 이 HTML을 iframe 내부에서 렌더링할 때 사용할 CSS를 포함
@@ -295,16 +295,3 @@ with st.form("input_form", clear_on_submit=True):
         handle_question(question_input)
         st.rerun()
 
-# 새로운 답변이 추가될 때마다 자동으로 스크롤 (iframe 내부 스크롤)
-if st.session_state.get("scroll_to_bottom"):
-    <div id="scroll_to_here"></div>
-    <script>
-  setTimeout(() => {
-      const chatScrollArea = document.getElementById("chat-content-scroll-area");
-      if (chatScrollArea) {
-          chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-      }
-  }, 300);
-</script>
-    """, height=0, scrolling=False)
-    st.session_state.scroll_to_bottom = False # 스크롤 플래그 초기화
