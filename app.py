@@ -223,24 +223,23 @@ def display_chat_html_content():
                 chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
                 for i, pair in enumerate(entry["content"]):
                     chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
-            chat_html_content += "</div></div>"
+            chat_html_content += """<div id="chat-scroll-anchor"></div>"""
 
     # iframe 내부 스크롤 스크립트: iframe 콘텐츠가 로드될 때만 실행됩니다.
     # 이 스크립트는 iframe 자체의 스크롤을 담당합니다.
     # **핵심 변경: scroll_to_bottom_flag를 사용하여 스크롤 필요 시에만 스크립트 실행**
-    scroll_iframe_script = ""
-    if st.session_state.scroll_to_bottom_flag: # <--- 이 부분 추가
+   scroll_iframe_script = ""
+    if st.session_state.scroll_to_bottom_flag:
         scroll_iframe_script = """
         <script>
-setTimeout(function () {
-    const el = document.getElementById("chat-content-scroll-area");
-    if (el) {
-        el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-    }
-}, 100);
-</script>
+        setTimeout(function () {
+            const anchor = document.getElementById("chat-scroll-anchor");
+            if (anchor) {
+                anchor.scrollIntoView({ behavior: "smooth" });
+            }
+        }, 100);
+        </script>
         """
-        # 스크롤이 실행된 후 플래그를 초기화하여 불필요한 반복 스크롤을 방지합니다.
         st.session_state.scroll_to_bottom_flag = False # <--- 이 부분 추가 (주의: iframe 안에서 플래그 초기화)
 
 
@@ -308,7 +307,7 @@ setTimeout(function () {
     </style>
     </head>
     <body>
-        <div id="chat-content-scroll-area" style="height: 100%; overflow-y: auto;">
+        <div id="chat-content-scroll-area" style="height: 400px; overflow-y: auto;">
               {chat_html_content}
         </div>
         {scroll_iframe_script}
