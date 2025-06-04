@@ -1,4 +1,3 @@
-
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -44,6 +43,8 @@ except Exception as e:
 # 세션 상태에 채팅 기록 저장
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = []
+if "scroll_to_bottom" not in st.session_state: # 스크롤 플래그 초기화
+    st.session_state.scroll_to_bottom = False
 
 # ✅ 질문 처리 함수
 def get_similarity_score(a, b):
@@ -88,7 +89,7 @@ def handle_question(question_input):
 # 💬 채팅 내용을 표시할 placeholder
 chat_placeholder = st.empty()
 
-# 🔻 채팅 입력창을 항상 하단에 고정하기 위한 컨테이너
+# 🔻 채팅 입력창을 항상 하단에 고정하기 위한 컨테이너 (이전과 동일)
 input_area_container = st.container()
 
 with input_area_container:
@@ -97,7 +98,6 @@ with input_area_container:
         submitted = st.form_submit_button("질문하기")
         if submitted and question_input:
             handle_question(question_input)
-            # 질문 처리 후 채팅 기록 업데이트 및 스크롤을 위해 rerun 호출
             st.session_state.scroll_to_bottom = True # 스크롤을 위한 플래그 설정
             st.rerun()
 
@@ -114,7 +114,8 @@ def display_chat_log():
                 chat_html += f"<p><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
     
     # 최신 답변으로 스크롤하기 위한 마커 추가
-    chat_html += "<div id='latest_answer_marker'></div>" 
+    # 이 마커가 가장 마지막에 추가되도록 함으로써, 마커가 화면 하단에 보일 때 최신 답변이 보장됨
+    chat_html += "<div id='latest_answer_marker' style='height:1px;'></div>" # 높이를 1px로 줄여 공간 차지 최소화
     
     return f"""
     <div id="chatbox" style="
@@ -131,19 +132,21 @@ def display_chat_log():
     """
 
 # 채팅 기록을 chat_placeholder에 표시
+# ✅ st.empty()를 사용하여 chat_placeholder 컨테이너를 동적으로 업데이트
 with chat_placeholder.container():
     st.markdown(display_chat_log(), unsafe_allow_html=True)
 
 # 새로운 답변이 추가될 때마다 자동으로 스크롤
+# ✅ `st.rerun()` 직후가 아닌, 모든 요소가 렌더링된 후 실행되도록 components.html을 마지막에 위치
 if st.session_state.get("scroll_to_bottom"):
     components.html("""
     <script>
       setTimeout(() => {
-        const latestMarker = document.getElementById("latest_answer_marker");
-        if (latestMarker) {
-          latestMarker.scrollIntoView({ behavior: "smooth", block: "end" }); // 'end'로 변경하여 마커가 화면 하단에 오도록
+        const chatbox = document.getElementById("chatbox");
+        if (chatbox) {
+          chatbox.scrollTop = chatbox.scrollHeight; // 채팅창의 가장 아래로 스크롤
         }
-      }, 100); // 딜레이를 줄여 더 빠르게 스크롤
+      }, 50); // 딜레이를 더 줄여 거의 즉시 스크롤되도록 시도
     </script>
-    """, height=0)
+    """, height=0, scrolling=False) # scrolling=False 추가하여 불필요한 스크롤바 방지
     st.session_state.scroll_to_bottom = False # 스크롤 플래그 초기화
