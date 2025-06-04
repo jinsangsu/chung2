@@ -131,7 +131,7 @@ components.html("""
     const observer = new MutationObserver(() => {
       chatbox.scrollTop = chatbox.scrollHeight;
     });
-    observer.observe(chatbox, { childList: true });
+    observer.observe(chatbox, { childList: true, subtree: true });
   }
 </script>
 """, height=0)
