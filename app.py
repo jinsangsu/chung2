@@ -6,7 +6,7 @@ import json
 import difflib
 
 # 기본 설정
-st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="wide") # layout="wide"로 변경하여 더 넓은 공간 확보
+st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="wide") # layout="wide"로 더 넓은 공간 확보
 
 # CSS 스타일 주입 (Streamlit 메인 앱에 적용될 스타일)
 st.markdown("""
@@ -46,7 +46,7 @@ st.markdown("""
         margin-bottom: 15px; /* 캐릭터 아래 간격 */
     }
 
-    /* 입력 폼 컨테이너 (하단에 고정 시도) */
+    /* 입력 폼 컨테이너 (하단에 고정) */
     .stForm {
         flex-shrink: 0; /* 입력 폼은 줄어들지 않도록 */
         background-color: white;
@@ -58,9 +58,7 @@ st.markdown("""
         max-width: 700px; /* Streamlit main 컨테이너의 기본 최대 너비와 맞춤 */
         margin-left: auto; /* 중앙 정렬 */
         margin-right: auto; /* 중앙 정렬 */
-        /* `position: sticky; bottom: 0;`는 Streamlit 환경에서 불안정할 수 있으므로, 
-           이 CSS는 Streamlit의 .stForm이 고정되도록 시도합니다. */
-        position: sticky; 
+        position: sticky; /* 하단 고정 시도 (Streamlit 환경에서 불안정할 수 있음) */
         bottom: 0; 
     }
     .stTextInput > div > div > input {
@@ -128,59 +126,37 @@ def handle_question(question_input):
             if q_input in q or get_similarity_score(q_input, q) >= SIMILARITY_THRESHOLD:
                 matched.append(r)
 
+        # 사용자 질문 먼저 추가
+        st.session_state.chat_log.append({
+            "type": "user_question", # 사용자 질문 타입
+            "question": question_input
+        })
+
+        # 봇 답변 추가
         if len(matched) == 1:
             st.session_state.chat_log.append({
-                "type": "single",
-                "role": "user", # 역할 추가
-                "question": question_input,
-                "answer": matched[0]["답변"]
-            })
-            # 봇 답변 추가 (사용자 질문에 대한 봇의 답변)
-            st.session_state.chat_log.append({
-                "type": "single",
-                "role": "bot", # 역할 추가
-                "question": "", # 봇은 질문하지 않으므로 비워둠
+                "type": "bot_answer_single", # 봇 단일 답변 타입
                 "answer": matched[0]["답변"]
             })
         elif len(matched) > 1:
             st.session_state.chat_log.append({
-                "type": "multi",
-                "role": "user", # 역할 추가
-                "question": question_input,
-                "matches": [{"q": r["질문"], "a": r["답변"]} for r in matched]
-            })
-            # 봇 답변 추가 (유사 질문 목록)
-            st.session_state.chat_log.append({
-                "type": "multi",
-                "role": "bot", # 역할 추가
-                "question": "",
+                "type": "bot_answer_multi", # 봇 다중 답변 타입
                 "matches": [{"q": r["질문"], "a": r["답변"]} for r in matched]
             })
         else:
             st.session_state.chat_log.append({
-                "type": "single",
-                "role": "user", # 역할 추가
-                "question": question_input,
-                "answer": "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
-            })
-            # 봇 답변 추가 (답변을 찾을 수 없을 때)
-            st.session_state.chat_log.append({
-                "type": "single",
-                "role": "bot", # 역할 추가
-                "question": "",
+                "type": "bot_answer_single", # 봇 답변 찾을 수 없음 타입
                 "answer": "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
             })
     except Exception as e:
+        # 오류 발생 시 사용자 질문 추가
         st.session_state.chat_log.append({
-            "type": "single",
-            "role": "user", # 역할 추가
-            "question": question_input,
-            "answer": f"❌ 오류 발생: {e}"
+            "type": "user_question",
+            "question": question_input
         })
+        # 오류 메시지 봇 답변 추가
         st.session_state.chat_log.append({
-            "type": "single",
-            "role": "bot", # 역할 추가
-            "question": "",
+            "type": "bot_answer_single",
             "answer": f"❌ 오류 발생: {e}"
         })
 
@@ -188,41 +164,36 @@ def handle_question(question_input):
 chat_history_placeholder = st.empty()
 
 # 채팅 내용을 HTML로 출력하는 함수
-def display_chat_html_content(): # 함수 이름 변경
+def display_chat_html_content():
     chat_html_content = ""
-    for qa in st.session_state.chat_log:
-        # 메시지 컨테이너에 role에 따른 클래스 추가
-        if qa["role"] == "user": # 사용자 메시지
-            message_class = "user-message-row"
-            question_icon = "❓"
-            # 사용자 메시지에는 답변 아이콘 필요 없음
-        elif qa["role"] == "bot": # 봇 메시지
-            message_class = "bot-message-row"
-            question_icon = "" # 봇은 질문하지 않으므로 아이콘 비워둠
-            answer_icon = "🧾" # 봇 답변 아이콘
-
-        if qa["role"] == "user": # 사용자 질문만 표시
+    for entry in st.session_state.chat_log:
+        if entry["type"] == "user_question":
             chat_html_content += f"""
-            <div class="message-row {message_class}">
+            <div class="message-row user-message-row">
                 <div class="message-bubble user-bubble">
-                    <p><strong>{question_icon} 질문:</strong> {qa['question']}</p>
+                    <p><strong>❓ 질문:</strong> {entry['question']}</p>
                 </div>
             </div>
             """
-        elif qa["role"] == "bot": # 봇 답변만 표시
+        elif entry["type"] == "bot_answer_single":
             chat_html_content += f"""
-            <div class="message-row {message_class}">
+            <div class="message-row bot-message-row">
                 <div class="message-bubble bot-bubble">
+                    <p>🧾 <strong>답변:</strong> {entry['answer']}</p>
+                </div>
+            </div>
             """
-            if qa["type"] == "single":
-                chat_html_content += f"<p>{answer_icon} <strong>답변:</strong> {qa['answer']}</p>"
-            elif qa["type"] == "multi":
-                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
-                for i, pair in enumerate(qa["matches"]):
-                    chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>{answer_icon} 답변: {pair['a']}</p>"
+        elif entry["type"] == "bot_answer_multi":
+            chat_html_content += f"""
+            <div class="message-row bot-message-row">
+                <div class="message-bubble bot-bubble">
+                    <p>🔎 유사한 질문이 여러 개 있습니다:</p>
+            """
+            for i, pair in enumerate(entry["matches"]):
+                chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
             chat_html_content += "</div></div>"
     
-    # 스크롤 타겟 마커
+    # 스크롤 타겟 마커 (JavaScript에서 이 ID를 사용하여 스크롤)
     chat_html_content += "<div id='scroll_to_here' style='height:1px;'></div>"
     
     # 이제 이 HTML을 iframe 내부에서 렌더링할 때 사용할 CSS를 포함
@@ -236,12 +207,12 @@ def display_chat_html_content(): # 함수 이름 변경
             font-family: sans-serif;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end; /* 내용을 아래에서부터 채움 */
+            justify-content: flex-end; /* 내용을 아래에서부터 채움 (스크롤 시 위로) */
             min-height: 100%; /* iframe 높이에 맞춤 */
-            overflow-y: hidden; /* iframe 자체 스크롤 숨기고, 내부 div가 스크롤되도록 */
+            overflow-y: hidden; /* iframe 자체 스크롤바 숨김 */
         }}
         
-        /* 전체 메시지 컨테이너 (이것이 스크롤될 것임) */
+        /* 채팅 내용 스크롤 영역 (iframe 내부에서 스크롤될 실제 영역) */
         #chat-content-scroll-area {{
             flex-grow: 1; /* 남은 공간을 모두 차지 */
             overflow-y: auto; /* 이 부분만 스크롤되도록 */
@@ -256,6 +227,7 @@ def display_chat_html_content(): # 함수 이름 변경
         .message-row {{
             display: flex;
             margin-bottom: 10px;
+            width: 100%; /* 전체 너비 차지 */
         }}
         /* 사용자 메시지 (오른쪽 정렬) */
         .user-message-row {{
@@ -268,7 +240,7 @@ def display_chat_html_content(): # 함수 이름 변경
 
         /* 메시지 버블 (내용) 스타일 */
         .message-bubble {{
-            max-width: 70%; /* 메시지 버블 최대 너비 */
+            max-width: 70%; /* 메시지 버블 최대 너비 (조절 가능) */
             padding: 8px 12px;
             border-radius: 15px;
             word-wrap: break-word; /* 긴 텍스트 줄바꿈 */
@@ -321,6 +293,7 @@ if st.session_state.get("scroll_to_bottom"):
     <script>
         // iframe 내부의 document에 접근하여 스크롤 제어
         // iframe의 title을 사용하여 정확한 iframe을 찾음
+        // 'Streamlit Component'는 기본값으로 붙는 title의 일부.
         const iframe = window.parent.document.querySelector('iframe[title*="Streamlit Component"]');
         if (iframe && iframe.contentWindow && iframe.contentWindow.document) {
             const chatScrollArea = iframe.contentWindow.document.getElementById("chat-content-scroll-area");
