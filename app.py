@@ -204,29 +204,42 @@ def handle_question(question_input):
 def display_chat_html_content():
     chat_html_content = ""
     for entry in st.session_state.chat_log:
-        if entry["role"] == "user":
+        if entry["role"] == "user":  # ✅ 들여쓰기 맞게 고침
+            user_question = entry["content"].replace("\n", "<br>")
             chat_html_content += f"""
             <div class="message-row user-message-row">
                 <div class="message-bubble user-bubble">
-                    <p><strong>❓ 질문:</strong> {entry['content']}</p>
+                    <p><strong>❓ 질문:</strong><br>{user_question}</p>
                 </div>
             </div>
             """
+
         elif entry["role"] == "bot":
-            chat_html_content += f"""
+            chat_html_content += """
             <div class="message-row bot-message-row">
                 <div class="message-bubble bot-bubble">
             """
-            if entry["display_type"] == "single_answer":
-                chat_html_content += f"<p>🧾 <strong>답변:</strong> {entry['content']}</p>"
-            elif entry["display_type"] == "multi_answer":
+
+            if entry.get("display_type") == "single_answer":
+                bot_answer = entry["content"].replace("\n", "<br>")
+                chat_html_content += f"<p>🧾 <strong>답변:</strong><br>{bot_answer}</p>"
+
+            elif entry.get("display_type") == "multi_answer":
                 chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
                 for i, pair in enumerate(entry["content"]):
-                    chat_html_content += f"<p class='chat-multi-item'><strong>{i+1}. 질문:</strong> {pair['q']}<br>👉 답변: {pair['a']}</p>"
-          
+                    q = pair['q'].replace('\n', '<br>')
+                    a = pair['a'].replace('\n', '<br>')
+                    chat_html_content += f"""
+                    <p class='chat-multi-item'>
+                        <strong>{i+1}. 질문:</strong> {q}<br>
+                        👉 <strong>답변:</strong> {a}
+                    </p>
+                    """
 
-    
-    
+            chat_html_content += """
+                </div>
+            </div>
+            """    
     scroll_iframe_script = ""
     if st.session_state.scroll_to_bottom_flag:
         scroll_iframe_script = """
