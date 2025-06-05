@@ -72,7 +72,8 @@ async def chat(request: ChatRequest):
     message_raw in q_no_space or
     message_no_space in q or
     message_no_space in q_no_space or
-    message_spaced in q
+    message_spaced in q or
+    q in message_spaced
 ):
             return {"reply": r["답변"]}
 
