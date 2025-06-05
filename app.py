@@ -342,9 +342,14 @@ with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
-       matched = handle_question(question_input)  # 질문/답변 세션 상태에 저장
+        prev_chat_length = len(st.session_state.chat_log)
+        handle_question(question_input)
 
-       if not matched or len(matched) == 0:
+        # ✅ handle_question 실행 후에도 답이 안 나왔으면 (즉, 마지막 봇 메시지가 없으면 GPT 호출)
+        new_chat_log = st.session_state.chat_log[prev_chat_length:]
+        has_bot_reply = any(entry["role"] == "bot" and "답변" in entry.get("content", "") for entry in new_chat_log)
+
+        if not has_bot_reply:
             try:
                 response = requests.post("http://localhost:8080/chat", json={"message": question_input})
                 gpt_reply = response.json()["reply"]
