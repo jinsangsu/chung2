@@ -329,34 +329,24 @@ def display_chat_html_content():
     </html>
     """
 
-# 채팅 기록을 직접 렌더링
-components.html(
-    display_chat_html_content(),
-    height=600, # 채팅창의 고정 높이 설정 (조절 가능)
-    scrolling=False # iframe 자체에 스크롤바 허용
-)
-
-
-
 # 입력 폼
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문하기")
+
     if submitted and question_input:
-        prev_chat_length = len(st.session_state.chat_log)
+        prev_chat_len = len(st.session_state.chat_log)
         handle_question(question_input)
 
-        # ✅ handle_question 실행 후에도 답이 안 나왔으면 (즉, 마지막 봇 메시지가 없으면 GPT 호출)
-        new_chat_log = st.session_state.chat_log[prev_chat_length:]
-        has_bot_reply = any(entry["role"] == "bot" and "답변" in entry.get("content", "") for entry in new_chat_log)
-
-        if not has_bot_reply:
+        # GPT 응답 처리 (보조)
+        new_entries = st.session_state.chat_log[prev_chat_len:]
+        if not any(e["role"] == "bot" for e in new_entries):
             try:
                 response = requests.post("http://localhost:8080/chat", json={"message": question_input})
-                gpt_reply = response.json()["reply"]
+                reply = response.json()["reply"]
                 st.session_state.chat_log.append({
                     "role": "bot",
-                    "content": f"🧠 GPT 응답:\n{gpt_reply}",
+                    "content": f"🧠 GPT 응답:\n{reply}",
                     "display_type": "single_answer"
                 })
             except Exception as e:
@@ -366,4 +356,10 @@ with st.form("input_form", clear_on_submit=True):
                     "display_type": "single_answer"
                 })
 
-
+# 2. 질문처리 이후에 채팅 기록을 렌더링해야 ‘이전 답이 다음 질문에 뜨는 현상’을 방지함
+# ✅ 이 부분은 질문 입력창 ‘위쪽’에 있어야 함
+components.html(
+    display_chat_html_content(),
+    height=600,
+    scrolling=False
+)
