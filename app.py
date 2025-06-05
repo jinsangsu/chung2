@@ -329,16 +329,23 @@ def display_chat_html_content():
     </html>
     """
 
-# 입력 폼
+components.html(
+    display_chat_html_content(),
+    height=600,
+    scrolling=False
+)
+
+# ✅ 2. 입력 폼 — 화면 하단에 고정
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문하기")
 
     if submitted and question_input:
+        # 질문 및 응답 처리
         prev_chat_len = len(st.session_state.chat_log)
         handle_question(question_input)
 
-        # GPT 응답 처리 (보조)
+        # GPT 백업 응답
         new_entries = st.session_state.chat_log[prev_chat_len:]
         if not any(e["role"] == "bot" for e in new_entries):
             try:
@@ -355,11 +362,3 @@ with st.form("input_form", clear_on_submit=True):
                     "content": f"❌ GPT 서버 응답 실패: {e}",
                     "display_type": "single_answer"
                 })
-
-# 2. 질문처리 이후에 채팅 기록을 렌더링해야 ‘이전 답이 다음 질문에 뜨는 현상’을 방지함
-# ✅ 이 부분은 질문 입력창 ‘위쪽’에 있어야 함
-components.html(
-    display_chat_html_content(),
-    height=600,
-    scrolling=False
-)
