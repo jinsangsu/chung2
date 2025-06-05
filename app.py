@@ -329,6 +329,13 @@ def display_chat_html_content():
     </html>
     """
 
+# 채팅 기록을 직접 렌더링
+components.html(
+    display_chat_html_content(),
+    height=600, # 채팅창의 고정 높이 설정 (조절 가능)
+    scrolling=False # iframe 자체에 스크롤바 허용
+)
+
 
 
 # 입력 폼
@@ -359,10 +366,4 @@ with st.form("input_form", clear_on_submit=True):
                     "display_type": "single_answer"
                 })
 
-# 채팅 기록을 직접 렌더링
-components.html(
-    display_chat_html_content(),
-    height=600, # 채팅창의 고정 높이 설정 (조절 가능)
-    scrolling=False # iframe 자체에 스크롤바 허용
-)
 
