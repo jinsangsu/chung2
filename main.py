@@ -10,6 +10,10 @@ from sentence_transformers import SentenceTransformer, util
 import torch
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')  # 모델 캐싱
 
+from soyspacing.countbase import Space
+spacing = Space()
+spacing.load_model(path=None)
+
 def get_semantic_similarity(q1, q2):
     emb1 = model.encode(q1, convert_to_tensor=True)
     emb2 = model.encode(q2, convert_to_tensor=True)
@@ -49,8 +53,9 @@ async def chat(request: ChatRequest):
     if worksheet is None:
         return JSONResponse(content={"reply": "시트를 불러올 수 없습니다. 관리자에게 문의해주세요."})
 
-    message = request.message.strip().lower()
-    message_no_space = message.replace(" ", "")
+    message_raw = request.message.strip().lower()
+    message_spaced = spacing.space(message_raw)     # 🔹 띄어쓰기 복원
+    message_no_space = message_raw.replace(" ", "")
 
     records = worksheet.get_all_records()
     best_match = None
@@ -62,15 +67,22 @@ async def chat(request: ChatRequest):
         q_no_space = q.replace(" ", "")
 
         # ✅ 문자열 포함 여부 먼저 확인
-        if message in q or message_no_space in q_no_space:
+        if (
+    message_raw in q or
+    message_raw in q_no_space or
+    message_no_space in q or
+    message_no_space in q_no_space or
+    message_spaced in q
+):
             return {"reply": r["답변"]}
 
         # ✅ 의미 유사도 비교
-        score1 = get_semantic_similarity(message, q)
+        score1 = get_semantic_similarity(message_raw, q)
         score2 = get_semantic_similarity(message_no_space, q_no_space)
-        score3 = get_similarity_score(message, q)  # difflib 유사도
+        score3 = get_similarity_score(message_raw, q)
+        score4 = get_similarity_score(message_spaced, q)
 
-        final_score = max(score1, score2, score3)
+        final_score = max(score1, score2, score3, score4)
 
         if final_score > threshold and final_score > best_score:
             best_match = r
