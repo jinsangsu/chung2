@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
 import json
 import difflib
+import requests
 
 # 기본 설정
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
@@ -341,24 +342,20 @@ with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
-        handle_question(question_input)
-        st.rerun() # 중요: 채팅 기록 업데이트 후 앱을 다시 실행하여 UI 업데이트
-
-# --- 자동 스크롤 JavaScript 주입 (메인 Streamlit 페이지 스크롤) ---
-# 기존의 이 부분을 제거하거나 주석 처리합니다.
-# if st.session_state.scroll_to_bottom_flag:
-#     scroll_main_page_script = """
-#     <script>
-#         function scrollToMainContentBottom() {
-#             const mainContent = document.querySelector('.stApp .main');
-#             if (mainContent) {
-#                 mainContent.scrollTop = mainContent.scrollHeight;
-#             } else {
-#                 window.scrollTo(0, document.body.scrollHeight);
-#             }
-#         }
-#         setTimeout(scrollToMainContentBottom, 150);
-#     </script>
-#     """
-#     components.html(scroll_main_page_script, height=0, width=0)
-#     st.session_state.scroll_to_bottom_flag = False
+        matched = handle_question(question_input)  # ✅ matched 리스트 받기
+    if len(matched) == 0:
+        try:
+            response = requests.post("http://localhost:8080/chat", json={"message": question_input})
+            gpt_reply = response.json()["reply"]
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": f"🧠 GPT 응답:\n{gpt_reply}",
+                "display_type": "single_answer"
+            })
+        except Exception as e:
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": f"❌ GPT 서버 응답 실패: {e}",
+                "display_type": "single_answer"
+            })
+    st.rerun()

@@ -60,7 +60,7 @@ async def chat(request: ChatRequest):
     records = worksheet.get_all_records()
     best_match = None
     best_score = 0.0
-    threshold = 0.55  # ✅ 의미 유사도 기준
+    threshold = 0.4  # ✅ 의미 유사도 기준
 
     for r in records:
         q = r["질문"].strip().lower()
@@ -73,7 +73,8 @@ async def chat(request: ChatRequest):
     message_no_space in q or
     message_no_space in q_no_space or
     message_spaced in q or
-    q in message_spaced
+    q in message_spaced or
+    q in message_spaced.replace(" ", "")
 ):
             return {"reply": r["답변"]}
 
