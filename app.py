@@ -342,9 +342,9 @@ with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
-    matched = handle_question(question_input)  # 질문/답변 세션 상태에 저장
+       matched = handle_question(question_input)  # 질문/답변 세션 상태에 저장
 
-    if not matched or len(matched) == 0:
+       if not matched or len(matched) == 0:
             try:
                 response = requests.post("http://localhost:8080/chat", json={"message": question_input})
                 gpt_reply = response.json()["reply"]
