@@ -342,20 +342,20 @@ with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
-        matched = handle_question(question_input)  # ✅ matched 리스트 받기
-    if len(matched) == 0:
-        try:
-            response = requests.post("http://localhost:8080/chat", json={"message": question_input})
-            gpt_reply = response.json()["reply"]
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": f"🧠 GPT 응답:\n{gpt_reply}",
-                "display_type": "single_answer"
-            })
-        except Exception as e:
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": f"❌ GPT 서버 응답 실패: {e}",
-                "display_type": "single_answer"
-            })
-    st.rerun()
+    matched = handle_question(question_input)  # 질문/답변 세션 상태에 저장
+
+    if not matched or len(matched) == 0:
+            try:
+                response = requests.post("http://localhost:8080/chat", json={"message": question_input})
+                gpt_reply = response.json()["reply"]
+                st.session_state.chat_log.append({
+                    "role": "bot",
+                    "content": f"🧠 GPT 응답:\n{gpt_reply}",
+                    "display_type": "single_answer"
+                })
+            except Exception as e:
+                st.session_state.chat_log.append({
+                    "role": "bot",
+                    "content": f"❌ GPT 서버 응답 실패: {e}",
+                    "display_type": "single_answer"
+                })
