@@ -184,9 +184,9 @@ def handle_question(question_input):
             try:
               response = requests.post("https://chung2.fly.dev/chat/", json={"message": question_input})
               reply = response.json()["reply"]
-                bot_answer_content = f"🧠 GPT 응답:<br>{reply}"  
+              bot_answer_content = f"🧠 GPT 응답:<br>{reply}"  
             except Exception as e:
-                bot_answer_content = f"❌ GPT 응답 실패: {e}"
+              bot_answer_content = f"❌ GPT 응답 실패: {e}"
             bot_display_type = "single_answer"
 
 
