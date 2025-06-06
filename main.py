@@ -3,6 +3,10 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import openai
+
+openai.api_key = "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"
+
 import gspread
 from google.oauth2.service_account import Credentials
 import difflib
@@ -90,7 +94,21 @@ async def chat(request: ChatRequest):
             best_match = r
             best_score = final_score
 
+    
     if best_match:
         return {"reply": best_match["답변"]}
     else:
-        return {"reply": "❌ 질문에 해당하는 답변을 찾을 수 없습니다."}
+        try:
+            completion = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "당신은 보험 설계사들을 도와주는 친절한 상담 매니저 애순이입니다."},
+                    {"role": "user", "content": request.message}
+                ],
+                temperature=0.7
+            )
+            gpt_reply = completion.choices[0].message.content.strip()
+            return {"reply": gpt_reply}
+        except Exception as e:
+            return {"reply": f"❌ GPT 응답 실패: {e}"}
+

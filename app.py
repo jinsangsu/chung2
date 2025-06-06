@@ -181,8 +181,15 @@ def handle_question(question_input):
             bot_answer_content = [{"q": r["질문"], "a": r["답변"]} for r in matched]
             bot_display_type = "multi_answer"
         else:
-            bot_answer_content = "❌ 해당 질문에 대한 답변을 찾을 수 없습니다."
+            try:
+                response = requests.post("https://aesoon-proxy.fly.dev/chat", json={"message": question_input})
+
+                reply = response.json()["reply"]
+                bot_answer_content = f"🧠 GPT 응답:<br>{reply}"  
+            except Exception as e:
+                bot_answer_content = f"❌ GPT 응답 실패: {e}"
             bot_display_type = "single_answer"
+
 
         st.session_state.chat_log.append({
             "role": "bot",
@@ -347,22 +354,6 @@ with st.form("input_form", clear_on_submit=True):
         # GPT 백업 응답 (이 부분도 chat_log를 업데이트하므로 rerun 필요)
         # 직접 일치하는 답변이 있었을 경우 중복 GPT 호출을 피하려면 이 로직을 다듬을 수 있습니다.
         # (원하는 동작 방식에 따라 이 로직을 다듬을 수 있습니다)
-        if st.session_state.chat_log and st.session_state.chat_log[-1]["role"] == "user":
-            try:
-                response = requests.post("http://localhost:8080/chat", json={"message": question_input})
-                reply = response.json()["reply"]
-                st.session_state.chat_log.append({
-                    "role": "bot",
-                    "content": f"🧠 GPT 응답:\n{reply}",
-                    "display_type": "single_answer"
-                })
-                st.session_state.scroll_to_bottom_flag = True # GPT 응답 시에도 스크롤 확인
-            except Exception as e:
-                st.session_state.chat_log.append({
-                    "role": "bot",
-                    "content": f"❌ GPT 서버 응답 실패: {e}",
-                    "display_type": "single_answer"
-                })
-                st.session_state.scroll_to_bottom_flag = True
+        
 
         st.rerun() # <--- chat_log 업데이트 후 재실행을 트리거하기 위해 이 줄을 추가합니다.
