@@ -107,10 +107,12 @@ async def chat(request: ChatRequest):
                 ],
                 temperature=0.7
             )
-            gpt_reply = completion.choices[0].message.content.strip()
-
-            if not gpt_reply:
-                 gpt_reply = "도와드릴 수 있는 내용을 말씀해 주세요. 예: '자동이체 변경은 어떻게 하나요?' 😊"
+            if completion and completion.choices and "message" in completion.choices[0] and "content" in completion.choices[0].message:
+               gpt_reply = completion.choices[0].message.content.strip()
+               if not gpt_reply:
+                    gpt_reply = "사장님, 어떤 도움이 필요하신가요? 😊"
+            else:
+               gpt_reply = "애순이가 잠시 자리를 비운 것 같아요. 다시 말씀해주시면 곧바로 응답할게요 🙏"
 
             return {"reply": gpt_reply}
 
