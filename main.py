@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import openai
-
+openai.organization = "org-TxeYk0W29mcYfJ2feQQkSdps"
 openai.api_key = "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"
 
 import gspread
