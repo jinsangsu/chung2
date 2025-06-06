@@ -102,13 +102,18 @@ async def chat(request: ChatRequest):
             completion = openai.ChatCompletion.create(
                 model="gpt-4",
                 messages=[
-                    {"role": "system", "content": "당신은 보험 설계사들을 도와주는 친절한 상담 매니저 애순이입니다."},
+                   {"role": "system", "content": "당신은 KB손해보험 개인영업 설계사들을 도와주는 친절하고 유쾌한 여성 매니저 애순이입니다. 사용자가 인삿말(예: '애순아', '안녕', '하이') 또는 일상적인 말을 하면 반드시 상냥하게 대답해 주세요. 절대로 무응답하지 마세요. 보험 관련 질문이 아니어도 반드시 성의 있게 대답해 주세요."},
                     {"role": "user", "content": request.message}
                 ],
                 temperature=0.7
             )
             gpt_reply = completion.choices[0].message.content.strip()
+
+            if not gpt_reply:
+                 gpt_reply = "도와드릴 수 있는 내용을 말씀해 주세요. 예: '자동이체 변경은 어떻게 하나요?' 😊"
+
             return {"reply": gpt_reply}
+
         except Exception as e:
             return {"reply": f"❌ GPT 응답 실패: {e}"}
 
