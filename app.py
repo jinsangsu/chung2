@@ -182,7 +182,9 @@ def handle_question(question_input):
             bot_display_type = "multi_answer"
         else:
             try:
-                response = requests.post("https://aesoon-proxy.fly.dev/chat", json={"message": question_input})
+              response = requests.post("https://chung2.fly.dev/chat/", json={"message": question_input})
+
+
 
                 reply = response.json()["reply"]
                 bot_answer_content = f"🧠 GPT 응답:<br>{reply}"  
