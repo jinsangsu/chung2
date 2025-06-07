@@ -3,7 +3,8 @@ gspread==5.7.2
 google-auth
 pillow
 fastapi
-uvicorn
+uvicorn[standard]
 sentence-transformers
 torch
 soyspacing
+openai
