@@ -4,8 +4,11 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import openai
-openai.organization = "org-TxeYk0W29mcYfJ2feQQkSdps"
-openai.api_key = "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"
+import os
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -14,9 +17,6 @@ from sentence_transformers import SentenceTransformer, util
 import torch
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')  # 모델 캐싱
 
-from soyspacing.countbase import Space
-spacing = Space()
-spacing.load_model(path=None)
 
 def get_semantic_similarity(q1, q2):
     emb1 = model.encode(q1, convert_to_tensor=True)
@@ -58,64 +58,50 @@ async def chat(request: ChatRequest):
         return JSONResponse(content={"reply": "시트를 불러올 수 없습니다. 관리자에게 문의해주세요."})
 
     message_raw = request.message.strip().lower()
-    message_spaced = spacing.space(message_raw)     # 🔹 띄어쓰기 복원
+        
     message_no_space = message_raw.replace(" ", "")
 
     records = worksheet.get_all_records()
     best_match = None
     best_score = 0.0
-    threshold = 0.4  # ✅ 의미 유사도 기준
+    threshold = 0.4
 
     for r in records:
         q = r["질문"].strip().lower()
         q_no_space = q.replace(" ", "")
 
-        # ✅ 문자열 포함 여부 먼저 확인
-        if (
-    message_raw in q or
-    message_raw in q_no_space or
-    message_no_space in q or
-    message_no_space in q_no_space or
-    message_spaced in q or
-    q in message_spaced or
-    q in message_spaced.replace(" ", "")
-):
-            return {"reply": r["답변"]}
-
-        # ✅ 의미 유사도 비교
         score1 = get_semantic_similarity(message_raw, q)
         score2 = get_semantic_similarity(message_no_space, q_no_space)
         score3 = get_similarity_score(message_raw, q)
-        score4 = get_similarity_score(message_spaced, q)
+        
 
-        final_score = max(score1, score2, score3, score4)
+        final_score = max(score1, score2, score3)
 
         if final_score > threshold and final_score > best_score:
             best_match = r
             best_score = final_score
 
-    
     if best_match:
         return {"reply": best_match["답변"]}
     else:
         try:
             completion = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",
                 messages=[
-                   {"role": "system", "content": "당신은 KB손해보험 개인영업 설계사들을 도와주는 친절하고 유쾌한 여성 매니저 애순이입니다. 사용자가 인삿말(예: '애순아', '안녕', '하이') 또는 일상적인 말을 하면 반드시 상냥하게 대답해 주세요. 절대로 무응답하지 마세요. 보험 관련 질문이 아니어도 반드시 성의 있게 대답해 주세요."},
+                    {"role": "system", "content": "당신은 KB손해보험 개인영업 설계사들을 도와주는 친절하고 유쾌한 여성 매니저 애순이입니다. 사용자가 인삿말(예: '애순아', '안녕', '하이') 또는 일상적인 말을 하면 반드시 상냥하게 대답해 주세요. 절대로 무응답하지 마세요. 보험 관련 질문이 아니어도 반드시 성의 있게 대답해 주세요."},
                     {"role": "user", "content": request.message}
                 ],
                 temperature=0.7
             )
             if completion and completion.choices and "message" in completion.choices[0] and "content" in completion.choices[0].message:
-               gpt_reply = completion.choices[0].message.content.strip()
-               if not gpt_reply:
+                gpt_reply = completion.choices[0].message.content.strip()
+                if not gpt_reply:
                     gpt_reply = "사장님, 어떤 도움이 필요하신가요? 😊"
             else:
-               gpt_reply = "애순이가 잠시 자리를 비운 것 같아요. 다시 말씀해주시면 곧바로 응답할게요 🙏"
+                gpt_reply = "애순이가 잠시 자리를 비운 것 같아요. 다시 말씀해주시면 곧바로 응답할게요 🙏"
 
             return {"reply": gpt_reply}
-
         except Exception as e:
+            print(f"❌ GPT 응답 실패 (로그): {e}")
             return {"reply": f"❌ GPT 응답 실패: {e}"}
 
