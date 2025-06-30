@@ -15,7 +15,6 @@ from sentence_transformers import SentenceTransformer, util
 import torch
 
 # SentenceTransformer 모델은 한 번만 로드하여 캐싱
-# (이 부분이 전역으로 선언되어 함수 호출마다 로드되지 않도록 합니다.)
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
 
