@@ -185,7 +185,7 @@ def handle_question(question_input):
             bot_display_type = "multi_answer"
         else:
             try:
-                response = requests.post("https://chung2.fly.dev/chat/", json={"message": question_input})
+                response = requests.post("https://chung2.fly.dev/chat", json={"message": question_input})
                 if response.status_code == 200:
                     data = response.json()
                     reply = data.get("reply", "❌ 응답이 비어 있습니다.")
