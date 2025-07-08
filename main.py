@@ -72,7 +72,7 @@ async def chat(request: ChatRequest):
     records = worksheet.get_all_records()
     best_match = None
     best_score = 0.0
-    threshold = 0.4  # 이 변수를 사용하고 있습니다.
+    threshold = 0.4
 
     for r in records:
         q = r["질문"].strip().lower()
@@ -88,48 +88,54 @@ async def chat(request: ChatRequest):
             best_match = r
             best_score = final_score
 
-    # for 루프가 끝난 후, 이 if/else 블록은 for 루프와 같은 들여쓰기 수준에 있어야 합니다.
-    # 이전까지 이 부분이 잘못된 들여쓰기 오류를 유발했습니다.
-    if best_match:  # <<< 이 라인의 들여쓰기가 수정되었습니다.
+    # ✅ 유사 질문이 있을 경우
+    if best_match:
         return {"reply": best_match["답변"]}
-    else:  # <<< 이 라인의 들여쓰기도 수정되었습니다.
+
+    # ✅ 유사 질문이 없을 경우: Gemini로 처리
+    try:
+        print("✅ Gemini 응답 호출 시작")
+        model = genai.GenerativeModel('gemini-pro')
+
+        full_prompt = (
+            "당신은 KB손해보험 개인영업 설계사들을 도와주는 친절하고 유쾌한 여성 매니저 애순이입니다. "
+            "사용자가 인삿말(예: '애순아', '안녕', '하이') 또는 일상적인 말을 하면 반드시 상냥하게 대답해 주세요. "
+            "절대로 무응답하지 마세요. 보험 관련 질문이 아니어도 반드시 성의 있게 대답해 주세요.\n\n"
+            f"사용자 질문: {request.message}"
+        )
+
+        contents_message = [
+            {
+                "role": "user",
+                "parts": [full_prompt]
+            }
+        ]
+
+        print("📤 Gemini 호출 직전: prompt 준비 완료")
+        response = model.generate_content(
+            contents_message,
+            generation_config=genai.types.GenerationConfig(temperature=0.7)
+        )
+        print("📥 Gemini 응답 도착: response 객체 생성됨")
+
+        # ✅ 응답 파싱 로직 보완
         try:
-            print("✅ Gemini 응답 호출 시작")
-           # Gemini 모델 초기화
-            model = genai.GenerativeModel('gemini-pro')
+            if hasattr(response, "candidates") and len(response.candidates) > 0:
+                parts = response.candidates[0].content.parts
+                if parts and hasattr(parts[0], "text"):
+                    gemini_reply = parts[0].text.strip()
+                    print("✅ Gemini 응답 결과:", gemini_reply)
+                    return {"reply": gemini_reply}
+                else:
+                    print("⚠️ Gemini 응답 구조에 text가 없습니다.")
+                    return {"reply": "🧠 Gemini 응답을 이해하지 못했어요."}
+            else:
+                print("⚠️ Gemini 응답에 후보(candidates)가 없습니다.")
+                return {"reply": "🧠 Gemini가 답변을 찾지 못했어요."}
+        except Exception as e_parse:
+            print(f"❌ Gemini 응답 파싱 실패: {e_parse}")
+            return {"reply": f"❌ Gemini 응답 파싱 실패: {e_parse}"}
 
-            # Gemini에 보낼 시스템 프롬프트와 사용자 메시지를 결합합니다.
-            full_prompt = (
-                "당신은 KB손해보험 개인영업 설계사들을 도와주는 친절하고 유쾌한 여성 매니저 애순이입니다. "
-                "사용자가 인삿말(예: '애순아', '안녕', '하이') 또는 일상적인 말을 하면 반드시 상냥하게 대답해 주세요. "
-                "절대로 무응답하지 마세요. 보험 관련 질문이 아니어도 반드시 성의 있게 대답해 주세요.\n\n"
-                f"사용자 질문: {request.message}"
-            )
-
-            # Gemini API가 요구하는 'contents' 형식으로 메시지 구성
-            contents_message = [
-                {
-                    "role": "user",
-                    "parts": [
-                        full_prompt
-                    ]
-                }
-            ]
-            print("📤 Gemini 호출 직전: prompt 준비 완료")
-            response = model.generate_content(
-                contents_message,
-                generation_config=genai.types.GenerationConfig(temperature=0.7)
-            )
-            print("📥 Gemini 응답 도착: response 객체 생성됨")
-            try:  # 응답 추출을 위한 try-except 블록
-                print("🔍 응답 객체 구조:", response.__dict__)  # 내부 구조 확인용
-                gemini_reply = response.candidates[0].content.parts[0].text.strip()
-                print("✅ Gemini 응답 결과:", gemini_reply)
-            except Exception as e_extract:  # 응답 추출 중 오류 처리
-                print(f"❌ Gemini 응답 추출 실패: {e_extract}")
-                gemini_reply = "응답을 불러오지 못했어요 😢"
-
-            return {"reply": gemini_reply}
-        except Exception as e:  # Gemini API 호출 자체의 오류 처리
-            print(f"❌ Gemini 응답 실패 (로그): {e}")
-            return {"reply": f"❌ Gemini 응답 실패: {e}"}
+    except Exception as e:
+        print(f"❌ Gemini API 호출 실패: {e}")
+        return {"reply": f"❌ Gemini API 호출 실패: {e}"}
