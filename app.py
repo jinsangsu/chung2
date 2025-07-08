@@ -8,8 +8,6 @@ import requests
 
 API_URL = "https://chung2.fly.dev/chat"
 
-response = requests.post(API_URL, json={"message": user_input})
-answer = response.json().get("reply", "응답이 없어요.")
 
 # 기본 설정
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
