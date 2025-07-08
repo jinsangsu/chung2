@@ -183,14 +183,16 @@ def handle_question(question_input):
         else:
             try:
                 response = requests.post("https://chung2.fly.dev/chat/", json={"message": question_input})
-                reply = response.json()["reply"]
-              # 백엔드에서 이미 "🧠 GPT 응답:"을 붙여서 보내주므로, 여기서는 그대로 사용합니다.
-                bot_answer_content = reply # <-- 이 라인만 reply로 변경합니다.
-
+                if response.status_code == 200:
+                    data = response.json()
+                    reply = data.get("reply", "❌ 응답이 비어 있습니다.")
+                else:
+                    reply = f"❌ 서버 오류 (Status {response.status_code})"
+               
+                bot_answer_content = reply
             except Exception as e:
-              # 백엔드 오류 메시지 그대로 표시
-                bot_answer_content = f"❌ 백엔드 응답 실패: {e}" # 메시지를 명확히 변경
-                bot_display_type = "single_answer"
+                bot_answer_content = f"❌ 백엔드 응답 실패: {e}"
+            bot_display_type = "single_answer"
 
 
         st.session_state.chat_log.append({
