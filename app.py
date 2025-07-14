@@ -58,16 +58,6 @@ st.markdown("""
 
     /* 입력 폼 컨테이너 (하단에 고정) */
     .stForm {
-        flex-shrink: 0; /* 입력 폼은 줄어들지 않도록 */
-        background-color: white;
-        padding: 10px 20px;
-        border-top: 1px solid #e0e0e0;
-        box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
-        z-index: 1000;
-        width: 100%;
-        max-width: 700px; /* block-container와 동일하게 최대 너비 제한 */
-        margin-left: auto; /* 중앙 정렬 */
-        margin-right: auto; /* 중앙 정렬 */
         position: fixed;
         bottom: 0;
         left: 0;
@@ -78,8 +68,9 @@ st.markdown("""
         border-top: 1px solid #e0e0e0;
         box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
         max-width: 700px;
-        margin: 0 auto;
-  }
+        margin-left: auto;
+        margin-right: auto;
+    }
     .stTextInput > div > div > input {
         border-radius: 20px;
         padding-right: 40px;
