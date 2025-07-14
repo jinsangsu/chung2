@@ -11,7 +11,7 @@ API_URL = "https://chung2.fly.dev/chat"
 
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
-# --- CSS: 오른쪽 정렬과 굵은 글씨, 스크롤 항상 활성화, !important로 강제 오버라이드
+# --- CSS: 기본 스타일(오른쪽 정렬 인라인으로 강제, 여기서는 최소만 유지)
 st.markdown("""
 <style>
 html, body, #root, .stApp, .streamlit-container {
@@ -40,7 +40,7 @@ html, body, #root, .stApp, .streamlit-container {
 /* 채팅 메시지 영역 */
 #chat-content-scroll-area {
     flex-grow: 1;
-    overflow-y: auto !important;   /* 항상 스크롤바 표시 */
+    overflow-y: auto !important;
     padding: 10px 0 0 0;
     scroll-behavior: smooth;
     display: flex;
@@ -54,24 +54,8 @@ html, body, #root, .stApp, .streamlit-container {
 .message-row {
     display: flex;
     margin-bottom: 12px;
-    width: 100vw !important;
-    max-width: 700px !important;
-}
-.user-message-row {
-    justify-content: flex-end !important; /* <--- 1. 수정된 부분: 사용자 메시지 오른쪽 정렬 */
-    width: 100vw !important;
-    max-width: 700px !important;
-}
-.user-bubble {
-    background-color: #dcf8c6;
-    color: #111;
-    font-weight: 700 !important;
-    text-align: right !important;
-    margin-left: auto !important;
-    display: inline-block !important;
-    align-items: flex-end !important;
-    justify-content: flex-end !important;
-    min-width: 80px;
+    width: 100%;
+    max-width: 700px;
 }
 .bot-message-row, .intro-message-row { justify-content: flex-start !important; }
 .bot-bubble {
@@ -87,7 +71,6 @@ html, body, #root, .stApp, .streamlit-container {
     font-weight: 400;
     text-align: left;
 }
-/* 유사 질문 */
 .chat-multi-item {
     margin-left: 25px;
     font-size: 0.98em;
@@ -161,18 +144,15 @@ except Exception as e:
 
 # --- 세션 상태: chat_log
 if "chat_log" not in st.session_state:
-    # 최초 인사말 메시지를 가장 위에 push
     st.session_state.chat_log = [
         {"role": "intro", "content": "", "display_type": "intro"}
     ]
 if "scroll_to_bottom_flag" not in st.session_state:
     st.session_state.scroll_to_bottom_flag = False
 
-# --- 유사도 계산
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
-# --- 질문 처리
 def handle_question(question_input):
     try:
         records = sheet.get_all_records()
@@ -183,15 +163,11 @@ def handle_question(question_input):
             q = r["질문"].lower()
             if q_input in q or get_similarity_score(q_input, q) >= SIMILARITY_THRESHOLD:
                 matched.append(r)
-
-        # 질문 추가
         st.session_state.chat_log.append({
             "role": "user",
             "content": question_input,
             "display_type": "question"
         })
-
-        # 답변 추가
         if len(matched) == 1:
             bot_answer_content = matched[0]["답변"]
             bot_display_type = "single_answer"
@@ -210,14 +186,12 @@ def handle_question(question_input):
             except Exception as e:
                 bot_answer_content = f"❌ 백엔드 응답 실패: {e}"
             bot_display_type = "single_answer"
-
         st.session_state.chat_log.append({
             "role": "bot",
             "content": bot_answer_content,
             "display_type": bot_display_type
         })
         st.session_state.scroll_to_bottom_flag = True
-
     except Exception as e:
         st.session_state.chat_log.append({
             "role": "bot",
@@ -226,7 +200,6 @@ def handle_question(question_input):
         })
         st.session_state.scroll_to_bottom_flag = True
 
-# --- 채팅 대화방 전체 HTML 렌더
 def display_chat_html_content():
     chat_html_content = ""
     for entry in st.session_state.chat_log:
@@ -241,9 +214,9 @@ def display_chat_html_content():
         elif entry["role"] == "user":
             user_question = entry["content"].replace("\n", "<br>")
             chat_html_content += f"""
-            <div class="message-row user-message-row">
-                <div class="message-bubble user-bubble">
-                      {user_question}
+            <div class="message-row user-message-row" style="display:flex;justify-content:flex-end;width:100%;">
+                <div class="message-bubble user-bubble" style="background:#dcf8c6;color:#111;font-weight:700;text-align:right;margin-left:auto;min-width:80px;display:inline-block;">
+                    {user_question}
                 </div>
             </div>
             """
@@ -277,7 +250,7 @@ def display_chat_html_content():
         if (anchor) {
             anchor.scrollIntoView({ behavior: "smooth", block: "end" });
         }
-    }, 100); /* <--- 2. 수정된 부분: 스크롤 지연시간 1000ms -> 100ms로 변경 */
+    }, 2000);
     </script>
     """
     return f"""
@@ -294,7 +267,6 @@ components.html(
     scrolling=True
 )
 
-# --- 입력창(폼) — 항상 하단 고정
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문하기")
