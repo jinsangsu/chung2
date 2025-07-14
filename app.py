@@ -1,4 +1,3 @@
-
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -50,21 +49,29 @@ html, body, #root, .stApp, .streamlit-container {
     background: #fff;
     height: 420px;
     min-height: 320px;
-    max-height: 520px;
+    max-width: 700px;
 }
 .message-row {
     display: flex;
     margin-bottom: 12px;
-    width: 100%;
+    width: 100vw !important;
+    max-width: 700px !important;
 }
-.user-message-row { justify-content: flex-end !important; }
+.user-message-row {
+    justify-content: flex-end !important;
+    width: 100vw !important;
+    max-width: 700px !important;
+}
 .user-bubble {
     background-color: #dcf8c6;
     color: #111;
     font-weight: 700 !important;
     text-align: right !important;
+    margin-left: auto !important;
+    display: inline-block !important;
     align-items: flex-end !important;
     justify-content: flex-end !important;
+    min-width: 80px;
 }
 .bot-message-row, .intro-message-row { justify-content: flex-start !important; }
 .bot-bubble {
@@ -263,19 +270,16 @@ def display_chat_html_content():
                 </div>
             </div>
             """
-    scroll_iframe_script = ""
-    if st.session_state.scroll_to_bottom_flag:
-        scroll_iframe_script = """
-        <script>
-        setTimeout(function () {
-            var anchor = document.getElementById("chat-scroll-anchor");
-            if (anchor) {
-                anchor.scrollIntoView({ behavior: "smooth", block: "end" });
-            }
-        }, 700);
-        </script>
-        """
-        st.session_state.scroll_to_bottom_flag = False
+    scroll_iframe_script = """
+    <script>
+    setTimeout(function () {
+        var anchor = document.getElementById("chat-scroll-anchor");
+        if (anchor) {
+            anchor.scrollIntoView({ behavior: "smooth", block: "end" });
+        }
+    }, 1000);
+    </script>
+    """
     return f"""
     <div id="chat-content-scroll-area">
         {chat_html_content}
