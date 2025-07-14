@@ -6,8 +6,8 @@ import difflib
 import requests
 import base64
 import os
-import re
 from collections import Counter
+import re
 
 API_URL = "https://chung2.fly.dev/chat"
 
@@ -158,21 +158,24 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} 이렇게 처리하시면 됩니다!"
 
 def extract_main_keywords(questions, exclude_terms=None, topn=5):
+    # konlpy 없이 명사 근사 추출(2~5글자 한글+패턴 필터)
     if exclude_terms is None:
         exclude_terms = []
     exclude_terms_norm = [normalize_text(term) for term in exclude_terms]
     candidate_words = []
     stopwords = set([
-        "질문", "답변", "경우", "사장님", "수", "및", "의", "을", "를", "에", "에서", "로", "으로",
-        "이", "가", "도", "는", "한", "해당", "등", "와", "과", "요", "때", "더", "만",
-        "는지", "이상", "사항", "관련", "필요", "있나요", "그런데", "하기", "방법", "내용", "여부", "했는데",
+        "질문", "답변", "경우", "보험", "사장님", "수", "및", "의", "을", "를", "에", "에서", "로", "으로",
+        "이", "가", "도", "는", "한", "해당", "등", "및", "의", "와", "과", "요", "때", "더", "도", "만",
+        "는지", "이상", "사항", "관련", "필요", "있나요", "및", "그런데", "하기", "방법", "내용", "여부", "했는데",
         "되었습니다", "됩니다", "되나요", "됐습니다", "합니다", "하였다", "됨", "함", "된다"
     ])
+    
     for q in questions:
         for w in re.findall(r"[가-힣]{2,5}", q):  # 한글 2~5글자
             w_norm = normalize_text(w)
             if w_norm in exclude_terms_norm or w_norm in stopwords:
                 continue
+            # 조사/어미/동사 패턴 끝 필터
             if re.search(r"(하다|되다|있다|없다|된다|한|는|가|로|을|를|요|고|의|에|과|와|든지|등|까지|까지요|에게|만|이라|거나|에서|로부터|에게서|부터|하는|받는|할까|한가요|하고|되고|인가요)$", w):
                 continue
             candidate_words.append(w)
@@ -210,19 +213,39 @@ def handle_question(question_input):
             "display_type": "question"
         })
 
-        # 매칭되는 질문이 5개 이상이면 입력된 질문(원문)으로 유도질문 생성!
+        # ---- 여기서부터 유도질문 개선 로직 ----
         if len(matched) >= 5:
-            main_word = question_input.strip()
-            main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
-            if len(main_word) >= 1:
+            # ------ 단일 키워드 유도질문 우선 적용 ------
+            input_words = [w for w in re.findall(r"[가-힣a-zA-Z0-9]{2,8}", question_input) if len(w) > 1]
+            stopwords = set([
+                "질문", "답변", "경우", "보험", "사장님", "수", "및", "의", "을", "를", "에", "에서", "로", "으로",
+                "이", "가", "도", "는", "한", "해당", "등", "및", "의", "와", "과", "요", "때", "더", "도", "만",
+                "는지", "이상", "사항", "관련", "필요", "있나요", "및", "그런데", "하기", "방법", "내용", "여부", "했는데",
+                "되었습니다", "됩니다", "되나요", "됐습니다", "합니다", "하였다", "됨", "함", "된다"
+            ])
+            filtered = [w for w in input_words if w not in stopwords]
+            if len(filtered) == 1:
+                main_word = filtered[0]
                 st.session_state.pending_keyword = user_input
                 st.session_state.chat_log.append({
                     "role": "bot",
-                    "content": f"사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요? 예) 한도, 결제, 사용방법 등 궁금한 점을 더 구체적으로 입력해 주세요!",
+                    "content": f"사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요? 예) 보험료, 보상, 가입 등<br>궁금한 점을 더 구체적으로 입력해 주세요!",
                     "display_type": "pending"
                 })
                 st.session_state.scroll_to_bottom_flag = True
                 return
+            # ------ 기존 멀티 키워드 방식 ------
+            user_terms = [w for w in re.findall(r"[가-힣a-zA-Z0-9]{2,8}", question_input) if len(w) > 1]
+            keywords = extract_main_keywords([r['질문'] for r in matched], exclude_terms=user_terms)
+            keyword_str = ", ".join(keywords)
+            st.session_state.pending_keyword = user_input
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": f"사장님, {keywords[0]}의 어떤 부분이 궁금하신가요? 예) {keyword_str} 등<br>궁금한 점을 더 구체적으로 입력해 주세요!",
+                "display_type": "pending"
+            })
+            st.session_state.scroll_to_bottom_flag = True
+            return
 
         if len(matched) == 1:
             bot_answer_content = {
