@@ -75,7 +75,6 @@ html, body, #root, .stApp, .streamlit-container {
     font-size: 0.98em;
     margin-bottom: 5px;
 }
-/* 입력 폼 고정 */
 .stForm {
     position: sticky;
     bottom: 0;
@@ -99,7 +98,6 @@ html, body, #root, .stApp, .streamlit-container {
 </style>
 """, unsafe_allow_html=True)
 
-# --- 캐릭터 이미지를 base64로 변환해서 인라인으로 사용(배포환경 호환용)
 def get_character_img_base64():
     img_path = "managerbot_character.webp"
     if os.path.exists(img_path):
@@ -128,7 +126,6 @@ def get_intro_html():
     </div>
     """
 
-# --- 구글 시트 연결
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -139,7 +136,6 @@ try:
 except Exception as e:
     st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
 
-# --- 세션 상태 초기화
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = [{"role": "intro", "content": "", "display_type": "intro"}]
 if "scroll_to_bottom_flag" not in st.session_state:
@@ -147,6 +143,14 @@ if "scroll_to_bottom_flag" not in st.session_state:
 
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
+
+def add_friendly_prefix(answer):
+    """사장님 중복 방지 + 친근 멘트 추가"""
+    answer = answer.strip()
+    if answer[:7].replace(" ", "").startswith("사장님"):
+        return answer
+    else:
+        return f"사장님, {answer} 이렇게 처리하시면 됩니다!"
 
 def handle_question(question_input):
     try:
@@ -158,18 +162,24 @@ def handle_question(question_input):
             q = r["질문"].lower()
             if q_input in q or get_similarity_score(q_input, q) >= SIMILARITY_THRESHOLD:
                 matched.append(r)
-        # 사용자 질문 append(오른쪽 표시)
         st.session_state.chat_log.append({
             "role": "user",
             "content": question_input,
             "display_type": "question"
         })
-        # 답변 append(왼쪽 표시, 종류별로 구분)
         if len(matched) == 1:
-            bot_answer_content = {"q": matched[0]["질문"], "a": matched[0]["답변"]}
+            bot_answer_content = {
+                "q": matched[0]["질문"],
+                "a": add_friendly_prefix(matched[0]["답변"])
+            }
             bot_display_type = "single_answer"
         elif len(matched) > 1:
-            bot_answer_content = [{"q": r["질문"], "a": r["답변"]} for r in matched]
+            bot_answer_content = []
+            for r in matched:
+                bot_answer_content.append({
+                    "q": r["질문"],
+                    "a": add_friendly_prefix(r["답변"])
+                })
             bot_display_type = "multi_answer"
         else:
             try:
@@ -206,23 +216,54 @@ def display_chat_html_content():
         elif entry["role"] == "user":
             user_question = entry["content"].replace("\n", "<br>")
             chat_html_content += (
-                # 인라인 스타일로 오른쪽 강제
                 '<div class="message-row user-message-row" style="display:flex;justify-content:flex-end;width:100%;">'
-                '<div class="message-bubble user-bubble" style="background:#dcf8c6;color:#111;font-weight:700;text-align:center;margin-left:auto;min-width:80px;display:inline-block;">'
+                '<div class="message-bubble user-bubble" '
+                'style="background:#dcf8c6;color:#111;font-weight:700;'
+                'text-align:center; margin-left:auto; min-width:80px; display:inline-block;'
+                'padding:12px 32px 12px 32px; border-radius:15px;">'
                 f'{user_question}'
                 '</div></div>'
             )
         elif entry["role"] == "bot":
-            chat_html_content += '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
             if entry.get("display_type") == "single_answer":
                 q = entry['content']['q'].replace('\n', '<br>')
                 a = entry['content']['a'].replace('\n', '<br>')
-                chat_html_content += f"""
-                <p style="margin-bottom: 8px;"><strong>질문:</strong> {q}</p>
-                <p>👉 <strong>답변:</strong> {a}</p>
-                """
+                chat_html_content += (
+                    '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
+                    f"<p style='margin-bottom: 8px;'><strong>질문:</strong> {q}</p>"
+                    f"<p>👉 <strong>답변:</strong> {a}</p>"
+                    '</div></div>'
+                )
             elif entry.get("display_type") == "multi_answer":
-                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+                num_qs = len(entry["content"])
+                # 주요 키워드 추출 (간단 방식)
+                main_keyword = ""
+                if len(st.session_state.chat_log) >= 2:
+                    last_user_question = st.session_state.chat_log[-2]["content"]
+                    for kw in ["카드", "자동차", "보험", "배서", "분납"]:
+                        if kw in last_user_question:
+                            main_keyword = kw
+                            break
+                if num_qs >= 5:
+                    # 안내멘트(키워드별)
+                    if main_keyword:
+                        chat_html_content += (
+                            f"<p style='color:#ff914d;font-weight:600;'>"
+                            f"사장님, {main_keyword}의 어떤 부분이 궁금하신가요? 더 자세하게 입력해 주시면 빠르게 답변드릴 수 있습니다.<br>"
+                            f"궁금한 점을 좀 더 구체적으로 입력해 주세요!</p>"
+                        )
+                    else:
+                        chat_html_content += (
+                            "<p style='color:#ff914d;font-weight:600;'>"
+                            "사장님, 어떤 부분이 궁금하신가요? 궁금한 점을 더 자세히 입력해 주세요!</p>"
+                        )
+                elif num_qs >= 3:
+                    chat_html_content += (
+                        "<p style='color:#ff914d;font-weight:600;'>"
+                        "사장님, 아래 질문 중 어느 부분이 궁금하신지 번호로 선택해 주세요!</p>"
+                    )
+                else:
+                    chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
                 for i, pair in enumerate(entry["content"]):
                     q = pair['q'].replace('\n', '<br>')
                     a = pair['a'].replace('\n', '<br>')
@@ -234,10 +275,11 @@ def display_chat_html_content():
                     """
             elif entry.get("display_type") == "llm_answer":
                 bot_answer = entry["content"].replace("\n", "<br>")
-                chat_html_content += f"<p>🧾 <strong>답변:</strong><br>{bot_answer}</p>"
-            chat_html_content += '</div></div>'
-
-    # **튕김 현상 완벽 방지 핵심: setTimeout 0, behavior auto**
+                chat_html_content += (
+                    '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
+                    f"<p>🧾 <strong>답변:</strong><br>{bot_answer}</p>"
+                    '</div></div>'
+                )
     scroll_iframe_script = """
     <script>
     setTimeout(function () {
