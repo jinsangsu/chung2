@@ -68,9 +68,18 @@ st.markdown("""
         max-width: 700px; /* block-container와 동일하게 최대 너비 제한 */
         margin-left: auto; /* 중앙 정렬 */
         margin-right: auto; /* 중앙 정렬 */
-        position: sticky; /* 하단 고정 (Streamlit 환경에서 더 잘 작동) */
+        position: fixed;
         bottom: 0;
-    }
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background-color: white;
+        padding: 10px 20px;
+        border-top: 1px solid #e0e0e0;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+        max-width: 700px;
+        margin: 0 auto;
+  }
     .stTextInput > div > div > input {
         border-radius: 20px;
         padding-right: 40px;
@@ -334,7 +343,7 @@ def display_chat_html_content():
     </style>
     </head>
     <body>
-        <div id="chat-content-scroll-area" style="height: 400px; overflow-y: auto;">
+        <div id="chat-content-scroll-area" style="height: calc(100vh - 300px); overflow-y: auto;">
               {chat_html_content}
               <div id="chat-scroll-anchor"></div>
         </div>
