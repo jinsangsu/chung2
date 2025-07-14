@@ -9,6 +9,9 @@ import os
 from collections import Counter
 import re
 
+from konlpy.tag import Okt
+okt = Okt()
+
 API_URL = "https://chung2.fly.dev/chat"
 
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
@@ -158,22 +161,20 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} 이렇게 처리하시면 됩니다!"
 
 def extract_main_keywords(questions, exclude_terms=None, topn=5):
+    # 명사만 추출
     if exclude_terms is None:
         exclude_terms = []
     exclude_terms_norm = [normalize_text(term) for term in exclude_terms]
-    counter = Counter()
     candidate_words = []
     for q in questions:
-        for w in re.findall(r"[가-힣a-zA-Z0-9]{2,8}", q):
-            if w in [
-                "질문", "답변", "경우", "보험", "사장님", "수", "및", "의", "을", "를", "에", "에서", "로", "으로",
-                "이", "가", "도", "는", "한", "해당", "등", "및", "의", "와", "과", "요", "때", "더", "도", "만",
-                "및", "는지", "이상", "사항", "관련", "필요", "있나요", "및", "그런데", "하기", "방법", "내용", "여부", "했는데"
-            ]:
+        nouns = okt.nouns(q)
+        for n in nouns:
+            n_norm = normalize_text(n)
+            if n_norm in exclude_terms_norm:
                 continue
-            w_norm = normalize_text(w)
-            if w_norm not in exclude_terms_norm:
-                candidate_words.append(w)
+            if len(n) < 2:
+                continue
+            candidate_words.append(n)
     normalized = [normalize_text(w) for w in candidate_words]
     mapping = {}
     for w, n in zip(candidate_words, normalized):
