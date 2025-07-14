@@ -268,7 +268,7 @@ def handle_question(question_input):
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~ 다시한번만 말씀해 주세요^*^",
+                "content": "사장님~~ 답변하기가 어려워요. 다시 궁금한거 말씀해 주세요^*^",
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
