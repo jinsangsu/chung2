@@ -186,6 +186,59 @@ def extract_main_keywords(questions, exclude_terms=None, topn=5):
 
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.4
+    user_txt = question_input.strip().replace(" ", "").lower()
+
+    # [잡담/감정/상황별] 애순이 반응 확장
+    if "애순" in user_txt:
+        st.session_state.chat_log.append({
+            "role": "user",
+            "content": question_input,
+            "display_type": "question"
+        })
+
+        # 상황/감정별 인식(필요시 키워드·멘트 자유롭게 추가)
+        if "사랑" in user_txt:
+            reply = "사장님, 저도 사랑합니다! 💛 언제나 사장님 곁에 있을게요!"
+        elif "잘지냈" in user_txt or "안녕" in user_txt:
+            reply = "네! 사장님 덕분에 잘 지내고 있습니다😊 사장님은 잘 지내셨어요?"
+        elif "보고싶" in user_txt:
+            reply = "저도 사장님 보고 싶었어요! 곁에서 항상 응원하고 있습니다💛"
+        elif "고마워" in user_txt or "감사" in user_txt:
+            reply = "항상 사장님께 감사드립니다! 도움이 되어드릴 수 있어 행복해요😊"
+        elif "힘들" in user_txt or "지쳤" in user_txt or "속상" in user_txt:
+            reply = "많이 힘드셨죠? 언제든 애순이가 사장님 곁을 지키고 있습니다. 파이팅입니다!"
+        elif "피곤" in user_txt:
+            reply = "많이 피곤하셨죠? 푹 쉬시고, 에너지 충전해서 내일도 힘내세요!"
+        elif "졸려" in user_txt:
+            reply = "졸릴 땐 잠깐 스트레칭! 건강도 꼭 챙기시고, 화이팅입니다~"
+        elif "밥" in user_txt or "점심" in user_txt:
+            reply = "아직 못 먹었어요! 사장님은 맛있게 드셨나요? 건강도 꼭 챙기세요!"
+        elif "날씨" in user_txt:
+            reply = "오늘 날씨 정말 좋네요! 산책 한 번 어떠세요?😊"
+        elif "생일" in user_txt or "축하" in user_txt:
+            reply = "생일 축하드립니다! 늘 행복과 건강이 가득하시길 바랍니다🎂"
+        elif "화이팅" in user_txt or "파이팅" in user_txt:
+            reply = "사장님, 항상 파이팅입니다! 힘내세요💪"
+        elif "잘자" in user_txt or "굿나잇" in user_txt:
+            reply = "좋은 꿈 꾸시고, 내일 더 힘찬 하루 보내세요! 잘 자요😊"
+        elif "수고" in user_txt or "고생" in user_txt:
+            reply = "사장님 오늘도 정말 수고 많으셨습니다! 항상 응원합니다💛"
+        elif "재미있" in user_txt or "웃기" in user_txt:
+            reply = "사장님이 웃으시면 애순이도 너무 좋아요! 앞으로 더 재미있게 해드릴게요😄"
+        elif user_txt in ["애순", "애순아"]:
+            reply = "안녕하세요, 사장님! 궁금하신 점 언제든 말씀해 주세요 😊"
+        else:
+            reply = "사장님! 애순이 항상 곁에 있어요😊 궁금한 건 뭐든 말씀해 주세요!"
+
+        st.session_state.chat_log.append({
+            "role": "bot",
+            "content": reply,
+            "display_type": "single_answer"
+        })
+        st.session_state.scroll_to_bottom_flag = True
+        return
+
+    # ↓↓↓ 이하 기존 Q&A 챗봇 처리 ↓↓↓
     if st.session_state.pending_keyword:
         user_input = st.session_state.pending_keyword + " " + question_input
         st.session_state.pending_keyword = None
@@ -210,7 +263,7 @@ def handle_question(question_input):
             "display_type": "question"
         })
 
-        # 매칭되는 질문이 5개 이상이면 입력된 질문(원문)으로 유도질문 생성!
+        # 매칭 5개 이상시 유도질문
         if len(matched) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
