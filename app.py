@@ -10,32 +10,29 @@ API_URL = "https://chung2.fly.dev/chat"
 
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
-# --- CSS (좌/우 버블, 프로필, 반응형 포함) ---
+# --- CSS: 입력창 하단 효과 & 대화 버블 ---
 st.markdown("""
 <style>
-.block-container { padding-bottom: 110px !important; }
-.char-row { display: flex; align-items: flex-start; margin-bottom: 18px;}
-.char-img { margin-right: 18px;}
-.char-txt { font-size:1.08em;}
+.block-container { padding-bottom: 120px !important; }
 .chat-wrap { max-width: 700px; margin:0 auto; }
-.msg-row { display:flex; align-items: flex-end; margin-bottom: 14px; }
+.msg-row { display:flex; align-items: flex-end; margin-bottom: 13px; }
 .msg-user { justify-content: flex-end; }
 .msg-bot { justify-content: flex-start; }
 .msg-bubble {
-    max-width: 66%%;
+    max-width: 67%%;
     padding: 11px 17px;
     border-radius: 18px;
-    font-size: 1.07em;
+    font-size: 1.08em;
     box-shadow: 0 1px 4px rgba(180,180,180,0.07);
-    line-height: 1.55;
+    line-height: 1.6;
     white-space: pre-line;
     word-break: break-word;
 }
-.bubble-user { background: #dcf8c6; color: #222; border-bottom-right-radius: 6px;}
-.bubble-bot { background: #f5f7fa; color: #222; border-bottom-left-radius: 6px;}
-.bot-profile { width:38px; height:38px; margin-right:7px; border-radius:50%; object-fit:cover;}
+.bubble-user { background: #dcf8c6; color: #222; border-bottom-right-radius: 7px;}
+.bubble-bot { background: #f5f7fa; color: #222; border-bottom-left-radius: 7px;}
+.bot-profile { width:38px; height:38px; margin-right:8px; border-radius:50%; object-fit:cover;}
 @media (max-width: 600px) {
-  .block-container { padding-bottom: 130px !important; }
+  .block-container { padding-bottom: 150px !important; }
   .chat-wrap { max-width:100vw; }
   .msg-bubble { font-size:1em; }
 }
@@ -44,11 +41,9 @@ st.markdown("""
 
 # --- 캐릭터 소개(상단) ---
 st.markdown("""
-<div class="char-row chat-wrap">
-    <div class="char-img">
-        <img src="https://raw.githubusercontent.com/licjssj777/kb-managerbot-character/main/managerbot_character.webp" width="60">
-    </div>
-    <div class="char-txt">
+<div class="chat-wrap" style="display:flex;align-items:flex-start;margin-bottom:18px;">
+    <img src="https://raw.githubusercontent.com/licjssj777/kb-managerbot-character/main/managerbot_character.webp" width="58" style="margin-right:18px;">
+    <div style="font-size:1.07em;">
         <b style="font-size:1.15em;">사장님, 안녕하세요!</b><br>
         저는 앞으로 사장님들 업무를 도와드리는<br>
         <b>충청호남본부 매니저봇 ‘애순’</b>이에요.<br>
@@ -124,8 +119,10 @@ def render_chat_html():
     html += "</div>"
     return html
 
+# --- 대화 내용: 반드시 입력창보다 위에! ---
 components.html(render_chat_html(), height=420, scrolling=True)
 
+# --- 입력창: 항상 마지막, padding-bottom 효과로 "하단고정"처럼! ---
 with st.form("input_form", clear_on_submit=True):
     q = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     if st.form_submit_button("질문하기") and q:
