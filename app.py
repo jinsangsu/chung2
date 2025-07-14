@@ -16,20 +16,22 @@ st.markdown("""
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
     background: white; max-width:700px; margin:0 auto;
     border-top:1px solid #e0e0e0; box-shadow:0 -2px 5px rgba(0,0,0,0.05);
+    padding: 12px 20px 16px 20px;
 }
-.block-container { padding-bottom: 125px !important; }
+.block-container { padding-bottom: 115px !important; }
 .message-row { display:flex; margin-bottom:10px; width:100%;}
 .user-message-row { justify-content: flex-end;}
 .bot-message-row { justify-content: flex-start;}
-.message-bubble { max-width:70%; padding:8px 12px; border-radius:15px;}
+.message-bubble { max-width:70%; padding:10px 15px; border-radius:15px; font-size:1.08em;}
 .user-bubble { background-color:#dcf8c6; color:#333;}
 .bot-bubble { background-color:#e0f7fa; color:#333;}
-.char-row { display: flex; align-items: flex-start; margin-bottom: 12px;}
-.char-img { margin-right: 20px;}
-.char-txt { font-size:1rem;}
+.char-row { display: flex; align-items: flex-start; margin-bottom: 18px;}
+.char-img { margin-right: 18px;}
+.char-txt { font-size:1.07em;}
 @media (max-width: 600px) {
-  .block-container { padding-bottom: 160px !important; }
+  .block-container { padding-bottom: 170px !important; }
   .stForm { max-width: 100vw; }
+  .message-bubble { font-size: 1em; }
 }
 </style>
 """, unsafe_allow_html=True)
@@ -99,9 +101,9 @@ def render_chat_html():
         bubble_class = "user-bubble" if role == "user" else "bot-bubble"
         row_class = "user-message-row" if role == "user" else "bot-message-row"
         html += f'<div class="message-row {row_class}"><div class="message-bubble {bubble_class}">{msg["content"]}</div></div>'
-    return f"<div style='height:calc(100vh - 240px);overflow-y:auto;padding:10px'>{html}</div>"
+    return f"<div style='height:calc(100vh - 310px);overflow-y:auto;padding:10px'>{html}</div>"
 
-components.html(render_chat_html(), height=500, scrolling=True)
+components.html(render_chat_html(), height=450, scrolling=True)
 
 # ---- 하단 입력 폼 ----
 with st.form("input_form", clear_on_submit=True):
