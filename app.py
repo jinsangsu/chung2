@@ -7,7 +7,6 @@ import requests
 import base64
 import os
 import re
-from collections import Counter
 
 API_URL = "https://chung2.fly.dev/chat"
 
@@ -160,7 +159,7 @@ def add_friendly_prefix(answer):
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.4
     user_txt = question_input.strip().replace(" ", "").lower()
-    
+
     # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
     chit_chat_patterns = [
         (["사랑", "좋아해"], "사장님, 저도 사랑합니다! 💛 언제나 사장님 곁에 있을게요!"),
@@ -212,7 +211,7 @@ def handle_question(question_input):
         st.session_state.scroll_to_bottom_flag = True
         return
 
-    # ↓↓↓ 이하 기존 Q&A 챗봇 처리 ↓↓↓
+    # ↓↓↓ Q&A 챗봇 처리 ↓↓↓
     if st.session_state.pending_keyword:
         user_input = st.session_state.pending_keyword + " " + question_input
         st.session_state.pending_keyword = None
@@ -307,7 +306,6 @@ def display_chat_html_content():
             )
         elif entry["role"] == "bot":
             if entry.get("display_type") == "single_answer":
-                # single_answer는 dict (q, a) 또는 str(잡담)
                 if isinstance(entry["content"], dict):
                     q = entry["content"].get('q', '').replace('\n', '<br>')
                     a = entry["content"].get('a', '').replace('\n', '<br>')
