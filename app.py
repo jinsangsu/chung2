@@ -157,79 +157,53 @@ def add_friendly_prefix(answer):
     else:
         return f"사장님, {answer} 이렇게 처리하시면 됩니다!"
 
-def extract_main_keywords(questions, exclude_terms=None, topn=5):
-    if exclude_terms is None:
-        exclude_terms = []
-    exclude_terms_norm = [normalize_text(term) for term in exclude_terms]
-    candidate_words = []
-    stopwords = set([
-        "질문", "답변", "경우", "사장님", "수", "및", "의", "을", "를", "에", "에서", "로", "으로",
-        "이", "가", "도", "는", "한", "해당", "등", "와", "과", "요", "때", "더", "만",
-        "는지", "이상", "사항", "관련", "필요", "있나요", "그런데", "하기", "방법", "내용", "여부", "했는데",
-        "되었습니다", "됩니다", "되나요", "됐습니다", "합니다", "하였다", "됨", "함", "된다"
-    ])
-    for q in questions:
-        for w in re.findall(r"[가-힣]{2,5}", q):  # 한글 2~5글자
-            w_norm = normalize_text(w)
-            if w_norm in exclude_terms_norm or w_norm in stopwords:
-                continue
-            if re.search(r"(하다|되다|있다|없다|된다|한|는|가|로|을|를|요|고|의|에|과|와|든지|등|까지|까지요|에게|만|이라|거나|에서|로부터|에게서|부터|하는|받는|할까|한가요|하고|되고|인가요)$", w):
-                continue
-            candidate_words.append(w)
-    normalized = [normalize_text(w) for w in candidate_words]
-    mapping = {}
-    for w, n in zip(candidate_words, normalized):
-        if n not in mapping:
-            mapping[n] = w
-    count = Counter(normalized)
-    return [mapping[n] for n, c in count.most_common(topn) if c > 0][:topn]
-
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.4
     user_txt = question_input.strip().replace(" ", "").lower()
+    
+    # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
+    chit_chat_patterns = [
+        (["사랑", "좋아해"], "사장님, 저도 사랑합니다! 💛 언제나 사장님 곁에 있을게요!"),
+        (["잘지냈", "안녕"], "네! 사장님 덕분에 잘 지내고 있습니다😊 사장님은 잘 지내셨어요?"),
+        (["보고싶"], "저도 사장님 보고 싶었어요! 곁에서 항상 응원하고 있습니다💛"),
+        (["고마워", "감사"], "항상 사장님께 감사드립니다! 도움이 되어드릴 수 있어 행복해요😊"),
+        (["힘들", "지쳤", "속상"], "많이 힘드셨죠? 언제든 애순이가 사장님 곁을 지키고 있습니다. 파이팅입니다!"),
+        (["피곤"], "많이 피곤하셨죠? 푹 쉬시고, 에너지 충전해서 내일도 힘내세요!"),
+        (["졸려"], "졸릴 땐 잠깐 스트레칭! 건강도 꼭 챙기시고, 화이팅입니다~"),
+        (["밥", "점심", "식사"], "아직 못 먹었어요! 사장님은 맛있게 드셨나요? 건강도 꼭 챙기세요!"),
+        (["날씨"], "오늘 날씨 정말 좋네요! 산책 한 번 어떠세요?😊"),
+        (["생일", "축하"], "생일 축하드립니다! 늘 행복과 건강이 가득하시길 바랍니다🎂"),
+        (["화이팅", "파이팅"], "사장님, 항상 파이팅입니다! 힘내세요💪"),
+        (["잘자", "굿나잇"], "좋은 꿈 꾸시고, 내일 더 힘찬 하루 보내세요! 잘 자요😊"),
+        (["수고", "고생"], "사장님 오늘도 정말 수고 많으셨습니다! 항상 응원합니다💛"),
+        (["재미있", "웃기"], "사장님이 웃으시면 애순이도 너무 좋아요! 앞으로 더 재미있게 해드릴게요😄"),
+    ]
+    for keywords, reply in chit_chat_patterns:
+        if any(kw in user_txt for kw in keywords):
+            st.session_state.chat_log.append({
+                "role": "user",
+                "content": question_input,
+                "display_type": "question"
+            })
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": reply,
+                "display_type": "single_answer"
+            })
+            st.session_state.scroll_to_bottom_flag = True
+            return
 
-    # [잡담/감정/상황별] 애순이 반응 확장
+    # [2] "애순"이 들어간 인삿말 (기존대로)
     if "애순" in user_txt:
         st.session_state.chat_log.append({
             "role": "user",
             "content": question_input,
             "display_type": "question"
         })
-
-        # 상황/감정별 인식(키워드·멘트 자유롭게 추가)
-        if "사랑" in user_txt:
-            reply = "사장님, 저도 사랑합니다! 💛 언제나 사장님 곁에 있을게요!"
-        elif "잘지냈" in user_txt or "안녕" in user_txt:
-            reply = "네! 사장님 덕분에 잘 지내고 있습니다😊 사장님은 잘 지내셨어요?"
-        elif "보고싶" in user_txt:
-            reply = "저도 사장님 보고 싶었어요! 곁에서 항상 응원하고 있습니다💛"
-        elif "고마워" in user_txt or "감사" in user_txt:
-            reply = "항상 사장님께 감사드립니다! 도움이 되어드릴 수 있어 행복해요😊"
-        elif "힘들" in user_txt or "지쳤" in user_txt or "속상" in user_txt:
-            reply = "많이 힘드셨죠? 언제든 애순이가 사장님 곁을 지키고 있습니다. 파이팅입니다!"
-        elif "피곤" in user_txt:
-            reply = "많이 피곤하셨죠? 푹 쉬시고, 에너지 충전해서 내일도 힘내세요!"
-        elif "졸려" in user_txt:
-            reply = "졸릴 땐 잠깐 스트레칭! 건강도 꼭 챙기시고, 화이팅입니다~"
-        elif "밥" in user_txt or "점심" in user_txt:
-            reply = "아직 못 먹었어요! 사장님은 맛있게 드셨나요? 건강도 꼭 챙기세요!"
-        elif "날씨" in user_txt:
-            reply = "오늘 날씨 정말 좋네요! 산책 한 번 어떠세요?😊"
-        elif "생일" in user_txt or "축하" in user_txt:
-            reply = "생일 축하드립니다! 늘 행복과 건강이 가득하시길 바랍니다🎂"
-        elif "화이팅" in user_txt or "파이팅" in user_txt:
-            reply = "사장님, 항상 파이팅입니다! 힘내세요💪"
-        elif "잘자" in user_txt or "굿나잇" in user_txt:
-            reply = "좋은 꿈 꾸시고, 내일 더 힘찬 하루 보내세요! 잘 자요😊"
-        elif "수고" in user_txt or "고생" in user_txt:
-            reply = "사장님 오늘도 정말 수고 많으셨습니다! 항상 응원합니다💛"
-        elif "재미있" in user_txt or "웃기" in user_txt:
-            reply = "사장님이 웃으시면 애순이도 너무 좋아요! 앞으로 더 재미있게 해드릴게요😄"
-        elif user_txt in ["애순", "애순아"]:
+        if user_txt in ["애순", "애순아"]:
             reply = "안녕하세요, 사장님! 궁금하신 점 언제든 말씀해 주세요 😊"
         else:
             reply = "사장님! 애순이 항상 곁에 있어요😊 궁금한 건 뭐든 말씀해 주세요!"
-
         st.session_state.chat_log.append({
             "role": "bot",
             "content": reply,
@@ -292,18 +266,14 @@ def handle_question(question_input):
                 })
             bot_display_type = "multi_answer"
         else:
-            try:
-                response = requests.post(API_URL, json={"message": question_input})
-                if response.status_code == 200:
-                    data = response.json()
-                    reply = data.get("reply", "❌ 응답이 비어 있습니다.")
-                else:
-                    reply = f"❌ 서버 오류 (Status {response.status_code})"
-                bot_answer_content = reply
-                bot_display_type = "llm_answer"
-            except Exception as e:
-                bot_answer_content = f"❌ 백엔드 응답 실패: {e}"
-                bot_display_type = "llm_answer"
+            # [3] 답변이 아예 없을 때 안내멘트
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": "사장님~~ 다시한번만 말씀해 주세요^*^",
+                "display_type": "single_answer"
+            })
+            st.session_state.scroll_to_bottom_flag = True
+            return
         if len(matched) > 0:
             st.session_state.chat_log.append({
                 "role": "bot",
@@ -337,7 +307,7 @@ def display_chat_html_content():
             )
         elif entry["role"] == "bot":
             if entry.get("display_type") == "single_answer":
-                # single_answer는 dict (q, a)
+                # single_answer는 dict (q, a) 또는 str(잡담)
                 if isinstance(entry["content"], dict):
                     q = entry["content"].get('q', '').replace('\n', '<br>')
                     a = entry["content"].get('a', '').replace('\n', '<br>')
@@ -348,7 +318,6 @@ def display_chat_html_content():
                         '</div></div>'
                     )
                 else:
-                    # 애순 잡담 등 텍스트 응답
                     bot_answer = str(entry["content"]).replace("\n", "<br>")
                     chat_html_content += (
                         '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
