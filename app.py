@@ -6,14 +6,11 @@ import difflib
 import requests
 import re
 
-API_URL = "https://chung2.fly.dev/chat"
-
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
-# --- CSS: 입력창 하단 효과 & 대화 버블 ---
 st.markdown("""
 <style>
-.block-container { padding-bottom: 120px !important; }
+.block-container { padding-bottom: 115px !important; }
 .chat-wrap { max-width: 700px; margin:0 auto; }
 .msg-row { display:flex; align-items: flex-end; margin-bottom: 13px; }
 .msg-user { justify-content: flex-end; }
@@ -39,7 +36,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 캐릭터 소개(상단) ---
+# 상단 캐릭터 소개
 st.markdown("""
 <div class="chat-wrap" style="display:flex;align-items:flex-start;margin-bottom:18px;">
     <img src="https://raw.githubusercontent.com/licjssj777/kb-managerbot-character/main/managerbot_character.webp" width="58" style="margin-right:18px;">
@@ -56,55 +53,15 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 구글 시트 연결 ---
-sheet = None
-try:
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    json_key_dict = st.secrets["gcp_service_account"]
-    credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
-    gc = gspread.authorize(credentials)
-    sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
-except Exception as e:
-    st.warning("❌ 구글 시트 연동 실패")
+# 구글 시트 연결 등 이하 동일...
+# (handle_question, clean_text, etc...)
 
-if "chat_log" not in st.session_state:
-    st.session_state.chat_log = []
-
-def get_similarity_score(a, b):
-    return difflib.SequenceMatcher(None, a, b).ratio()
-
-def clean_text(text):
-    # 모든 이미지/HTML 태그 제거
-    text = re.sub(r"<img[^>]+>", "", text)
-    text = re.sub(r"<[^>]+>", "", text)
-    return text.strip()
-
-def handle_question(q_input):
-    matched = []
-    try:
-        for r in sheet.get_all_records():
-            if q_input in r["질문"].lower() or get_similarity_score(q_input, r["질문"].lower()) >= 0.4:
-                matched.append(r)
-    except:
-        pass
-    st.session_state.chat_log.append({"role": "user", "content": q_input})
-    if matched:
-        for r in matched:
-            ans = clean_text(r["답변"])
-            st.session_state.chat_log.append({"role": "bot", "content": ans})
-    else:
-        try:
-            res = requests.post(API_URL, json={"message": q_input})
-            reply = clean_text(res.json().get("reply", "❌ 응답 없음"))
-        except:
-            reply = "❌ 서버 응답 실패"
-        st.session_state.chat_log.append({"role": "bot", "content": reply})
-
+# render_chat_html 함수 내에서 한 줄씩 번갈아
 def render_chat_html():
     html = '<div class="chat-wrap">'
     bot_profile_url = "https://raw.githubusercontent.com/licjssj777/kb-managerbot-character/main/managerbot_character.webp"
     for msg in st.session_state.chat_log:
-        content = clean_text(msg["content"])
+        content = re.sub(r"<[^>]+>", "", str(msg["content"])) # 모든 태그 제거
         if msg["role"] == "user":
             html += f"""
             <div class="msg-row msg-user">
@@ -119,10 +76,8 @@ def render_chat_html():
     html += "</div>"
     return html
 
-# --- 대화 내용: 반드시 입력창보다 위에! ---
-components.html(render_chat_html(), height=420, scrolling=True)
+components.html(render_chat_html(), height=600, scrolling=True)
 
-# --- 입력창: 항상 마지막, padding-bottom 효과로 "하단고정"처럼! ---
 with st.form("input_form", clear_on_submit=True):
     q = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     if st.form_submit_button("질문하기") and q:
