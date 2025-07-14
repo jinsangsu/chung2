@@ -148,7 +148,6 @@ def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
 def normalize_text(text):
-    # 한글, 영문, 숫자만 남기고 모두 소문자, 공백 제거
     return re.sub(r"[^가-힣a-zA-Z0-9]", "", text.lower())
 
 def add_friendly_prefix(answer):
@@ -158,32 +157,33 @@ def add_friendly_prefix(answer):
     else:
         return f"사장님, {answer} 이렇게 처리하시면 됩니다!"
 
-def extract_main_keywords(questions, topn=5):
-    # 모든 질문 텍스트 합쳐서 명사 후보 추출 (한글/영문 2~8글자, 조사/불필요 단어/중복 제외)
+def extract_main_keywords(questions, exclude_terms=None, topn=5):
+    if exclude_terms is None:
+        exclude_terms = []
+    exclude_terms_norm = [normalize_text(term) for term in exclude_terms]
     counter = Counter()
     candidate_words = []
     for q in questions:
-        # 조사 등 제외, 가장 많이 쓰이는 명사 위주로 추출
         for w in re.findall(r"[가-힣a-zA-Z0-9]{2,8}", q):
-            # 명사 사전 또는 자주 쓰이는 조사/불용어/조합 필터링 (예시)
-            if w not in [
+            if w in [
                 "질문", "답변", "경우", "보험", "사장님", "수", "및", "의", "을", "를", "에", "에서", "로", "으로",
-                "이", "가", "도", "는", "한", "해당", "등", "및", "의", "와", "과", "요", "때", "더", "도", "만","데",
-                "및", "는지", "이상", "사항", "관련", "필요", "있나요", "및", "그런데", "하기", "방법", "내용", "여부"
+                "이", "가", "도", "는", "한", "해당", "등", "및", "의", "와", "과", "요", "때", "더", "도", "만",
+                "및", "는지", "이상", "사항", "관련", "필요", "있나요", "및", "그런데", "하기", "방법", "내용", "여부", "했는데"
             ]:
+                continue
+            w_norm = normalize_text(w)
+            if w_norm not in exclude_terms_norm:
                 candidate_words.append(w)
-    # 단일 단어 normalization하여 중복 방지
     normalized = [normalize_text(w) for w in candidate_words]
     mapping = {}
     for w, n in zip(candidate_words, normalized):
         if n not in mapping:
             mapping[n] = w
     count = Counter(normalized)
-    # 가장 자주 나오는 원본 단어 topn
-    return [mapping[n] for n, c in count.most_common(topn) if c > 0][:topn] or ["카드등록", "카드해지", "자동이체", "분할납입"]
+    return [mapping[n] for n, c in count.most_common(topn) if c > 0][:topn]
 
 def handle_question(question_input):
-    # 1. 추가질문 대기중이면(즉, 1차 입력에서 5개 이상 매칭 후)
+    SIMILARITY_THRESHOLD = 0.4
     if st.session_state.pending_keyword:
         user_input = st.session_state.pending_keyword + " " + question_input
         st.session_state.pending_keyword = None
@@ -193,26 +193,24 @@ def handle_question(question_input):
     try:
         records = sheet.get_all_records()
         q_input_norm = normalize_text(user_input)
-        SIMILARITY_THRESHOLD = 0.4  # ← for r in records: 바로 위에 추가
         matched = []
         for r in records:
-             sheet_q_norm = normalize_text(r["질문"])
-             if (
-                 (q_input_norm in sheet_q_norm) or
-                 (sheet_q_norm in q_input_norm) or
-                 (get_similarity_score(q_input_norm, sheet_q_norm) >= SIMILARITY_THRESHOLD)
-              ):
-                 matched.append(r)
-        # 사용자 질문 append(오른쪽 표시)
+            sheet_q_norm = normalize_text(r["질문"])
+            if (
+                (q_input_norm in sheet_q_norm) or
+                (sheet_q_norm in q_input_norm) or
+                (get_similarity_score(q_input_norm, sheet_q_norm) >= SIMILARITY_THRESHOLD)
+            ):
+                matched.append(r)
         st.session_state.chat_log.append({
             "role": "user",
             "content": question_input,
             "display_type": "question"
         })
 
-        # 2. 만약 유사질문이 5개 이상이면 "키워드" 제시 & 추가 입력만 유도
         if len(matched) >= 5:
-            keywords = extract_main_keywords([r['질문'] for r in matched])
+            user_terms = [w for w in re.findall(r"[가-힣a-zA-Z0-9]{2,8}", question_input) if len(w) > 1]
+            keywords = extract_main_keywords([r['질문'] for r in matched], exclude_terms=user_terms)
             keyword_str = ", ".join(keywords)
             st.session_state.pending_keyword = user_input
             st.session_state.chat_log.append({
@@ -223,7 +221,6 @@ def handle_question(question_input):
             st.session_state.scroll_to_bottom_flag = True
             return
 
-        # 3. 1개 또는 5개 미만으로 매칭된 경우 답변 바로 출력
         if len(matched) == 1:
             bot_answer_content = {
                 "q": matched[0]["질문"],
@@ -239,7 +236,6 @@ def handle_question(question_input):
                 })
             bot_display_type = "multi_answer"
         else:
-            # 아예 없는 경우는 LLM API로!
             try:
                 response = requests.post(API_URL, json={"message": question_input})
                 if response.status_code == 200:
