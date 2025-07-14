@@ -196,7 +196,7 @@ def handle_question(question_input):
             "display_type": "question"
         })
 
-        # 상황/감정별 인식(필요시 키워드·멘트 자유롭게 추가)
+        # 상황/감정별 인식(키워드·멘트 자유롭게 추가)
         if "사랑" in user_txt:
             reply = "사장님, 저도 사랑합니다! 💛 언제나 사장님 곁에 있을게요!"
         elif "잘지냈" in user_txt or "안녕" in user_txt:
@@ -337,39 +337,47 @@ def display_chat_html_content():
             )
         elif entry["role"] == "bot":
             if entry.get("display_type") == "single_answer":
-                q = entry['content']['q'].replace('\n', '<br>')
-                a = entry['content']['a'].replace('\n', '<br>')
-                chat_html_content += (
-                    '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
-                    f"<p style='margin-bottom: 8px;'><strong>질문:</strong> {q}</p>"
-                    f"<p>👉 <strong>답변:</strong> {a}</p>"
-                    '</div></div>'
-                )
+                # single_answer는 dict (q, a)
+                if isinstance(entry["content"], dict):
+                    q = entry["content"].get('q', '').replace('\n', '<br>')
+                    a = entry["content"].get('a', '').replace('\n', '<br>')
+                    chat_html_content += (
+                        '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
+                        f"<p style='margin-bottom: 8px;'><strong>질문:</strong> {q}</p>"
+                        f"<p>👉 <strong>답변:</strong> {a}</p>"
+                        '</div></div>'
+                    )
+                else:
+                    # 애순 잡담 등 텍스트 응답
+                    bot_answer = str(entry["content"]).replace("\n", "<br>")
+                    chat_html_content += (
+                        '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
+                        f"<p>🧾 <strong>답변:</strong><br>{bot_answer}</p>"
+                        '</div></div>'
+                    )
             elif entry.get("display_type") == "multi_answer":
-                 chat_html_content += "<div class='message-row bot-message-row'><div class='message-bubble bot-bubble'>"
-                 chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
-                      # entry["content"]가 리스트일 때만 for문 실행
-                  if isinstance(entry["content"], list):
-                      for i, pair in enumerate(entry["content"]):
-                          q = pair['q'].replace('\n', '<br>')
-                           a = pair['a'].replace('\n', '<br>')
-                           chat_html_content += f"""
-                           <p class='chat-multi-item' style="margin-bottom: 10px;">
-                                 <strong>{i+1}. 질문:</strong> {q}<br>
-                                    👉 <strong>답변:</strong> {a}
-                           </p>
-                            """
-                       # 만약 dict로 잘못 들어오면(예외처리)
-              elif isinstance(entry["content"], dict):
-                   q = entry["content"].get('q', '').replace('\n', '<br>')
-                   a = entry["content"].get('a', '').replace('\n', '<br>')
-                   chat_html_content += f"""
-                       <p class='chat-multi-item' style="margin-bottom: 10px;">
-                           <strong>질문:</strong> {q}<br>
-                           👉 <strong>답변:</strong> {a}
-                       </p>
-                      """
-               chat_html_content += "</div></div>"
+                chat_html_content += "<div class='message-row bot-message-row'><div class='message-bubble bot-bubble'>"
+                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+                if isinstance(entry["content"], list):
+                    for i, pair in enumerate(entry["content"]):
+                        q = pair['q'].replace('\n', '<br>')
+                        a = pair['a'].replace('\n', '<br>')
+                        chat_html_content += f"""
+                        <p class='chat-multi-item' style="margin-bottom: 10px;">
+                            <strong>{i+1}. 질문:</strong> {q}<br>
+                            👉 <strong>답변:</strong> {a}
+                        </p>
+                        """
+                elif isinstance(entry["content"], dict):
+                    q = entry["content"].get('q', '').replace('\n', '<br>')
+                    a = entry["content"].get('a', '').replace('\n', '<br>')
+                    chat_html_content += f"""
+                        <p class='chat-multi-item' style="margin-bottom: 10px;">
+                            <strong>질문:</strong> {q}<br>
+                            👉 <strong>답변:</strong> {a}
+                        </p>
+                        """
+                chat_html_content += "</div></div>"
             elif entry.get("display_type") == "pending":
                 chat_html_content += (
                     '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
@@ -377,7 +385,7 @@ def display_chat_html_content():
                     '</div></div>'
                 )
             elif entry.get("display_type") == "llm_answer":
-                bot_answer = entry["content"].replace("\n", "<br>")
+                bot_answer = str(entry["content"]).replace("\n", "<br>")
                 chat_html_content += (
                     '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
                     f"<p>🧾 <strong>답변:</strong><br>{bot_answer}</p>"
