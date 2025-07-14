@@ -6,12 +6,13 @@ import difflib
 import requests
 import base64
 import os
+from collections import Counter
+import re
 
 API_URL = "https://chung2.fly.dev/chat"
 
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
-# --- CSS: 기본 스타일(질문 오른쪽은 인라인 style로 보장)
 st.markdown("""
 <style>
 html, body, #root, .stApp, .streamlit-container {
@@ -140,33 +141,70 @@ if "chat_log" not in st.session_state:
     st.session_state.chat_log = [{"role": "intro", "content": "", "display_type": "intro"}]
 if "scroll_to_bottom_flag" not in st.session_state:
     st.session_state.scroll_to_bottom_flag = False
+if "pending_keyword" not in st.session_state:
+    st.session_state.pending_keyword = None
 
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
 def add_friendly_prefix(answer):
-    """사장님 중복 방지 + 친근 멘트 추가"""
     answer = answer.strip()
     if answer[:7].replace(" ", "").startswith("사장님"):
         return answer
     else:
         return f"사장님, {answer} 이렇게 처리하시면 됩니다!"
 
+def extract_main_keywords(questions, topn=5):
+    # 질문리스트에서 자주 나오는 명사 단어만 간단 추출(정교하게 하려면 konlpy 사용)
+    # 여기선 한글/영문 2~8글자 추출 + "카드", "등록", "해지", "자동이체" 등
+    counter = Counter()
+    for q in questions:
+        for w in re.findall(r"[가-힣a-zA-Z]{2,8}", q):
+            # 너무 짧거나 너무 일반적인 단어(질문, 답변 등)는 제외
+            if w not in ["질문", "답변", "가능", "경우", "서류", "보험", "사장님"]:
+                counter[w] += 1
+    return [w for w, c in counter.most_common(topn) if c > 0][:topn] or ["카드등록", "카드해지", "자동이체", "분할납입"]
+
 def handle_question(question_input):
+    # 1. 추가질문 대기중이면(즉, 1차 입력에서 5개 이상 매칭 후)
+    if st.session_state.pending_keyword:
+        user_input = st.session_state.pending_keyword + " " + question_input
+        st.session_state.pending_keyword = None
+    else:
+        user_input = question_input
+
     try:
         records = sheet.get_all_records()
-        q_input = question_input.lower()
+        q_input = user_input.lower()
         SIMILARITY_THRESHOLD = 0.4
         matched = []
         for r in records:
             q = r["질문"].lower()
             if q_input in q or get_similarity_score(q_input, q) >= SIMILARITY_THRESHOLD:
                 matched.append(r)
+        # 사용자 질문 append(오른쪽 표시)
         st.session_state.chat_log.append({
             "role": "user",
             "content": question_input,
             "display_type": "question"
         })
+
+        # 2. 만약 유사질문이 5개 이상이면 "키워드" 제시 & 추가 입력만 유도
+        if len(matched) >= 5:
+            keywords = extract_main_keywords([r['질문'] for r in matched])
+            keyword_str = ", ".join(keywords)
+            # pending 상태를 세션에 저장(이전 입력)
+            st.session_state.pending_keyword = user_input
+            # 챗봇 안내 멘트만 추가(실제 Q/A 출력 X)
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": f"사장님, {keywords[0]}의 어떤 부분이 궁금하신가요? 예) {keyword_str} 등<br>궁금한 점을 더 구체적으로 입력해 주세요!",
+                "display_type": "pending"
+            })
+            st.session_state.scroll_to_bottom_flag = True
+            return
+
+        # 3. 1개 또는 5개 미만으로 매칭된 경우 답변 바로 출력
         if len(matched) == 1:
             bot_answer_content = {
                 "q": matched[0]["질문"],
@@ -182,6 +220,7 @@ def handle_question(question_input):
                 })
             bot_display_type = "multi_answer"
         else:
+            # 아예 없는 경우는 LLM API로!
             try:
                 response = requests.post(API_URL, json={"message": question_input})
                 if response.status_code == 200:
@@ -194,11 +233,12 @@ def handle_question(question_input):
             except Exception as e:
                 bot_answer_content = f"❌ 백엔드 응답 실패: {e}"
                 bot_display_type = "llm_answer"
-        st.session_state.chat_log.append({
-            "role": "bot",
-            "content": bot_answer_content,
-            "display_type": bot_display_type
-        })
+        if len(matched) > 0:
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": bot_answer_content,
+                "display_type": bot_display_type
+            })
         st.session_state.scroll_to_bottom_flag = True
     except Exception as e:
         st.session_state.chat_log.append({
@@ -235,35 +275,8 @@ def display_chat_html_content():
                     '</div></div>'
                 )
             elif entry.get("display_type") == "multi_answer":
-                num_qs = len(entry["content"])
-                # 주요 키워드 추출 (간단 방식)
-                main_keyword = ""
-                if len(st.session_state.chat_log) >= 2:
-                    last_user_question = st.session_state.chat_log[-2]["content"]
-                    for kw in ["카드", "자동차", "보험", "배서", "분납"]:
-                        if kw in last_user_question:
-                            main_keyword = kw
-                            break
-                if num_qs >= 5:
-                    # 안내멘트(키워드별)
-                    if main_keyword:
-                        chat_html_content += (
-                            f"<p style='color:#ff914d;font-weight:600;'>"
-                            f"사장님, {main_keyword}의 어떤 부분이 궁금하신가요? 더 자세하게 입력해 주시면 빠르게 답변드릴 수 있습니다.<br>"
-                            f"궁금한 점을 좀 더 구체적으로 입력해 주세요!</p>"
-                        )
-                    else:
-                        chat_html_content += (
-                            "<p style='color:#ff914d;font-weight:600;'>"
-                            "사장님, 어떤 부분이 궁금하신가요? 궁금한 점을 더 자세히 입력해 주세요!</p>"
-                        )
-                elif num_qs >= 3:
-                    chat_html_content += (
-                        "<p style='color:#ff914d;font-weight:600;'>"
-                        "사장님, 아래 질문 중 어느 부분이 궁금하신지 번호로 선택해 주세요!</p>"
-                    )
-                else:
-                    chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+                chat_html_content += "<div class='message-row bot-message-row'><div class='message-bubble bot-bubble'>"
+                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
                 for i, pair in enumerate(entry["content"]):
                     q = pair['q'].replace('\n', '<br>')
                     a = pair['a'].replace('\n', '<br>')
@@ -273,6 +286,13 @@ def display_chat_html_content():
                         👉 <strong>답변:</strong> {a}
                     </p>
                     """
+                chat_html_content += "</div></div>"
+            elif entry.get("display_type") == "pending":
+                chat_html_content += (
+                    '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
+                    f"<p style='color:#ff914d;font-weight:600;'>{entry['content']}</p>"
+                    '</div></div>'
+                )
             elif entry.get("display_type") == "llm_answer":
                 bot_answer = entry["content"].replace("\n", "<br>")
                 chat_html_content += (
