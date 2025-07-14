@@ -40,13 +40,16 @@ st.markdown("""
     /* 채팅 메시지 영역 */
     #chat-content-scroll-area {
         flex-grow: 1;
-        overflow-y: auto;
+        overflow-y: auto !important;   /* 항상 스크롤바 표시 */
         padding: 10px 0 0 0;
         scroll-behavior: smooth;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
         background: #fff;
+        height: 420px;
+        min-height: 320px;
+        max-height: 520px;
     }
     .message-row {
         display: flex;
@@ -64,16 +67,22 @@ st.markdown("""
     }
     .user-bubble {
         background-color: #dcf8c6;
-        color: #333;
+        color: #111;
+        font-weight: 700;
+        text-align: right;
     }
     .bot-bubble {
         background-color: #e0f7fa;
         color: #333;
+        font-weight: 400;
+        text-align: left;
     }
     .intro-bubble {
         background-color: #f6f6fc;
         color: #252525;
         box-shadow: 0 2px 6px #eee;
+        font-weight: 400;
+        text-align: left;
     }
     /* 유사 질문 */
     .chat-multi-item {
@@ -202,94 +211,4 @@ def handle_question(question_input):
         st.session_state.chat_log.append({
             "role": "bot",
             "content": bot_answer_content,
-            "display_type": bot_display_type
-        })
-        st.session_state.scroll_to_bottom_flag = True
-
-    except Exception as e:
-        st.session_state.chat_log.append({
-            "role": "bot",
-            "content": f"❌ 오류 발생: {e}",
-            "display_type": "single_answer"
-        })
-        st.session_state.scroll_to_bottom_flag = True
-
-# --- 채팅 대화방 전체 HTML 렌더
-def display_chat_html_content():
-    chat_html_content = ""
-    for entry in st.session_state.chat_log:
-        if entry["role"] == "intro":
-            chat_html_content += f"""
-            <div class="message-row intro-message-row">
-                <div class="message-bubble intro-bubble">
-                    {get_intro_html()}
-                </div>
-            </div>
-            """
-        elif entry["role"] == "user":
-            user_question = entry["content"].replace("\n", "<br>")
-            chat_html_content += f"""
-            <div class="message-row user-message-row">
-                <div class="message-bubble user-bubble">
-                      {user_question}
-                </div>
-            </div>
-            """
-        elif entry["role"] == "bot":
-            chat_html_content += """
-            <div class="message-row bot-message-row">
-                <div class="message-bubble bot-bubble">
-            """
-            if entry.get("display_type") == "single_answer":
-                bot_answer = entry["content"].replace("\n", "<br>")
-                chat_html_content += f"<p>🧾 <strong>답변:</strong><br>{bot_answer}</p>"
-            elif entry.get("display_type") == "multi_answer":
-                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
-                for i, pair in enumerate(entry["content"]):
-                    q = pair['q'].replace('\n', '<br>')
-                    a = pair['a'].replace('\n', '<br>')
-                    chat_html_content += f"""
-                    <p class='chat-multi-item'>
-                        <strong>{i+1}. 질문:</strong> {q}<br>
-                        👉 <strong>답변:</strong> {a}
-                    </p>
-                    """
-            chat_html_content += """
-                </div>
-            </div>
-            """
-    scroll_iframe_script = ""
-    if st.session_state.scroll_to_bottom_flag:
-        scroll_iframe_script = """
-        <script>
-        setTimeout(function () {
-            const anchor = document.getElementById("chat-scroll-anchor");
-            if (anchor) {
-                anchor.scrollIntoView({ behavior: "smooth" });
-            }
-        }, 100);
-        </script>
-        """
-        st.session_state.scroll_to_bottom_flag = False
-    return f"""
-    <div id="chat-content-scroll-area" style="height: 420px;">
-        {chat_html_content}
-        <div id="chat-scroll-anchor"></div>
-    </div>
-    {scroll_iframe_script}
-    """
-
-components.html(
-    display_chat_html_content(),
-    height=500,
-    scrolling=False
-)
-
-# --- 입력창(폼) — 항상 하단 고정
-with st.form("input_form", clear_on_submit=True):
-    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
-    submitted = st.form_submit_button("질문하기")
-    if submitted and question_input:
-        handle_question(question_input)
-        st.rerun()
-
+            "display_type": b_
