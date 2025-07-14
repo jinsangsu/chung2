@@ -4,35 +4,35 @@ from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
 import difflib
 import requests
+import re
 
 API_URL = "https://chung2.fly.dev/chat"
 
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
-# --- CSS ---
 st.markdown("""
 <style>
-.block-container { padding-bottom: 100px !important; }
+.block-container { padding-bottom: 110px !important; }
 .char-row { display: flex; align-items: flex-start; margin-bottom: 18px;}
 .char-img { margin-right: 18px;}
 .char-txt { font-size:1.08em;}
-/* 채팅 버블 스타일 */
 .chat-wrap { max-width: 700px; margin:0 auto; }
-.msg-row { display:flex; align-items: flex-end; margin-bottom: 12px; }
+.msg-row { display:flex; align-items: flex-end; margin-bottom: 14px; }
 .msg-user { justify-content: flex-end; }
 .msg-bot { justify-content: flex-start; }
 .msg-bubble {
-    max-width: 67%%; 
-    padding: 11px 16px; 
+    max-width: 66%%;
+    padding: 11px 17px;
     border-radius: 18px;
     font-size: 1.07em;
     box-shadow: 0 1px 4px rgba(180,180,180,0.07);
-    line-height: 1.5;
+    line-height: 1.55;
     white-space: pre-line;
+    word-break: break-word;
 }
 .bubble-user { background: #dcf8c6; color: #222; border-bottom-right-radius: 6px;}
 .bubble-bot { background: #f5f7fa; color: #222; border-bottom-left-radius: 6px;}
-.bot-profile { width:38px; height:38px; margin-right:7px; border-radius:50%; }
+.bot-profile { width:38px; height:38px; margin-right:7px; border-radius:50%; object-fit:cover;}
 @media (max-width: 600px) {
   .block-container { padding-bottom: 130px !important; }
   .chat-wrap { max-width:100vw; }
@@ -41,7 +41,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 캐릭터 소개(상단) ---
+# 캐릭터 소개
 st.markdown("""
 <div class="char-row chat-wrap">
     <div class="char-img">
@@ -60,7 +60,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- 구글 시트 연결 ---
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -77,6 +76,12 @@ if "chat_log" not in st.session_state:
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
+def clean_text(text):
+    # 이미지 태그 제거, html tag 제거
+    text = re.sub(r"<img[^>]+>", "", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    return text.strip()
+
 def handle_question(q_input):
     matched = []
     try:
@@ -88,16 +93,16 @@ def handle_question(q_input):
     st.session_state.chat_log.append({"role": "user", "content": q_input})
     if matched:
         for r in matched:
-            st.session_state.chat_log.append({"role": "bot", "content": r["답변"]})
+            ans = clean_text(r["답변"])
+            st.session_state.chat_log.append({"role": "bot", "content": ans})
     else:
         try:
             res = requests.post(API_URL, json={"message": q_input})
-            reply = res.json().get("reply", "❌ 응답 없음")
+            reply = clean_text(res.json().get("reply", "❌ 응답 없음"))
         except:
             reply = "❌ 서버 응답 실패"
         st.session_state.chat_log.append({"role": "bot", "content": reply})
 
-# --- 챗 UI (질문=오른쪽, 답변=왼쪽, 캐릭터 포함) ---
 def render_chat_html():
     html = '<div class="chat-wrap">'
     bot_profile_url = "https://raw.githubusercontent.com/licjssj777/kb-managerbot-character/main/managerbot_character.webp"
@@ -110,7 +115,7 @@ def render_chat_html():
         else:
             html += f"""
             <div class="msg-row msg-bot">
-                <img src="{bot_profile_url}" class="bot-profile">
+                <img src="{bot_profile_url}" class="bot-profile" alt="bot">
                 <div class="msg-bubble bubble-bot">{msg["content"]}</div>
             </div>"""
     html += "</div>"
@@ -118,7 +123,6 @@ def render_chat_html():
 
 components.html(render_chat_html(), height=400, scrolling=True)
 
-# --- 하단 입력 폼 (마지막에 위치) ---
 with st.form("input_form", clear_on_submit=True):
     q = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     if st.form_submit_button("질문하기") and q:
