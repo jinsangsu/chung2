@@ -10,6 +10,7 @@ API_URL = "https://chung2.fly.dev/chat"
 
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
+# --- CSS (좌/우 버블, 프로필, 반응형 포함) ---
 st.markdown("""
 <style>
 .block-container { padding-bottom: 110px !important; }
@@ -41,7 +42,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 캐릭터 소개
+# --- 캐릭터 소개(상단) ---
 st.markdown("""
 <div class="char-row chat-wrap">
     <div class="char-img">
@@ -60,6 +61,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# --- 구글 시트 연결 ---
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -77,7 +79,7 @@ def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
 def clean_text(text):
-    # 이미지 태그 제거, html tag 제거
+    # 모든 이미지/HTML 태그 제거
     text = re.sub(r"<img[^>]+>", "", text)
     text = re.sub(r"<[^>]+>", "", text)
     return text.strip()
@@ -107,21 +109,22 @@ def render_chat_html():
     html = '<div class="chat-wrap">'
     bot_profile_url = "https://raw.githubusercontent.com/licjssj777/kb-managerbot-character/main/managerbot_character.webp"
     for msg in st.session_state.chat_log:
+        content = clean_text(msg["content"])
         if msg["role"] == "user":
             html += f"""
             <div class="msg-row msg-user">
-                <div class="msg-bubble bubble-user">{msg["content"]}</div>
+                <div class="msg-bubble bubble-user">{content}</div>
             </div>"""
         else:
             html += f"""
             <div class="msg-row msg-bot">
                 <img src="{bot_profile_url}" class="bot-profile" alt="bot">
-                <div class="msg-bubble bubble-bot">{msg["content"]}</div>
+                <div class="msg-bubble bubble-bot">{content}</div>
             </div>"""
     html += "</div>"
     return html
 
-components.html(render_chat_html(), height=400, scrolling=True)
+components.html(render_chat_html(), height=420, scrolling=True)
 
 with st.form("input_form", clear_on_submit=True):
     q = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
