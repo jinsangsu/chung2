@@ -346,18 +346,30 @@ def display_chat_html_content():
                     '</div></div>'
                 )
             elif entry.get("display_type") == "multi_answer":
-                chat_html_content += "<div class='message-row bot-message-row'><div class='message-bubble bot-bubble'>"
-                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
-                for i, pair in enumerate(entry["content"]):
-                    q = pair['q'].replace('\n', '<br>')
-                    a = pair['a'].replace('\n', '<br>')
-                    chat_html_content += f"""
-                    <p class='chat-multi-item' style="margin-bottom: 10px;">
-                        <strong>{i+1}. 질문:</strong> {q}<br>
-                        👉 <strong>답변:</strong> {a}
-                    </p>
-                    """
-                chat_html_content += "</div></div>"
+                 chat_html_content += "<div class='message-row bot-message-row'><div class='message-bubble bot-bubble'>"
+                 chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+                      # entry["content"]가 리스트일 때만 for문 실행
+                  if isinstance(entry["content"], list):
+                      for i, pair in enumerate(entry["content"]):
+                          q = pair['q'].replace('\n', '<br>')
+                           a = pair['a'].replace('\n', '<br>')
+                           chat_html_content += f"""
+                           <p class='chat-multi-item' style="margin-bottom: 10px;">
+                                 <strong>{i+1}. 질문:</strong> {q}<br>
+                                    👉 <strong>답변:</strong> {a}
+                           </p>
+                            """
+                       # 만약 dict로 잘못 들어오면(예외처리)
+              elif isinstance(entry["content"], dict):
+                   q = entry["content"].get('q', '').replace('\n', '<br>')
+                   a = entry["content"].get('a', '').replace('\n', '<br>')
+                   chat_html_content += f"""
+                       <p class='chat-multi-item' style="margin-bottom: 10px;">
+                           <strong>질문:</strong> {q}<br>
+                           👉 <strong>답변:</strong> {a}
+                       </p>
+                      """
+               chat_html_content += "</div></div>"
             elif entry.get("display_type") == "pending":
                 chat_html_content += (
                     '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
