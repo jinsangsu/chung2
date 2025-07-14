@@ -168,7 +168,7 @@ def extract_main_keywords(questions, topn=5):
             # 명사 사전 또는 자주 쓰이는 조사/불용어/조합 필터링 (예시)
             if w not in [
                 "질문", "답변", "경우", "보험", "사장님", "수", "및", "의", "을", "를", "에", "에서", "로", "으로",
-                "이", "가", "도", "는", "한", "해당", "등", "및", "의", "와", "과", "요", "때", "더", "도", "만",
+                "이", "가", "도", "는", "한", "해당", "등", "및", "의", "와", "과", "요", "때", "더", "도", "만","데",
                 "및", "는지", "이상", "사항", "관련", "필요", "있나요", "및", "그런데", "하기", "방법", "내용", "여부"
             ]:
                 candidate_words.append(w)
@@ -193,12 +193,14 @@ def handle_question(question_input):
     try:
         records = sheet.get_all_records()
         q_input_norm = normalize_text(user_input)
-        SIMILARITY_THRESHOLD = 0.4
-        matched = []
         for r in records:
-            sheet_q_norm = normalize_text(r["질문"])
-            if (q_input_norm in sheet_q_norm) or (get_similarity_score(q_input_norm, sheet_q_norm) >= SIMILARITY_THRESHOLD):
-                matched.append(r)
+             sheet_q_norm = normalize_text(r["질문"])
+             if (
+                 (q_input_norm in sheet_q_norm) or
+                 (sheet_q_norm in q_input_norm) or
+                 (get_similarity_score(q_input_norm, sheet_q_norm) >= SIMILARITY_THRESHOLD)
+              ):
+                 matched.append(r)
         # 사용자 질문 append(오른쪽 표시)
         st.session_state.chat_log.append({
             "role": "user",
