@@ -1,3 +1,4 @@
+
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -11,106 +12,101 @@ API_URL = "https://chung2.fly.dev/chat"
 
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
 
-# --- CSS
+# --- CSS: 오른쪽 정렬과 굵은 글씨, 스크롤 항상 활성화, !important로 강제 오버라이드
 st.markdown("""
 <style>
-    html, body, #root, .stApp, .streamlit-container {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-    }
-    .stApp > header, .stApp > footer {
-        visibility: hidden;
-        height: 0px !important;
-    }
-    .block-container {
-        padding-top: 1rem;
-        padding-bottom: 0rem;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        max-width: 700px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    /* 채팅 메시지 영역 */
-    #chat-content-scroll-area {
-        flex-grow: 1;
-        overflow-y: auto !important;   /* 항상 스크롤바 표시 */
-        padding: 10px 0 0 0;
-        scroll-behavior: smooth;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        background: #fff;
-        height: 420px;
-        min-height: 320px;
-        max-height: 520px;
-    }
-    .message-row {
-        display: flex;
-        margin-bottom: 12px;
-        width: 100%;
-    }
-    .user-message-row { justify-content: flex-end; }
-    .bot-message-row, .intro-message-row { justify-content: flex-start; }
-    .message-bubble {
-        max-width: 80%;
-        padding: 10px 14px;
-        border-radius: 15px;
-        word-wrap: break-word;
-        font-size: 1.04em;
-    }
-    .user-bubble {
-        background-color: #dcf8c6;
-        color: #111;
-        font-weight: 700;
-        text-align: right;
-    }
-    .bot-bubble {
-        background-color: #e0f7fa;
-        color: #333;
-        font-weight: 400;
-        text-align: left;
-    }
-    .intro-bubble {
-        background-color: #f6f6fc;
-        color: #252525;
-        box-shadow: 0 2px 6px #eee;
-        font-weight: 400;
-        text-align: left;
-    }
-    /* 유사 질문 */
-    .chat-multi-item {
-        margin-left: 25px;
-        font-size: 0.98em;
-        margin-bottom: 5px;
-    }
-    /* 입력 폼 고정 */
-    .stForm {
-        position: sticky;
-        bottom: 0;
-        background-color: white;
-        padding: 10px 20px 8px 20px;
-        border-top: 1px solid #e0e0e0;
-        box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
-        z-index: 1000;
-        width: 100%;
-        max-width: 700px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    .stTextInput > div > div > input {
-        border-radius: 20px;
-        padding-right: 40px;
-    }
-    .stButton > button {
-        border-radius: 20px;
-    }
+html, body, #root, .stApp, .streamlit-container {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+.stApp > header, .stApp > footer {
+    visibility: hidden;
+    height: 0px !important;
+}
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 0rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+/* 채팅 메시지 영역 */
+#chat-content-scroll-area {
+    flex-grow: 1;
+    overflow-y: auto !important;   /* 항상 스크롤바 표시 */
+    padding: 10px 0 0 0;
+    scroll-behavior: smooth;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    background: #fff;
+    height: 420px;
+    min-height: 320px;
+    max-height: 520px;
+}
+.message-row {
+    display: flex;
+    margin-bottom: 12px;
+    width: 100%;
+}
+.user-message-row { justify-content: flex-end !important; }
+.user-bubble {
+    background-color: #dcf8c6;
+    color: #111;
+    font-weight: 700 !important;
+    text-align: right !important;
+    align-items: flex-end !important;
+    justify-content: flex-end !important;
+}
+.bot-message-row, .intro-message-row { justify-content: flex-start !important; }
+.bot-bubble {
+    background-color: #e0f7fa;
+    color: #333;
+    font-weight: 400;
+    text-align: left;
+}
+.intro-bubble {
+    background-color: #f6f6fc;
+    color: #252525;
+    box-shadow: 0 2px 6px #eee;
+    font-weight: 400;
+    text-align: left;
+}
+/* 유사 질문 */
+.chat-multi-item {
+    margin-left: 25px;
+    font-size: 0.98em;
+    margin-bottom: 5px;
+}
+/* 입력 폼 고정 */
+.stForm {
+    position: sticky;
+    bottom: 0;
+    background-color: white;
+    padding: 10px 20px 8px 20px;
+    border-top: 1px solid #e0e0e0;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+    z-index: 1000;
+    width: 100%;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.stTextInput > div > div > input {
+    border-radius: 20px;
+    padding-right: 40px;
+}
+.stButton > button {
+    border-radius: 20px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -272,11 +268,11 @@ def display_chat_html_content():
         scroll_iframe_script = """
         <script>
         setTimeout(function () {
-            const anchor = document.getElementById("chat-scroll-anchor");
+            var anchor = document.getElementById("chat-scroll-anchor");
             if (anchor) {
-                anchor.scrollIntoView({ behavior: "smooth" });
+                anchor.scrollIntoView({ behavior: "smooth", block: "end" });
             }
-        }, 100);
+        }, 700);
         </script>
         """
         st.session_state.scroll_to_bottom_flag = False
@@ -291,7 +287,7 @@ def display_chat_html_content():
 components.html(
     display_chat_html_content(),
     height=520,
-    scrolling=True     # 스크롤 표시 활성화
+    scrolling=True
 )
 
 # --- 입력창(폼) — 항상 하단 고정
