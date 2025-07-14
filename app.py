@@ -345,8 +345,8 @@ def display_chat_html_content():
 
 components.html(
     display_chat_html_content(),
-    height=600,
-    scrolling=False
+    height=500,
+    scrolling=True
 )
 
 # ✅ 2. 입력 폼 — 화면 하단에 고정
