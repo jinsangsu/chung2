@@ -58,7 +58,7 @@ html, body, #root, .stApp, .streamlit-container {
     max-width: 700px !important;
 }
 .user-message-row {
-    justify-content: flex-end !important;
+    justify-content: flex-end !important; /* <--- 1. 수정된 부분: 사용자 메시지 오른쪽 정렬 */
     width: 100vw !important;
     max-width: 700px !important;
 }
@@ -277,7 +277,7 @@ def display_chat_html_content():
         if (anchor) {
             anchor.scrollIntoView({ behavior: "smooth", block: "end" });
         }
-    }, 1000);
+    }, 100); /* <--- 2. 수정된 부분: 스크롤 지연시간 1000ms -> 100ms로 변경 */
     </script>
     """
     return f"""
