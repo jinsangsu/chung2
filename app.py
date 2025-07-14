@@ -9,9 +9,6 @@ import os
 from collections import Counter
 import re
 
-from konlpy.tag import Okt
-okt = Okt()
-
 API_URL = "https://chung2.fly.dev/chat"
 
 st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
@@ -161,20 +158,25 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} 이렇게 처리하시면 됩니다!"
 
 def extract_main_keywords(questions, exclude_terms=None, topn=5):
-    # 명사만 추출
+    # konlpy 없이 명사 근사 추출(2~5글자 한글+패턴 필터)
     if exclude_terms is None:
         exclude_terms = []
     exclude_terms_norm = [normalize_text(term) for term in exclude_terms]
     candidate_words = []
+    stopwords = set([
+        "질문", "답변", "경우", "보험", "사장님", "수", "및", "의", "을", "를", "에", "에서", "로", "으로",
+        "이", "가", "도", "는", "한", "해당", "등", "및", "의", "와", "과", "요", "때", "더", "도", "만",
+        "는지", "이상", "사항", "관련", "필요", "있나요", "및", "그런데", "하기", "방법", "내용", "여부", "했는데"
+    ])
     for q in questions:
-        nouns = okt.nouns(q)
-        for n in nouns:
-            n_norm = normalize_text(n)
-            if n_norm in exclude_terms_norm:
+        for w in re.findall(r"[가-힣]{2,5}", q):  # 한글 2~5글자
+            w_norm = normalize_text(w)
+            if w_norm in exclude_terms_norm or w_norm in stopwords:
                 continue
-            if len(n) < 2:
+            # 조사/어미/동사 패턴 끝 필터
+            if re.search(r"(하다|되다|있다|없다|된다|한|는|가|로|을|를|요|고|의|에|과|와|든지|등|까지|까지요|에게|만|이라|거나|에서|로부터|에게서|부터|하는|받는|할까|한가요|하고|되고|인가요)$", w):
                 continue
-            candidate_words.append(n)
+            candidate_words.append(w)
     normalized = [normalize_text(w) for w in candidate_words]
     mapping = {}
     for w, n in zip(candidate_words, normalized):
