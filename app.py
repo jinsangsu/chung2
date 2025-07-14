@@ -208,7 +208,7 @@ def display_chat_html_content():
             chat_html_content += (
                 # 인라인 스타일로 오른쪽 강제
                 '<div class="message-row user-message-row" style="display:flex;justify-content:flex-end;width:100%;">'
-                '<div class="message-bubble user-bubble" style="background:#dcf8c6;color:#111;font-weight:700;text-align:right;margin-left:auto;min-width:80px;display:inline-block;">'
+                '<div class="message-bubble user-bubble" style="background:#dcf8c6;color:#111;font-weight:700;text-align:center;margin-left:auto;min-width:80px;display:inline-block;">'
                 f'{user_question}'
                 '</div></div>'
             )
