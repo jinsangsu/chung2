@@ -154,7 +154,7 @@ def add_friendly_prefix(answer):
     if answer[:7].replace(" ", "").startswith("사장님"):
         return answer
     else:
-        return f"사장님, {answer} 궁금한거 해결되셨나요?!"
+        return f"사장님, {answer}   <br> <strong> 💛궁금한거 해결되셨나요?!😊"</strong>
 
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.3
@@ -202,7 +202,7 @@ def handle_question(question_input):
         if user_txt in ["애순", "애순아"]:
             reply = "안녕하세요, 사장님! 궁금하신 점 언제든 말씀해 주세요 😊"
         else:
-            reply = "사장님! 애순이 항상 곁에 있어요😊 궁금한 건 뭐든 말씀해 주세요!"
+            reply = "사장님! 애순이 항상 곁에 있어요 😊 궁금한 건 뭐든 말씀해 주세요!"
         st.session_state.chat_log.append({
             "role": "bot",
             "content": reply,
