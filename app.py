@@ -12,13 +12,7 @@ st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layou
 # ---- CSS ----
 st.markdown("""
 <style>
-.stForm {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-    background: white; max-width:700px; margin:0 auto;
-    border-top:1px solid #e0e0e0; box-shadow:0 -2px 5px rgba(0,0,0,0.05);
-    padding: 12px 20px 16px 20px;
-}
-.block-container { padding-bottom: 115px !important; }
+.block-container { padding-bottom: 100px !important; }
 .message-row { display:flex; margin-bottom:10px; width:100%;}
 .user-message-row { justify-content: flex-end;}
 .bot-message-row { justify-content: flex-start;}
@@ -29,8 +23,7 @@ st.markdown("""
 .char-img { margin-right: 18px;}
 .char-txt { font-size:1.07em;}
 @media (max-width: 600px) {
-  .block-container { padding-bottom: 170px !important; }
-  .stForm { max-width: 100vw; }
+  .block-container { padding-bottom: 150px !important; }
   .message-bubble { font-size: 1em; }
 }
 </style>
@@ -101,11 +94,11 @@ def render_chat_html():
         bubble_class = "user-bubble" if role == "user" else "bot-bubble"
         row_class = "user-message-row" if role == "user" else "bot-message-row"
         html += f'<div class="message-row {row_class}"><div class="message-bubble {bubble_class}">{msg["content"]}</div></div>'
-    return f"<div style='height:calc(100vh - 310px);overflow-y:auto;padding:10px'>{html}</div>"
+    return f"<div style='height:400px;overflow-y:auto;padding:10px'>{html}</div>"
 
-components.html(render_chat_html(), height=450, scrolling=True)
+components.html(render_chat_html(), height=400, scrolling=True)
 
-# ---- 하단 입력 폼 ----
+# ---- 하단 입력 폼 (position:fixed X) ----
 with st.form("input_form", clear_on_submit=True):
     q = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     if st.form_submit_button("질문하기") and q:
