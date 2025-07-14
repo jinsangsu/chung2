@@ -193,6 +193,8 @@ def handle_question(question_input):
     try:
         records = sheet.get_all_records()
         q_input_norm = normalize_text(user_input)
+        SIMILARITY_THRESHOLD = 0.4  # ← for r in records: 바로 위에 추가
+        matched = []
         for r in records:
              sheet_q_norm = normalize_text(r["질문"])
              if (
