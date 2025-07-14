@@ -154,7 +154,7 @@ def add_friendly_prefix(answer):
     if answer[:7].replace(" ", "").startswith("사장님"):
         return answer
     else:
-        return f"사장님, {answer} 이렇게 처리하시면 됩니다!"
+        return f"사장님, {answer} 궁금한거 해결되셨나요?!"
 
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.3
@@ -244,7 +244,7 @@ def handle_question(question_input):
                 st.session_state.pending_keyword = user_input
                 st.session_state.chat_log.append({
                     "role": "bot",
-                    "content": f"사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요? 예) 한도, 결제, 사용방법 등 궁금한 점을 더 구체적으로 입력해 주세요!",
+                    "content": f"사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요? 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!",
                     "display_type": "pending"
                 })
                 st.session_state.scroll_to_bottom_flag = True
@@ -268,7 +268,7 @@ def handle_question(question_input):
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~ 답변하기가 어려워요. 다시 궁금한거 말씀해 주세요^*^",
+                "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
