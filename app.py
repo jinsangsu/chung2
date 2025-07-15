@@ -3,103 +3,31 @@ import gspread
 from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
 import difflib
-import requests
 import base64
 import os
 import re
 
-API_URL = "https://chung2.fly.dev/chat"
+# 1. [지점 설정 테이블]
+BRANCH_CONFIG = {
+    "gj":    {"bot_name": "은주",    "intro": "광주지점 이쁜이 ‘은주’입니다.",    "image": "eunju_character.webp"},
+    "dj":    {"bot_name": "소원",    "intro": "대전지점 이쁜이 ‘소원’입니다.",    "image": "sowon_character.webp"},
+    "cb":   {"bot_name": "현의",    "intro": "충북지점 엄마 ‘현의’입니다.",    "image": "hyuni_character.webp"},
+    "sc":   {"bot_name": "주희",    "intro": "순천지점 이쁜이 ‘주희’입니다.",    "image": "juhee_character.webp"},
+    "jj":     {"bot_name": "삼숙",    "intro": "전주지점 엄마 ‘삼숙’입니다.",    "image": "samsook_character.webp"},
+    "is":      {"bot_name": "수빈",    "intro": "익산지점 이쁜이 ‘수빈’입니다.",    "image": "subin_character.webp"},
+    "ca":    {"bot_name": "연지",    "intro": "천안지점 희망 ‘연지’입니다.",    "image": "yeonji_character.webp"},
+    "yd":     {"bot_name": "상민",    "intro": "예당지점 이쁜이 ‘상민’입니다.",    "image": "sangmin_character.webp"},
+    "djt2": {"bot_name": "영경",    "intro": "대전TC2지점 이쁜이 ‘영경’입니다.", "image": "youngkyung_character.webp"},
+    "default":    {"bot_name": "애순이",  "intro": "충청호남본부 매니저봇 ‘애순이’입니다.", "image": "managerbot_character.webp"}
+}
 
-st.set_page_config(page_title="애순이 설계사 Q&A", page_icon="💬", layout="centered")
+# 2. [지점 파라미터 추출]
+query_params = st.experimental_get_query_params()
+branch = query_params.get('branch', ['default'])[0].lower()
+config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
 
-st.markdown("""
-<style>
-html, body, #root, .stApp, .streamlit-container {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-}
-.stApp > header, .stApp > footer {
-    visibility: hidden;
-    height: 0px !important;
-}
-.block-container {
-    padding-top: 1rem;
-    padding-bottom: 0rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-}
-#chat-content-scroll-area {
-    flex-grow: 1;
-    overflow-y: auto !important;
-    padding: 10px 0 0 0;
-    scroll-behavior: smooth;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    background: #fff;
-    height: 420px;
-    min-height: 320px;
-    max-width: 700px;
-}
-.message-row {
-    display: flex;
-    margin-bottom: 12px;
-    width: 100vw !important;
-    max-width: 700px !important;
-}
-.bot-message-row, .intro-message-row { justify-content: flex-start !important; }
-.bot-bubble {
-    background-color: #e0f7fa;
-    color: #333;
-    font-weight: 400;
-    text-align: left;
-}
-.intro-bubble {
-    background-color: #f6f6fc;
-    color: #252525;
-    box-shadow: 0 2px 6px #eee;
-    font-weight: 400;
-    text-align: left;
-}
-.chat-multi-item {
-    margin-left: 25px;
-    font-size: 0.98em;
-    margin-bottom: 5px;
-}
-.stForm {
-    position: sticky;
-    bottom: 0;
-    background-color: white;
-    padding: 10px 20px 8px 20px;
-    border-top: 1px solid #e0e0e0;
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
-    z-index: 1000;
-    width: 100%;
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-}
-.stTextInput > div > div > input {
-    border-radius: 20px;
-    padding-right: 40px;
-}
-.stButton > button {
-    border-radius: 20px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-def get_character_img_base64():
-    img_path = "managerbot_character.webp"
+# 3. [캐릭터 이미지 불러오기]
+def get_character_img_base64(img_path):
     if os.path.exists(img_path):
         with open(img_path, "rb") as img_file:
             b64 = base64.b64encode(img_file.read()).decode("utf-8")
@@ -107,17 +35,16 @@ def get_character_img_base64():
     return None
 
 def get_intro_html():
-    char_img = get_character_img_base64()
+    char_img = get_character_img_base64(config["image"])
     img_tag = f'<img src="{char_img}" width="75" style="margin-right:17px; border-radius:16px; border:1px solid #eee;">' if char_img else ''
     return f"""
     <div style="display: flex; align-items: flex-start; margin-bottom:18px;">
         {img_tag}
         <div>
             <h2 style='margin:0 0 8px 0;font-weight:900;'>사장님, 안녕하세요!</h2>
-            <p>저는 앞으로 사장님들 업무를 도와드리는<br>
-            <strong>충청호남본부 매니저봇 ‘애순’</strong>이에요.</p>
+            <p>{config['intro']}</p>
             <p>매니저님께 여쭤보시기 전에<br>
-            저 애순이한테 먼저 물어봐 주세요!<br>
+            저 {config['bot_name']}에게 먼저 물어봐 주세요!<br>
             제가 아는 건 바로, 친절하게 알려드릴게요!</p>
             <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
             늘 옆에서 든든하게 함께하겠습니다.</p>
@@ -126,16 +53,19 @@ def get_intro_html():
     </div>
     """
 
+# 4. [구글시트(공용) 연결]
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     json_key_dict = st.secrets["gcp_service_account"]
     credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
     gc = gspread.authorize(credentials)
+    # ★ 공용 질의응답시트 키만 아래에 넣으세요!
     sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
 except Exception as e:
     st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
 
+# 5. [채팅 세션/로직/FAQ 등 기존 app.py와 동일하게 복붙]
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = [{"role": "intro", "content": "", "display_type": "intro"}]
 if "scroll_to_bottom_flag" not in st.session_state:
@@ -156,6 +86,9 @@ def add_friendly_prefix(answer):
     else:
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
+def handle_question(question_input):
+    SIMILARITY_THRESHOLD = 0.3
+    user_txt = question_input.strip().replace(" ", "").lower()
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.3
     user_txt = question_input.strip().replace(" ", "").lower()
