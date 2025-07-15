@@ -142,7 +142,7 @@ def handle_question(question_input):
             "display_type": "single_answer"
         })
         st.session_state.scroll_to_bottom_flag = True
-        return
+        
 
 # [3] 각 지점 캐릭터 이름(bot_name)도 반응하게 처리
 bot_names = [v["bot_name"] for k, v in BRANCH_CONFIG.items()]
@@ -160,6 +160,7 @@ if any(bot_name in user_txt for bot_name in bot_names):
     })
     st.session_state.scroll_to_bottom_flag = True
     return
+
     # ↓↓↓ Q&A 챗봇 처리 ↓↓↓
     if st.session_state.pending_keyword:
         user_input = st.session_state.pending_keyword + " " + question_input
