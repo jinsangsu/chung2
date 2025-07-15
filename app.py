@@ -22,9 +22,7 @@ BRANCH_CONFIG = {
 }
 
 # 2. [지점 파라미터 추출]
-st.write("st.query_params:", st.query_params)
-branch = st.query_params.get('branch', ['default'])[0]
-st.write("DEBUG - branch:", branch)
+branch = st.query_params.get('branch', ['default'])[0]   # <-- 오로지 이 한 줄!
 branch = branch.lower() if branch else "default"
 st.write("DEBUG - 최종 branch:", branch)
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
