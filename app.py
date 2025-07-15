@@ -261,7 +261,7 @@ def display_chat_html_content():
                     a = entry["content"].get('a', '').replace('\n', '<br>')
                     chat_html_content += (
                         '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
-                        f"<p style='margin-bottom: 8px;'><strong style='color:#0074d9;'>질문: {q}</strong></p>"
+                        f"<p style='margin-bottom: 8px;'><strong style='color:#003399;'>질문: {q}</strong></p>"
                         f"<p>👉 <strong>답변:</strong> {a}</p>"
                         '</div></div>'
                     )
@@ -281,7 +281,7 @@ def display_chat_html_content():
                         a = pair['a'].replace('\n', '<br>')
                         chat_html_content += f"""
                         <p class='chat-multi-item' style="margin-bottom: 10px;">
-                            <strong style="color:#0074d9;">{i+1}. 질문: {q}</strong><br>
+                            <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
                             👉 <strong>답변:</strong> {a}
                         </p>
                         """
@@ -290,7 +290,7 @@ def display_chat_html_content():
                     a = entry["content"].get('a', '').replace('\n', '<br>')
                     chat_html_content += f"""
                         <p class='chat-multi-item' style="margin-bottom: 10px;">
-                            <strong style="color:#0074d9;">{i+1}. 질문: {q}</strong><br>
+                            <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
                             👉 <strong>답변:</strong> {a}
                         </p>
                         """
