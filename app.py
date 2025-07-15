@@ -89,7 +89,9 @@ def get_intro_html():
             예를들면 자동차, 카드, 자동이체등...제가 아는 건 바로, 친절하게 알려드릴게요!</p>
             <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
             늘 옆에서 든든하게 함께하겠습니다.</p>
-            <strong style="font-weight:900; color:#003399;">잘 부탁드려요! 유지율 잘 챙겨주세요~~~😊</strong>
+            <strong style="font-weight:900; color:#D32F2F; font-family:'NanumSquare','맑은 고딕','Malgun Gothic',sans-serif;">
+잘 부탁드려요! 유지율 잘 챙겨주세요~~~😊
+</strong>
             <strong style="font-weight:900; color:#003399;">사장님!! 오늘도 화이팅!!!</strong>
         </div>
     </div>
