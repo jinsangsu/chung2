@@ -124,42 +124,42 @@ def handle_question(question_input):
             })
             st.session_state.scroll_to_bottom_flag = True
             return
-
-    # [2] "애순"이 들어간 인삿말 (기존대로)
-    if "애순" in user_txt:
-        st.session_state.chat_log.append({
-            "role": "user",
-            "content": question_input,
-            "display_type": "question"
-        })
-        if user_txt in ["애순", "애순아"]:
-            reply = "안녕하세요, 사장님! 궁금하신 점 언제든 말씀해 주세요 😊"
-        else:
-            reply = "사장님! 애순이 항상 곁에 있어요 😊 궁금한 건 뭐든 말씀해 주세요!"
-        st.session_state.chat_log.append({
-            "role": "bot",
-            "content": reply,
-            "display_type": "single_answer"
-        })
-        st.session_state.scroll_to_bottom_flag = True
-        
-
-# [3] 각 지점 캐릭터 이름(bot_name)도 반응하게 처리
-bot_names = [v["bot_name"] for k, v in BRANCH_CONFIG.items()]
-if any(bot_name in user_txt for bot_name in bot_names):
+# [2] "애순"이 들어간 인삿말 (기존 + return 추가!)
+   if "애순" in user_txt:
     st.session_state.chat_log.append({
         "role": "user",
         "content": question_input,
         "display_type": "question"
     })
-    reply = f"안녕하세요, 사장님! 저는 항상 곁에 있는 {config['bot_name']}입니다 😊 궁금한 건 뭐든 말씀해 주세요!"
+    if user_txt in ["애순", "애순아"]:
+        reply = "안녕하세요, 사장님! 궁금하신 점 언제든 말씀해 주세요 😊"
+    else:
+        reply = "사장님! 애순이 항상 곁에 있어요 😊 궁금한 건 뭐든 말씀해 주세요!"
     st.session_state.chat_log.append({
         "role": "bot",
         "content": reply,
         "display_type": "single_answer"
     })
     st.session_state.scroll_to_bottom_flag = True
-    return
+    return  # ✅ 여기 추가 중요!
+
+# [3] 각 지점 캐릭터 이름(bot_name)도 반응하게 처리
+bot_names = [v["bot_name"] for k, v in BRANCH_CONFIG.items()]
+for bot_name in bot_names:
+    if bot_name in user_txt:
+        st.session_state.chat_log.append({
+            "role": "user",
+            "content": question_input,
+            "display_type": "question"
+        })
+        reply = f"안녕하세요, 사장님! 저는 항상 곁에 있는 {bot_name}입니다 😊 궁금한 건 뭐든 말씀해 주세요!"
+        st.session_state.chat_log.append({
+            "role": "bot",
+            "content": reply,
+            "display_type": "single_answer"
+        })
+        st.session_state.scroll_to_bottom_flag = True
+        return
 
     # ↓↓↓ Q&A 챗봇 처리 ↓↓↓
     if st.session_state.pending_keyword:
