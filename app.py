@@ -22,18 +22,10 @@ BRANCH_CONFIG = {
 }
 
 # 2. [지점 파라미터 추출]
-def get_branch_name():
-    # 쿼리 파라미터 우선
-    branch = st.query_params.get('branch', [None])[0]
-    if branch:
-        return branch.lower()
-    # URL Path 지원 (Streamlit 서버 환경변수 활용)
-    path = os.environ.get('STREAMLIT_SERVER_REQUESTS_PATH', '').lstrip('/')
-    if path:
-        return path.split('/')[0].lower()
-    return "default"
-branch = get_branch_name()
+branch = st.query_params.get('branch', ['default'])[0]
+branch = branch.lower() if branch else "default"
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
+
 # 3. [캐릭터 이미지 불러오기]
 def get_character_img_base64(img_path):
     if os.path.exists(img_path):
