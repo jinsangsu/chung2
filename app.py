@@ -24,9 +24,9 @@ BRANCH_CONFIG = {
 # 2. [지점 파라미터 추출]
 branch = st.query_params.get('branch', ['default'])   # <-- 오로지 이 한 줄!
 branch = branch.lower() if branch else "default"
-st.write("DEBUG - 최종 branch:", branch)
+
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
-st.write("DEBUG - config:", config)
+
 
 # 3. [캐릭터 이미지 불러오기]
 def get_character_img_base64(img_path):
