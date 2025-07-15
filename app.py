@@ -9,16 +9,16 @@ import re
 
 # 1. [지점 설정 테이블]
 BRANCH_CONFIG = {
-    "gj":    {"bot_name": "은주",    "intro": "광주지점 이쁜이 ‘은주’입니다.",    "image": "eunju_character.webp"},
-    "dj":    {"bot_name": "소원",    "intro": "대전지점 이쁜이 ‘소원’입니다.",    "image": "sowon_character.webp"},
-    "cb":   {"bot_name": "현의",    "intro": "충북지점 엄마 ‘현의’입니다.",    "image": "hyuni_character.webp"},
-    "sc":   {"bot_name": "주희",    "intro": "순천지점 이쁜이 ‘주희’입니다.",    "image": "juhee_character.webp"},
-    "jj":     {"bot_name": "삼숙",    "intro": "전주지점 엄마 ‘삼숙’입니다.",    "image": "samsook_character.webp"},
-    "is":      {"bot_name": "수빈",    "intro": "익산지점 이쁜이 ‘수빈’입니다.",    "image": "subin_character.webp"},
-    "ca":    {"bot_name": "연지",    "intro": "천안지점 희망 ‘연지’입니다.",    "image": "yeonji_character.webp"},
-    "yd":     {"bot_name": "상민",    "intro": "예당지점 이쁜이 ‘상민’입니다.",    "image": "sangmin_character.webp"},
-    "djt2": {"bot_name": "영경",    "intro": "대전TC2지점 이쁜이 ‘영경’입니다.", "image": "youngkyung_character.webp"},
-    "default":    {"bot_name": "애순이",  "intro": "충청호남본부 매니저봇 ‘애순이’입니다.", "image": "managerbot_character.webp"}
+    "gj":    {"bot_name": "은주",    "intro": "광주지점 이쁜이 ‘은주’입니다.❤️",    "image": "eunju_character.webp"},
+    "dj":    {"bot_name": "소원",    "intro": "대전지점 이쁜이 ‘소원’입니다.❤️",    "image": "sowon_character.webp"},
+    "cb":   {"bot_name": "현의",    "intro": "충북지점 엄마 ‘현의’입니다.❤️",    "image": "hyuni_character.webp"},
+    "sc":   {"bot_name": "주희",    "intro": "순천지점 이쁜이 ‘주희’입니다❤️.",    "image": "juhee_character.webp"},
+    "jj":     {"bot_name": "삼숙",    "intro": "전주지점 엄마 ‘삼숙’입니다.❤️",    "image": "samsook_character.webp"},
+    "is":      {"bot_name": "수빈",    "intro": "익산지점 이쁜이 ‘수빈’입니다.❤️",    "image": "subin_character.webp"},
+    "ca":    {"bot_name": "연지",    "intro": "천안지점 희망 ‘연지’입니다.❤️",    "image": "yeonji_character.webp"},
+    "yd":     {"bot_name": "상민",    "intro": "예당지점 이쁜이 ‘상민’입니다.❤️",    "image": "sangmin_character.webp"},
+    "djt2": {"bot_name": "영경",    "intro": "대전TC2지점 이쁜이 ‘영경’입니다.❤️", "image": "youngkyung_character.webp"},
+    "default":    {"bot_name": "애순이",  "intro": "충청호남본부 매니저봇 ‘애순이’입니다.❤️", "image": "managerbot_character.webp"}
 }
 
 # 2. [지점 파라미터 추출]
@@ -44,7 +44,7 @@ def get_intro_html():
             <h2 style='margin:0 0 8px 0;font-weight:900;'>사장님, 안녕하세요!</h2>
             <p>{config['intro']}</p>
             <p>저에게 오시기전에 <br>
-            여기에서 먼저 물어봐 주세요! 궁금하신거 단어를 입력하시면 되여❤️<br>
+            여기에서 먼저 물어봐 주세요! 궁금하신거 단어를 입력하시면 되여<br>
             예를들면 자동차, 카드, 자동이체등...제가 아는 건 바로, 친절하게 알려드릴게요!</p>
             <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
             늘 옆에서 든든하게 함께하겠습니다.</p>
