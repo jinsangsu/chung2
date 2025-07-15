@@ -56,9 +56,9 @@ BRANCH_CONFIG = {
     "yd":     {"bot_name": "상민",    "intro": "예당지점 이쁜이 ‘상민’입니다.❤️",    "image": "sangmin_character.webp"},
     "djt2": {"bot_name": "영경",    "intro": "대전TC2지점 이쁜이 ‘영경’입니다.❤️", "image": "youngkyung_character.webp"},
     "ctc": {"bot_name": "유림",    "intro": "청주TC지점 이쁜이 ‘유림’입니다.❤️", "image": "youlim_character.webp"},
-    "scj": {"bot_name": "혜련",    "intro": "안녕하세요~ 서청주지점 꽃 ‘혜련’이에요❤️", "image": "heryun_character.webp"},
-    "yst": {"bot_name": "영주",    "intro": "안녕하세요~ 유성TC지점 이쁜이 ‘영주’에요❤️", "image": "youngju_character.webp"},
-    "gs": {"bot_name": "혜진",    "intro": "안녕하세요~ 군산지점 이쁜이 ‘’혜진이에요❤️", "image": "hejin_character.webp"},
+    "scj": {"bot_name": "혜련",    "intro": "서청주지점 꽃 ‘혜련’이에요❤️", "image": "heryun_character.webp"},
+    "yst": {"bot_name": "영주",    "intro": "유성TC지점 이쁜이 ‘영주’에요❤️", "image": "youngju_character.webp"},
+    "gs": {"bot_name": "혜진",    "intro": "군산지점 이쁜이 ‘’혜진이에요❤️", "image": "hejin_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 매니저봇 ‘애순이’입니다.❤️", "image": "managerbot_character.webp"}
 }
 
@@ -85,10 +85,11 @@ def get_intro_html():
             <h2 style='margin:0 0 8px 0;font-weight:900;'>사장님, 안녕하세요!</h2>
             <p>{config['intro']}</p>
             <p>저에게 오시기전에 <br>
-            여기에서 먼저 물어봐 주세요! 궁금하신거 단어를 입력하시면 되여^*^<br>
-            예를들면 자동차, 카드, 자동이체등...제가 아는 건 바로, 친절하게 알려드릴게요!</p>
-            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>
-            늘 옆에서 든든하게 함께하겠습니다.</p>
+            여기에서 먼저 물어봐 주세요! <br>
+            궁금하신 단어를 입력하시면 되여^*^</p>
+            <p>예를들면 자동차, 카드, 자동이체등...제가 아는 건 바로, 친절하게 알려드릴게요!</p>
+            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록</p>
+            <p>늘 옆에서 든든하게 함께하겠습니다.</p>
             <strong style="font-weight:900; color:#D32F2F; font-family:'NanumSquare','맑은 고딕','Malgun Gothic',sans-serif;">
 잘 부탁드려요! 유지율 잘 챙겨주세요~~~😊
 </strong>
