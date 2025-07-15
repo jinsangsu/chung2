@@ -22,7 +22,7 @@ BRANCH_CONFIG = {
 }
 
 # 2. [지점 파라미터 추출]
-query_params = st.experimental_get_query_params()
+query_params = st.query_params
 branch = query_params.get('branch', ['default'])[0].lower()
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
 
