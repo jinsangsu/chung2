@@ -18,6 +18,7 @@ BRANCH_CONFIG = {
     "ca":    {"bot_name": "연지",    "intro": "천안지점 희망 ‘연지’입니다.❤️",    "image": "yeonji_character.webp"},
     "yd":     {"bot_name": "상민",    "intro": "예당지점 이쁜이 ‘상민’입니다.❤️",    "image": "sangmin_character.webp"},
     "djt2": {"bot_name": "영경",    "intro": "대전TC2지점 이쁜이 ‘영경’입니다.❤️", "image": "youngkyung_character.webp"},
+    "cjt": {"bot_name": "유림",    "intro": "청주TC지점 이쁜이 ‘유림’입니다.❤️", "image": "youlim_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 매니저봇 ‘애순이’입니다.❤️", "image": "managerbot_character.webp"}
 }
 
