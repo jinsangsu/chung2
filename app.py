@@ -58,6 +58,7 @@ BRANCH_CONFIG = {
     "ctc": {"bot_name": "유림",    "intro": "청주TC지점 이쁜이 ‘유림’입니다.❤️", "image": "youlim_character.webp"},
     "scj": {"bot_name": "혜련",    "intro": "안녕하세요~ 서청주지점 꽃 ‘혜련’이에요❤️", "image": "heryun_character.webp"},
     "yst": {"bot_name": "영주",    "intro": "안녕하세요~ 유성TC지점 이쁜이 ‘영주’에요❤️", "image": "youngju_character.webp"},
+    "gs": {"bot_name": "혜진",    "intro": "안녕하세요~ 군산지점 이쁜이 ‘’혜진이에요❤️", "image": "hejin_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 매니저봇 ‘애순이’입니다.❤️", "image": "managerbot_character.webp"}
 }
 
