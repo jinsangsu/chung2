@@ -22,8 +22,22 @@ BRANCH_CONFIG = {
 }
 
 # 2. [지점 파라미터 추출]
-query_params = st.query_params
-branch = query_params.get('branch', ['default'])[0].lower()
+def get_branch_name():
+    # 1. 쿼리 파라미터 우선
+    query_params = st.query_params
+    branch = query_params.get('branch', [None])[0]
+    if branch:
+        return branch.lower()
+    # 2. 경로에서 추출 (예: /gj, /dj 등)
+    if "PATH_INFO" in st.session_state.get('_server', {}).get('environ', {}):
+        path = st.session_state._server.environ["PATH_INFO"]
+        path = path.lstrip("/").split("/")[0]
+        if path:
+            return path.lower()
+    # 3. 없으면 default
+    return "default"
+
+branch = get_branch_name()
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
 
 # 3. [캐릭터 이미지 불러오기]
