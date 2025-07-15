@@ -7,6 +7,43 @@ import base64
 import os
 import re
 
+st.markdown("""
+<style>
+/* 전체 앱 상단·하단 공백 최소화 */
+.stApp {
+    padding-top: 0px !important;
+    margin-top: 0px !important;
+    padding-bottom: 0px !important;
+    margin-bottom: 0px !important;
+    background-color: #fff;
+}
+/* 모든 컨테이너 및 블록 공백 축소 */
+.block-container, .element-container, .stContainer, .stMarkdown, .stHeader, .stSubheader, .stTextInput, .stTextArea, .stButton {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+}
+/* columns(이미지+인사말) 좌우 여백도 최소화 */
+.stColumns {
+    gap: 8px !important;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+}
+/* 인사말 영역, 캐릭터 영역도 공란 최소 */
+.intro-container {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    padding-top: 0px !important;
+    padding-bottom: 0px !important;
+}
+/* hr(구분선) 공란 최소 */
+hr {
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 # 1. [지점 설정 테이블]
 BRANCH_CONFIG = {
     "gj":    {"bot_name": "은주",    "intro": "광주지점 이쁜이 ‘은주’입니다.❤️",    "image": "eunju_character.webp"},
