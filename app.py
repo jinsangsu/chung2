@@ -281,7 +281,7 @@ def display_chat_html_content():
                         a = pair['a'].replace('\n', '<br>')
                         chat_html_content += f"""
                         <p class='chat-multi-item' style="margin-bottom: 10px;">
-                            <strong>{i+1}. 질문:</strong> {q}<br>
+                            <strong style="color:#0074d9;">{i+1}. 질문: {q}</strong><br>
                             👉 <strong>답변:</strong> {a}
                         </p>
                         """
