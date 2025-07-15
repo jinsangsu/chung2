@@ -23,23 +23,17 @@ BRANCH_CONFIG = {
 
 # 2. [지점 파라미터 추출]
 def get_branch_name():
-    # 1. 쿼리 파라미터 우선
-    query_params = st.query_params
-    branch = query_params.get('branch', [None])[0]
+    # 쿼리 파라미터 우선
+    branch = st.query_params.get('branch', [None])[0]
     if branch:
         return branch.lower()
-    # 2. 경로에서 추출 (예: /gj, /dj 등)
-    if "PATH_INFO" in st.session_state.get('_server', {}).get('environ', {}):
-        path = st.session_state._server.environ["PATH_INFO"]
-        path = path.lstrip("/").split("/")[0]
-        if path:
-            return path.lower()
-    # 3. 없으면 default
+    # URL Path 지원 (Streamlit 서버 환경변수 활용)
+    path = os.environ.get('STREAMLIT_SERVER_REQUESTS_PATH', '').lstrip('/')
+    if path:
+        return path.split('/')[0].lower()
     return "default"
-
 branch = get_branch_name()
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
-
 # 3. [캐릭터 이미지 불러오기]
 def get_character_img_base64(img_path):
     if os.path.exists(img_path):
