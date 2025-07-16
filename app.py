@@ -59,7 +59,7 @@ BRANCH_CONFIG = {
     "scj": {"bot_name": "혜련",    "intro": "서청주지점 꽃 ‘혜련’이에요❤️", "image": "heryun_character.webp"},
     "yst": {"bot_name": "영주",    "intro": "유성TC지점 이쁜이 ‘영주’에요❤️", "image": "youngju_character.webp"},
     "gs": {"bot_name": "혜진",    "intro": "군산지점 이쁜이 ‘’혜진이에요❤️", "image": "hejin_character.webp"},
-    "default":    {"bot_name": "애순이",  "intro": "충청호남본부 매니저봇 ‘애순이’입니다.❤️", "image": "managerbot_character.webp"}
+    "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
 }
 
 # 2. [지점 파라미터 추출]
@@ -82,16 +82,17 @@ def get_intro_html():
     <div style="display: flex; align-items: flex-start; margin-bottom:18px;">
         {img_tag}
         <div>
-            <h2 style='margin:0 0 8px 0;font-weight:900;'>사장님, 안녕하세요!</h2>
+            <h2 style='margin:0 0 8px 0;font-weight:800;'>사장님, 안녕하세요!</h2>
             <p>{config['intro']}</p>
-            <p>저에게 오시기전에 <br>
+            <p>궁금하신거 있으시면 <br>
             여기에서 먼저 물어봐 주세요! <br>
-            궁금하신 단어를 입력하시면 되여^*^</p>
-            <p>예를들면 자동차, 카드, 자동이체등...제가 아는 건 바로, 친절하게 알려드릴게요!</p>
+            궁금하신 단어나 내용을 입력하시면 되여^*^</p>
+            <p>예를들면 자동차, 카드등록, 자동이체등...<br>
+            제가 아는 건 바로, 친절하게 알려드릴게요!</p>
             <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록</p>
             <p>늘 옆에서 든든하게 함께하겠습니다.</p>
             <strong style="font-weight:900; color:#D32F2F; font-family:'NanumSquare','맑은 고딕','Malgun Gothic',sans-serif;">
-잘 부탁드려요! 유지율 잘 챙겨주세요~~~😊
+잘 부탁드려요! 유지율도 조금만 더 챙겨주세요^*^😊
 </strong>
             <strong style="font-weight:900; color:#003399;">사장님!! 오늘도 화이팅!!!</strong>
         </div>
