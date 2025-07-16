@@ -82,18 +82,18 @@ def get_intro_html():
     <div style="display: flex; align-items: flex-start; margin-bottom:18px;">
         {img_tag}
         <div>
-            <h2 style='margin:0 0 8px 0;font-weight:800;'>사장님, 안녕하세요!</h2>
+            <h2 style='margin:0 0 8px 0;font-weight:700;'>사장님, 안녕하세요!!</h2>
             <p>{config['intro']}</p>
             <p>궁금하신거 있으시면 <br>
             여기에서 먼저 물어봐 주세요! <br>
-            궁금하신 단어나 내용을 입력하시면 되여^*^</p>
+            궁금하신 내용을 입력하시면 되여~</p>
             <p>예를들면 자동차, 카드등록, 자동이체등...<br>
-            제가 아는 건 바로, 친절하게 알려드릴게요!</p>
-            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록</p>
-            <p>늘 옆에서 든든하게 함께하겠습니다.</p>
-            <strong style="font-weight:900; color:#D32F2F; font-family:'NanumSquare','맑은 고딕','Malgun Gothic',sans-serif;">
-잘 부탁드려요! 유지율도 조금만 더 챙겨주세요^*^😊
-</strong>
+            제가 아는 건 친절하게 알려드릴게요!</p>
+            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
+            늘 옆에서 든든하게 함께하겠습니다.</p>
+            <p><strong style="font-weight:900; color:#D32F2F; font-family:'NanumSquare','맑은 고딕','Malgun Gothic',sans-serif;">
+유지율도 조금만 더 챙겨주세요^*^😊
+</strong></p>
             <strong style="font-weight:900; color:#003399;">사장님!! 오늘도 화이팅!!!</strong>
         </div>
     </div>
