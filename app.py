@@ -494,5 +494,5 @@ with st.form("input_form", clear_on_submit=True):
     submitted = st.form_submit_button("질문하기")
 
     if submitted and question_input:
-        handle_question(question_input)
+        st.session_state["pending_question"] = question_input
         st.rerun()
