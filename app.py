@@ -464,7 +464,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
 
             const input = window.parent.document.querySelector('textarea, input[type=text]');
             const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-            setter.call(input, transcript);
+            setter.call(input, fullTranscript);
             input.dispatchEvent(new Event('input', { bubbles: true }));
 
             document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
