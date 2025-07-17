@@ -427,6 +427,38 @@ components.html(
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+    components.html("""
+        <button onclick="startDictation()" style="padding: 8px 20px; font-size: 16px; margin-top:10px; background-color:#003399; color:white; border:none; border-radius:10px;">
+            🎙 마이크로 질문
+        </button>
+        <script>
+        function startDictation() {
+            if (window.hasOwnProperty('webkitSpeechRecognition')) {
+                var recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = "ko-KR";
+                recognition.start();
+
+                recognition.onresult = function(e) {
+                    const text = e.results[0][0].transcript;
+                    const input = window.parent.document.querySelector('textarea, input[type=text]');
+                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                    nativeInputValueSetter.call(input, text);
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    recognition.stop();
+                };
+
+                recognition.onerror = function(e) {
+                    recognition.stop();
+                    alert("🎤 음성 인식에 실패했어요: " + e.error);
+                };
+            } else {
+                alert("⚠️ 현재 브라우저는 음성 인식을 지원하지 않아요. 크롬을 사용해주세요.");
+            }
+        }
+        </script>
+    """, height=100)
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
         handle_question(question_input)
