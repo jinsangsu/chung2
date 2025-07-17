@@ -307,12 +307,12 @@ def handle_question(question_input):
             bot_display_type = "multi_answer"
         else:
             # [3] 답변이 아예 없을 때 안내멘트
-            ai_reply = call_gpt_proxy(question_input)
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": ai_reply,
-                "display_type": "llm_answer"
+                "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
+                "display_type": "single_answer"
             })
+
             st.session_state.scroll_to_bottom_flag = True
             return
 
