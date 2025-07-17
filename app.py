@@ -434,65 +434,66 @@ with st.form("input_form", clear_on_submit=True):
 
     # 🎙 음성 인식 버튼 먼저 출력
     components.html("""
-    <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
-        <button id="mic-button" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
-            🎙 음성으로 질문
-        </button>
-        <button id="stop-button" style="padding: 10px 20px; font-size: 16px; background-color:#cccccc; color:black; border:none; border-radius:10px;">
-            ⛔️ 멈추기
-        </button>
-    </div>
+<div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+    <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
+        🎤 음성 인식
+    </button>
+    <button id="submitQuestion" style="padding: 10px 20px; font-size: 16px; background-color:#FFD700; color:black; border:none; border-radius:10px;">
+        질문하기
+    </button>
+</div>
+<div id="speech_status" style="color:gray; font-size:0.9em; margin-top:5px;"></div>
 
-    <script>
-    let recognition;
-    let keepListening = false;
+<script>
+let isRecording = false;
+let recognition;
 
-    function startDictation() {
-        if (!('webkitSpeechRecognition' in window)) {
-            alert("⚠️ 현재 브라우저는 음성 인식을 지원하지 않아요. 크롬을 사용해주세요.");
-            return;
-        }
-
+document.getElementById("toggleRecord").addEventListener("click", function () {
+    if (!isRecording) {
         recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
         recognition.lang = "ko-KR";
+        recognition.interimResults = false;
+        recognition.continuous = false;
 
-        recognition.onresult = function(e) {
-            const text = e.results[0][0].transcript;
+        recognition.onresult = function (event) {
+            let transcript = event.results[0][0].transcript;
             const input = window.parent.document.querySelector('textarea, input[type=text]');
             const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-            setter.call(input, text);
+            setter.call(input, transcript);
             input.dispatchEvent(new Event('input', { bubbles: true }));
-            alert("✅ 음성 입력이 완료되었어요! '질문하기' 버튼을 눌러주세요.");
+
+            document.getElementById("speech_status").innerText = "🎤 음성 입력 완료!";
         };
 
-        recognition.onend = function() {
-            if (keepListening) {
-                setTimeout(() => recognition.start(), 500);
-            }
+        recognition.onerror = function (e) {
+            document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
+            isRecording = false;
+            document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
         };
 
-        recognition.onerror = function(e) {
-            console.error("음성인식 오류:", e);
-            recognition.stop();
+        recognition.onend = function () {
+            isRecording = false;
+            document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
         };
 
         recognition.start();
-        keepListening = true;
-    }
+        isRecording = true;
+        document.getElementById("toggleRecord").innerText = "🛑 멈추기";
 
-    function stopDictation() {
-        keepListening = false;
-        if (recognition) {
-            recognition.stop();
-        }
+    } else {
+        recognition.stop();
+        isRecording = false;
+        document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+        document.getElementById("speech_status").innerText = "🛑 음성 인식이 종료되었습니다.";
     }
+});
 
-    document.getElementById("mic-button").onclick = startDictation;
-    document.getElementById("stop-button").onclick = stopDictation;
-    </script>
-    """, height=120)
+document.getElementById("submitQuestion").addEventListener("click", function () {
+    const submitBtn = window.parent.document.querySelector('button[kind="primary"]');
+    if (submitBtn) submitBtn.click();
+});
+</script>
+""", height=150)
 
     # ⬇️ 질문하기 버튼은 가장 아래로 위치
     submitted = st.form_submit_button("질문하기")
