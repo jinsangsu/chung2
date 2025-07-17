@@ -418,6 +418,10 @@ def display_chat_html_content():
     </div>
     {scroll_iframe_script}
     """
+# ✅ [1] rerun 이후 질문 처리 (꼭 맨 위 또는 form 바깥에 위치)
+if "pending_question" in st.session_state:
+    handle_question(st.session_state["pending_question"])
+    del st.session_state["pending_question"]
 
 components.html(
     display_chat_html_content(),
