@@ -6,6 +6,25 @@ import difflib
 import base64
 import os
 import re
+import requests  # 이미 있을 수 있음
+
+# [GPT 프록시 서버 호출 함수 추가]
+def call_gpt_proxy(prompt):
+    try:
+        response = requests.post(
+            "https://chung2.fly.dev/chat",  # 프록시 서버 주소
+            json={"message": prompt},
+            headers={"Content-Type": "application/json"},
+            timeout=20
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return data["reply"] if "reply" in data else "응답 형식이 올바르지 않아요."
+        else:
+            return f"서버 오류: {response.status_code} - {response.text}"
+    except Exception as e:
+        return f"요청 실패: {e}"
+
 
 #다크모드라이트모드적용
 st.markdown("""
@@ -288,13 +307,15 @@ def handle_question(question_input):
             bot_display_type = "multi_answer"
         else:
             # [3] 답변이 아예 없을 때 안내멘트
+            ai_reply = call_gpt_proxy(question_input)
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
-                "display_type": "single_answer"
+                "content": ai_reply,
+                "display_type": "llm_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
             return
+
         if len(matched) > 0:
             st.session_state.chat_log.append({
                 "role": "bot",
@@ -397,6 +418,10 @@ def display_chat_html_content():
     </div>
     {scroll_iframe_script}
     """
+# ✅ [1] rerun 이후 질문 처리 (꼭 맨 위 또는 form 바깥에 위치)
+if "pending_question" in st.session_state:
+    handle_question(st.session_state["pending_question"])
+    del st.session_state["pending_question"]
 
 components.html(
     display_chat_html_content(),
@@ -406,7 +431,83 @@ components.html(
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+
+    # 🎙 음성 인식 버튼 먼저 출력
+    components.html("""
+<div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+    <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
+        🎤 음성 인식
+    </button>
+    <button id="submitQuestion" style="padding: 10px 20px; font-size: 16px; background-color:#FFD700; color:black; border:none; border-radius:10px;">
+        질문하기
+    </button>
+</div>
+<div id="speech_status" style="color:gray; font-size:0.9em; margin-top:5px;"></div>
+
+<script>
+let isRecording = false;
+let recognition;
+
+document.getElementById("toggleRecord").addEventListener("click", function () {
+    if (!isRecording) {
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = "ko-KR";
+        recognition.interimResults = false;
+        recognition.continuous = true;
+
+        let fullTranscript = "";
+        recognition.onresult = function (event) {
+            fullTranscript = "";
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                 fullTranscript += event.results[i][0].transcript;
+            }
+
+            const input = window.parent.document.querySelector('textarea, input[type=text]');
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+            setter.call(input, fullTranscript);
+            input.dispatchEvent(new Event('input', { bubbles: true }));  
+            input.focus();
+            document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
+        };
+            
+        recognition.onerror = function (e) {
+            document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
+            isRecording = false;
+            document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+        };
+
+        recognition.onend = function () {
+            document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+            isRecording = false;
+        };
+
+        recognition.start();
+        isRecording = true;
+        document.getElementById("toggleRecord").innerText = "🛑 멈추기";
+
+    } else {
+        recognition.stop();
+        isRecording = false;
+        document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+        document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
+    }
+});
+
+document.getElementById("submitQuestion").addEventListener("click", function () {
+    const input = window.parent.document.querySelector('textarea, input[type=text]');
+    const form = input.closest("form");
+    if (form) {
+        form.dispatchEvent(new Event('submit', { bubbles: true }));
+    }
+});
+</script>
+""", height=180)
+
+    # ⬇️ 질문하기 버튼은 가장 아래로 위치
     submitted = st.form_submit_button("질문하기")
+
     if submitted and question_input:
-        handle_question(question_input)
+        st.session_state["pending_question"] = question_input
         st.rerun()
+
+
