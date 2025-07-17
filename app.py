@@ -453,7 +453,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
         recognition = new webkitSpeechRecognition();
         recognition.lang = "ko-KR";
         recognition.interimResults = false;
-        recognition.continuous = false;
+        recognition.continuous = true;
 
         recognition.onresult = function (event) {
             let transcript = event.results[0][0].transcript;
@@ -472,8 +472,8 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
         };
 
         recognition.onend = function () {
-            isRecording = false;
             document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+            isRecording = false;
         };
 
         recognition.start();
@@ -484,16 +484,19 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
         recognition.stop();
         isRecording = false;
         document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
-        document.getElementById("speech_status").innerText = "🛑 음성 인식이 종료되었습니다.";
+        document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
     }
 });
 
 document.getElementById("submitQuestion").addEventListener("click", function () {
-    const submitBtn = window.parent.document.querySelector('button[kind="primary"]');
-    if (submitBtn) submitBtn.click();
+    const input = window.parent.document.querySelector('textarea, input[type=text]');
+    const form = input.closest("form");
+    if (form) {
+        form.dispatchEvent(new Event('submit', { bubbles: true }));
+    }
 });
 </script>
-""", height=150)
+""", height=180)
 
     # ⬇️ 질문하기 버튼은 가장 아래로 위치
     submitted = st.form_submit_button("질문하기")
