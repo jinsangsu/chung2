@@ -495,5 +495,4 @@ with st.form("input_form", clear_on_submit=True):
 
     if submitted and question_input:
         handle_question(question_input)
-        st.session_state["input_box"] = ""
         st.rerun()
