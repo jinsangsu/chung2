@@ -13,11 +13,12 @@ def call_gpt_proxy(prompt):
     try:
         response = requests.post(
             "https://chung2.fly.dev/chat",  # 프록시 서버 주소
-            json={"prompt": prompt},
+            json={"message": prompt},
             timeout=20
         )
         if response.status_code == 200:
-            return response.json().get("reply", "죄송해요, 답변을 가져오지 못했어요.")
+            data = response.json()
+            return data["reply"] if "reply" in data else "응답 형식이 올바르지 않아요."
         else:
             return f"서버 오류: {response.status_code}"
     except Exception as e:
