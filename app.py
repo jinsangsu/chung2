@@ -467,9 +467,3 @@ with st.form("input_form", clear_on_submit=True):
     });
     </script>
     """, height=160)
-
-    # 3. 질문하기 버튼 (form 안)
-    submitted = st.form_submit_button("질문하기")
-    if submitted and question_input:
-        st.session_state["pending_question"] = question_input
-        st.rerun()
