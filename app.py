@@ -8,48 +8,28 @@ import os
 import re
 import requests  # 이미 있을 수 있음
 
-# [GPT 프록시 서버 호출 함수 추가]
-def call_gpt_proxy(prompt):
-    try:
-        response = requests.post(
-            "https://chung2.fly.dev/chat",  # 프록시 서버 주소
-            json={"message": prompt},
-            headers={"Content-Type": "application/json"},
-            timeout=20
-        )
-        if response.status_code == 200:
-            data = response.json()
-            return data["reply"] if "reply" in data else "응답 형식이 올바르지 않아요."
-        else:
-            return f"서버 오류: {response.status_code} - {response.text}"
-    except Exception as e:
-        return f"요청 실패: {e}"
 
 
 #다크모드라이트모드적용
 st.markdown("""
 <style>
-/* 다크모드/라이트모드 자동 전환 CSS */
-@media (prefers-color-scheme: dark) {
-    .stApp {
-        background-color: #1A1A1A !important;   /* 다크 배경 */
-        color: #eee !important;                /* 다크 글씨 */
-    }
-    html, body, .stTextInput>div>div>input, .stTextArea>div>textarea,
-    .stForm, .stMarkdown, .stSubheader, .stHeader {
-        background-color: #222 !important;
-        color: #fff !important;
-    }
+.intro-text, .main-text, .highlight-text {
+    transition: color 0.2s;
 }
-/* 라이트모드 */
+@media (prefers-color-scheme: dark) {
+    .intro-text, .main-text, .highlight-text { color: #fff !important; }
+    .highlight-text { color: #ff8080 !important; } /* 강조글은 연한빨강 */
+    .main-text { color: #80bfff !important; }      /* 화이팅 등 파랑글은 연한파랑 */
+}
 @media (prefers-color-scheme: light) {
-    .stApp {
-        background-color: #fff !important;    /* 흰 배경 */
-        color: #222 !important;               /* 검은 글씨 */
-    }
+    .intro-text, .main-text, .highlight-text { color: #222 !important; }
+    .highlight-text { color: #D32F2F !important; }
+    .main-text { color: #003399 !important; }
 }
 </style>
 """, unsafe_allow_html=True)
+
+
 
 st.markdown("""
 <style>
@@ -128,18 +108,20 @@ def get_intro_html():
         {img_tag}
         <div>
             <h2 style='margin:0 0 8px 0;font-weight:700;'>사장님, 안녕하세요!!</h2>
-            <p>{config['intro']}</p>
-            <p>궁금하신거 있으시면 <br>
+            <p class="intro-text">{config['intro']}</p>
+            <p class="intro-text">궁금하신거 있으시면 <br>
             여기에서 먼저 물어봐 주세요! <br>
             궁금하신 내용을 입력하시면 되여~</p>
-            <p>예를들면 자동차, 카드등록, 자동이체등...<br>
+            <p class="intro-text">예를들면 자동차, 카드등록, 자동이체등...<br>
             제가 아는 건 친절하게 알려드릴게요!</p>
-            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
+            <p class="intro-text">사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
             늘 옆에서 제가 함께하겠습니다.</p>
-            <p><strong style="font-weight:900; color:#D32F2F; font-family:'NanumSquare','맑은 고딕','Malgun Gothic',sans-serif;">
-유지율도 조금만 더 챙겨주세요^*^😊
-</strong></p>
-            <strong style="font-weight:900; color:#003399;">사장님!! 오늘도 화이팅!!!</strong>
+            <p class="highlight-text" style="font-weight:900;">
+                유지율도 조금만 더 챙겨주세요^*^😊
+            </p>
+            <p class="main-text" style="font-weight:900;">
+                사장님!! 오늘도 화이팅!!!
+            </p>
         </div>
     </div>
     """
