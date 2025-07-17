@@ -439,55 +439,55 @@ with st.form("input_form", clear_on_submit=True):
 
     <script>
     let recognition;
-    let keepListening = false;
+let keepListening = false;
 
-    function startDictation() {
-        if (!('webkitSpeechRecognition' in window)) {
-            alert("⚠️ 현재 브라우저는 음성 인식을 지원하지 않아요. 크롬을 사용해주세요.");
-            return;
-        }
-
-        recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = "ko-KR";
-
-        recognition.onresult = function(e) {
-            const text = e.results[0][0].transcript;
-            const input = window.parent.document.querySelector('textarea, input[type=text]');
-            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-            setter.call(input, text);
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-
-            // 질문 자동 제출
-            const form = window.parent.document.querySelector("form");
-            if (form) form.requestSubmit();
-        };
-
-        recognition.onend = function() {
-            if (keepListening) {
-                setTimeout(() => recognition.start(), 500);  // 0.5초 후 재시작
-            }
-        };
-
-        recognition.onerror = function(e) {
-            console.error("음성인식 오류:", e);
-            recognition.stop();
-        };
-
-        recognition.start();
-        keepListening = true;
+function startDictation() {
+    if (!('webkitSpeechRecognition' in window)) {
+        alert("⚠️ 현재 브라우저는 음성 인식을 지원하지 않아요. 크롬을 사용해주세요.");
+        return;
     }
 
-    function stopDictation() {
-        keepListening = false;
-        if (recognition) {
-            recognition.stop();
-        }
-    }
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;  // 한 문장 인식 후 멈춤
+    recognition.interimResults = false;
+    recognition.lang = "ko-KR";
 
-    document.getElementById("mic-button").onclick = startDictation;
-    document.getElementById("stop-button").onclick = stopDictation;
+    recognition.onresult = function(e) {
+        const text = e.results[0][0].transcript;
+        const input = window.parent.document.querySelector('textarea, input[type=text]');
+        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        setter.call(input, text);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        // ✅ 인식된 후 자동 제출
+        const form = window.parent.document.querySelector("form");
+        if (form) form.requestSubmit();
+    };
+
+    recognition.onend = function() {
+        if (keepListening) {
+            setTimeout(() => recognition.start(), 500);
+        }
+    };
+
+    recognition.onerror = function(e) {
+        console.error("음성인식 오류:", e);
+        recognition.stop();
+    };
+
+    recognition.start();
+    keepListening = true;
+}
+
+function stopDictation() {
+    keepListening = false;
+    if (recognition) {
+        recognition.stop();
+    }
+}
+
+document.getElementById("mic-button").onclick = startDictation;
+document.getElementById("stop-button").onclick = stopDictation;
     </script>
 """, height=120)
 
