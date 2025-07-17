@@ -465,11 +465,11 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
             const input = window.parent.document.querySelector('textarea, input[type=text]');
             const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
             setter.call(input, fullTranscript);
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-
+            input.dispatchEvent(new Event('input', { bubbles: true }));  
+            input.focus();
             document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
         };
-
+            
         recognition.onerror = function (e) {
             document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
             isRecording = false;
