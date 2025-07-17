@@ -423,7 +423,17 @@ if "pending_question" in st.session_state:
     handle_question(st.session_state["pending_question"])
     del st.session_state["pending_question"]
 
-components.html("""
+components.html(
+    display_chat_html_content(),
+    height=520,
+    scrolling=True
+)
+
+with st.form("input_form", clear_on_submit=True):
+    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+
+    # 🎙 음성 인식 버튼 먼저 출력
+    components.html("""
 <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
     <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
         🎤 음성 인식
@@ -438,65 +448,58 @@ components.html("""
 let isRecording = false;
 let recognition;
 
-// 음성 인식 토글
-function startSpeechRecognition() {
-    recognition = new webkitSpeechRecognition();
-    recognition.lang = "ko-KR";
-    recognition.interimResults = false;
-    recognition.continuous = true;
-
-    recognition.onresult = function (event) {
-        let transcript = event.results[event.results.length - 1][0].transcript;
-        const input = window.parent.document.querySelector('textarea, input[type=text]');
-        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        setter.call(input, transcript);
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-
-        document.getElementById("speech_status").innerText = "🎤 음성 입력: " + transcript;
-    };
-
-    recognition.onerror = function (e) {
-        document.getElementById("speech_status").innerText = "⚠️ 오류: " + e.error;
-        stopSpeechRecognition();
-    };
-
-    recognition.onend = function () {
-        if (isRecording) recognition.start();  // 자동 건 종료 경우 다시 시작
-    };
-
-    recognition.start();
-    isRecording = true;
-    document.getElementById("toggleRecord").innerText = "🔚 멈추기";
-    document.getElementById("speech_status").innerText = "🎤 음성 인식 중...";
-}
-
-function stopSpeechRecognition() {
-    if (recognition) recognition.stop();
-    isRecording = false;
-    document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
-    document.getElementById("speech_status").innerText = "⛔️ 인식 종료";
-}
-
-// 클릭시 토그링
-
 document.getElementById("toggleRecord").addEventListener("click", function () {
-    if (!isRecording) startSpeechRecognition();
-    else stopSpeechRecognition();
-});
+    if (!isRecording) {
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = "ko-KR";
+        recognition.interimResults = false;
+        recognition.continuous = false;
 
-// 질문 복사 무료 제출
+        recognition.onresult = function (event) {
+            let transcript = event.results[0][0].transcript;
+            const input = window.parent.document.querySelector('textarea, input[type=text]');
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+            setter.call(input, transcript);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+
+            document.getElementById("speech_status").innerText = "🎤 음성 입력 완료!";
+        };
+
+        recognition.onerror = function (e) {
+            document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
+            isRecording = false;
+            document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+        };
+
+        recognition.onend = function () {
+            isRecording = false;
+            document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+        };
+
+        recognition.start();
+        isRecording = true;
+        document.getElementById("toggleRecord").innerText = "🛑 멈추기";
+
+    } else {
+        recognition.stop();
+        isRecording = false;
+        document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+        document.getElementById("speech_status").innerText = "🛑 음성 인식이 종료되었습니다.";
+    }
+});
 
 document.getElementById("submitQuestion").addEventListener("click", function () {
     const submitBtn = window.parent.document.querySelector('button[kind="primary"]');
     if (submitBtn) submitBtn.click();
 });
 </script>
-""", height=160)
+""", height=150)
 
-# 입력첨 (평소 방식)
-with st.form("input_form", clear_on_submit=True):
-    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+    # ⬇️ 질문하기 버튼은 가장 아래로 위치
     submitted = st.form_submit_button("질문하기")
+
     if submitted and question_input:
         st.session_state["pending_question"] = question_input
         st.rerun()
+
+
