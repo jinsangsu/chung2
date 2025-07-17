@@ -427,6 +427,12 @@ components.html(
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+
+    if question_input:
+       handle_question(question_input)
+       st.session_state["input_box"] = ""  # 입력창 초기화
+       st.rerun()
+
     components.html("""
     <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
         <button id="mic-button" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
@@ -452,17 +458,21 @@ function startDictation() {
     recognition.interimResults = false;
     recognition.lang = "ko-KR";
 
-    recognition.onresult = function(e) {
-        const text = e.results[0][0].transcript;
-        const input = window.parent.document.querySelector('textarea, input[type=text]');
-        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        setter.call(input, text);
-        input.dispatchEvent(new Event('input', { bubbles: true }));
+   recognition.onresult = function(e) {
+    const text = e.results[0][0].transcript;
+    const input = window.parent.document.querySelector('textarea, input[type=text]');
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+    setter.call(input, text);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
 
-        // ✅ 인식된 후 자동 제출
-        const form = window.parent.document.querySelector("form");
-        if (form) form.requestSubmit();
-    };
+    // ✅ 인식 완료 후 약간의 시간 뒤에 자동 제출 (엔터 키 방식)
+    setTimeout(() => {
+        const enterEvent = new KeyboardEvent("keydown", {
+            bubbles: true, cancelable: true, keyCode: 13
+        });
+        input.dispatchEvent(enterEvent);
+    }, 1200);
+};
 
     recognition.onend = function() {
         if (keepListening) {
