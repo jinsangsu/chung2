@@ -430,66 +430,64 @@ components.html(
 )
 
 with st.form("input_form", clear_on_submit=True):
+    # 1. 질문 입력창
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
 
-    # 🎙 음성 인식 버튼 먼저 출력
+    # 2. 음성인식 버튼
     components.html("""
-<div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
-    <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
-        🎤 음성 인식
-    </button>
-</div>
-<div id="speech_status" style="color:gray; font-size:0.9em; margin-top:5px;"></div>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+        <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
+            🎤 음성 인식
+        </button>
+    </div>
+    <div id="speech_status" style="color:gray; font-size:0.9em; margin-top:5px;"></div>
+    <script>
+    let isRecording = false;
+    let recognition;
 
-<script>
-let isRecording = false;
-let recognition;
-
-document.getElementById("toggleRecord").addEventListener("click", function () {
-    const input = window.parent.document.querySelector('textarea, input[type=text]');
-    if (input) input.focus();  // 입력창 포커스
-
-    if (!isRecording) {
-        recognition = new webkitSpeechRecognition();
-        recognition.lang = "ko-KR";
-        recognition.interimResults = false;
-        recognition.continuous = true;
-        let fullTranscript = "";
-        recognition.onresult = function (event) {
-            fullTranscript = "";
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                 fullTranscript += event.results[i][0].transcript;
-            }
-            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-            setter.call(input, fullTranscript);
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.focus();
-            document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
-        };
-        recognition.onerror = function (e) {
-            document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
+    document.getElementById("toggleRecord").addEventListener("click", function () {
+        const input = window.parent.document.querySelector('textarea, input[type=text]');
+        if (input) input.focus();
+        if (!isRecording) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = "ko-KR";
+            recognition.interimResults = false;
+            recognition.continuous = true;
+            let fullTranscript = "";
+            recognition.onresult = function (event) {
+                fullTranscript = "";
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    fullTranscript += event.results[i][0].transcript;
+                }
+                const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                setter.call(input, fullTranscript);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.focus();
+                document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
+            };
+            recognition.onerror = function (e) {
+                document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
+                isRecording = false;
+                document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+            };
+            recognition.onend = function () {
+                document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+                isRecording = false;
+            };
+            recognition.start();
+            isRecording = true;
+            document.getElementById("toggleRecord").innerText = "🛑 멈추기";
+        } else {
+            recognition.stop();
             isRecording = false;
             document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
-        };
-        recognition.onend = function () {
-            document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
-            isRecording = false;
-        };
-        recognition.start();
-        isRecording = true;
-        document.getElementById("toggleRecord").innerText = "🛑 멈추기";
-    } else {
-        recognition.stop();
-        isRecording = false;
-        document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
-        document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
-    }
-});
-</script>
-""", height=160)
+            document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
+        }
+    });
+    </script>
+    """, height=160)
 
-with st.form("input_form", clear_on_submit=True):
-    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+    # 3. 질문하기 버튼 (form 안)
     submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
         st.session_state["pending_question"] = question_input
