@@ -468,7 +468,7 @@ with st.form("input_form", clear_on_submit=True):
     </script>
     """, height=160)
    
-     if question_input and (
+   if question_input and (
          "last_question" not in st.session_state or question_input != st.session_state["last_question"]
 ):
          st.session_state["pending_question"] = question_input
