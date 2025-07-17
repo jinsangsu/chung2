@@ -455,14 +455,19 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
         recognition.interimResults = false;
         recognition.continuous = true;
 
+        let fullTranscript = "";
         recognition.onresult = function (event) {
-            let transcript = event.results[0][0].transcript;
+            fullTranscript = "";
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                 fullTranscript += event.results[i][0].transcript;
+            }
+
             const input = window.parent.document.querySelector('textarea, input[type=text]');
             const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
             setter.call(input, transcript);
             input.dispatchEvent(new Event('input', { bubbles: true }));
 
-            document.getElementById("speech_status").innerText = "🎤 음성 입력 완료!";
+            document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
         };
 
         recognition.onerror = function (e) {
