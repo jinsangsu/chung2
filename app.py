@@ -6,6 +6,23 @@ import difflib
 import base64
 import os
 import re
+import requests  # 이미 있을 수 있음
+
+# [GPT 프록시 서버 호출 함수 추가]
+def call_gpt_proxy(prompt):
+    try:
+        response = requests.post(
+            "https://chung2.fly.dev/chat",  # 프록시 서버 주소
+            json={"prompt": prompt},
+            timeout=20
+        )
+        if response.status_code == 200:
+            return response.json().get("reply", "죄송해요, 답변을 가져오지 못했어요.")
+        else:
+            return f"서버 오류: {response.status_code}"
+    except Exception as e:
+        return f"요청 실패: {e}"
+
 
 #다크모드라이트모드적용
 st.markdown("""
@@ -288,13 +305,15 @@ def handle_question(question_input):
             bot_display_type = "multi_answer"
         else:
             # [3] 답변이 아예 없을 때 안내멘트
+            ai_reply = call_gpt_proxy(question_input)
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
-                "display_type": "single_answer"
+                "content": ai_reply,
+                "display_type": "llm_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
             return
+
         if len(matched) > 0:
             st.session_state.chat_log.append({
                 "role": "bot",
