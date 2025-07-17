@@ -428,14 +428,7 @@ components.html(
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
 
-    # ❗ 질문 제출 버튼을 반드시 추가
-    submitted = st.form_submit_button("질문하기")
-
-    if submitted and question_input:
-        handle_question(question_input)
-        st.session_state["input_box"] = ""  # 입력창 초기화
-        st.rerun()
-
+    # 🎙 음성 인식 버튼 먼저 출력
     components.html("""
     <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
         <button id="mic-button" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
@@ -447,63 +440,60 @@ with st.form("input_form", clear_on_submit=True):
     </div>
 
     <script>
-let recognition;
-let keepListening = false;
+    let recognition;
+    let keepListening = false;
 
-function startDictation() {
-    if (!('webkitSpeechRecognition' in window)) {
-        alert("⚠️ 현재 브라우저는 음성 인식을 지원하지 않아요. 크롬을 사용해주세요.");
-        return;
-    }
-
-    recognition = new webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "ko-KR";
-
-    recognition.onresult = function(e) {
-        const text = e.results[0][0].transcript;
-        const input = window.parent.document.querySelector('textarea, input[type=text]');
-        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-        setter.call(input, text);
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-
-        // ✅ 자동 제출 제거 → 안내 메시지만 띄움
-        alert("✅ 음성 입력이 완료되었어요! '질문하기' 버튼을 눌러주세요.");
-    };
-
-    recognition.onend = function() {
-        if (keepListening) {
-            setTimeout(() => recognition.start(), 500);
+    function startDictation() {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert("⚠️ 현재 브라우저는 음성 인식을 지원하지 않아요. 크롬을 사용해주세요.");
+            return;
         }
-    };
 
-    recognition.onerror = function(e) {
-        console.error("음성인식 오류:", e);
-        recognition.stop();
-    };
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = "ko-KR";
 
-    recognition.start();
-    keepListening = true;
-}
+        recognition.onresult = function(e) {
+            const text = e.results[0][0].transcript;
+            const input = window.parent.document.querySelector('textarea, input[type=text]');
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+            setter.call(input, text);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            alert("✅ 음성 입력이 완료되었어요! '질문하기' 버튼을 눌러주세요.");
+        };
 
-function stopDictation() {
-    keepListening = false;
-    if (recognition) {
-        recognition.stop();
+        recognition.onend = function() {
+            if (keepListening) {
+                setTimeout(() => recognition.start(), 500);
+            }
+        };
+
+        recognition.onerror = function(e) {
+            console.error("음성인식 오류:", e);
+            recognition.stop();
+        };
+
+        recognition.start();
+        keepListening = true;
     }
-}
 
-document.getElementById("mic-button").onclick = startDictation;
-document.getElementById("stop-button").onclick = stopDictation;
-</script>
+    function stopDictation() {
+        keepListening = false;
+        if (recognition) {
+            recognition.stop();
+        }
+    }
 
+    document.getElementById("mic-button").onclick = startDictation;
+    document.getElementById("stop-button").onclick = stopDictation;
+    </script>
+    """, height=120)
 
-""", height=120)
-
-
-
+    # ⬇️ 질문하기 버튼은 가장 아래로 위치
     submitted = st.form_submit_button("질문하기")
+
     if submitted and question_input:
         handle_question(question_input)
+        st.session_state["input_box"] = ""
         st.rerun()
