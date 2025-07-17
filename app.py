@@ -410,9 +410,12 @@ components.html(
     scrolling=True
 )
 
-with st.form("input_form", clear_on_submit=True):
-    # 1. 질문 입력창
+# 1. 입력창 + 질문하기 버튼 (가로로 배치)
+col1, col2 = st.columns([5, 1])
+with col1:
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+with col2:
+    submitted = st.button("질문하기", use_container_width=True)
 
     # 2. 음성인식 버튼
     components.html("""
@@ -468,9 +471,7 @@ with st.form("input_form", clear_on_submit=True):
     </script>
     """, height=160)
    
-    if question_input and (
-         "last_question" not in st.session_state or question_input != st.session_state["last_question"]
-):
-         st.session_state["pending_question"] = question_input
-         st.session_state["last_question"] = question_input
-         st.experimental_rerun()
+   # 3. 질문 제출 이벤트
+if submitted and question_input:
+    st.session_state["pending_question"] = question_input
+    st.experimental_rerun()
