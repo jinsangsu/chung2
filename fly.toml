@@ -2,6 +2,9 @@
 app = "chung2"
 primary_region = "nrt"
 
+[env]
+  GEMINI_API_KEY = "AIzaSyBema0StjkzJU5DWqb5idXQzRtkUNXIZyE"
+
 [build]
   dockerfile = "Dockerfile"
 
