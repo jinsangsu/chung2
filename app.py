@@ -444,7 +444,7 @@ with st.form("input_form", clear_on_submit=True):
     </div>
 
     <script>
-    let recognition;
+let recognition;
 let keepListening = false;
 
 function startDictation() {
@@ -454,25 +454,20 @@ function startDictation() {
     }
 
     recognition = new webkitSpeechRecognition();
-    recognition.continuous = false;  // 한 문장 인식 후 멈춤
+    recognition.continuous = false;
     recognition.interimResults = false;
     recognition.lang = "ko-KR";
 
-   recognition.onresult = function(e) {
-    const text = e.results[0][0].transcript;
-    const input = window.parent.document.querySelector('textarea, input[type=text]');
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-    setter.call(input, text);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    recognition.onresult = function(e) {
+        const text = e.results[0][0].transcript;
+        const input = window.parent.document.querySelector('textarea, input[type=text]');
+        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        setter.call(input, text);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
 
-    // ✅ 인식 완료 후 약간의 시간 뒤에 자동 제출 (엔터 키 방식)
-    setTimeout(() => {
-        const enterEvent = new KeyboardEvent("keydown", {
-            bubbles: true, cancelable: true, keyCode: 13
-        });
-        input.dispatchEvent(enterEvent);
-    }, 1200);
-};
+        // ✅ 자동 제출 제거 → 안내 메시지만 띄움
+        alert("✅ 음성 입력이 완료되었어요! '질문하기' 버튼을 눌러주세요.");
+    };
 
     recognition.onend = function() {
         if (keepListening) {
@@ -498,7 +493,9 @@ function stopDictation() {
 
 document.getElementById("mic-button").onclick = startDictation;
 document.getElementById("stop-button").onclick = stopDictation;
-    </script>
+</script>
+
+
 """, height=120)
 
 
