@@ -7,6 +7,31 @@ import base64
 import os
 import re
 
+#다크모드라이트모드적용
+st.markdown("""
+<style>
+/* 다크모드/라이트모드 자동 전환 CSS */
+@media (prefers-color-scheme: dark) {
+    .stApp {
+        background-color: #1A1A1A !important;   /* 다크 배경 */
+        color: #eee !important;                /* 다크 글씨 */
+    }
+    html, body, .stTextInput>div>div>input, .stTextArea>div>textarea,
+    .stForm, .stMarkdown, .stSubheader, .stHeader {
+        background-color: #222 !important;
+        color: #fff !important;
+    }
+}
+/* 라이트모드 */
+@media (prefers-color-scheme: light) {
+    .stApp {
+        background-color: #fff !important;    /* 흰 배경 */
+        color: #222 !important;               /* 검은 글씨 */
+    }
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 /* 전체 앱 상단·하단 공백 최소화 */
