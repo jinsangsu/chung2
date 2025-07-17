@@ -428,10 +428,13 @@ components.html(
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
 
-    if question_input:
-       handle_question(question_input)
-       st.session_state["input_box"] = ""  # 입력창 초기화
-       st.rerun()
+    # ❗ 질문 제출 버튼을 반드시 추가
+    submitted = st.form_submit_button("질문하기")
+
+    if submitted and question_input:
+        handle_question(question_input)
+        st.session_state["input_box"] = ""  # 입력창 초기화
+        st.rerun()
 
     components.html("""
     <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
