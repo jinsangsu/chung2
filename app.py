@@ -414,11 +414,12 @@ components.html(
 col1, col2 = st.columns([5, 1])
 with col1:
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+
 with col2:
     submitted = st.button("질문하기", use_container_width=True)
 
     # 2. 음성인식 버튼
-    components.html("""
+components.html("""
     <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
         <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
             🎤 음성 인식
