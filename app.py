@@ -417,10 +417,21 @@ def submit_question():
 
 st.markdown("""
     <style>
-    input[type="text"] {
-        padding-top: 6px !important;
-        padding-bottom: 6px !important;
+    .stForm .st-b2, .stForm .st-b1, .stForm .st-b3 {
+        display: flex;
+        align-items: center !important;
+    }
+    .stForm .stTextInput > div, .stForm .stTextInput input {
+        min-height: 44px !important;
+        height: 44px !important;
         font-size: 1.1rem !important;
+        vertical-align: middle !important;
+    }
+    .stForm .stButton > button {
+        min-height: 44px !important;
+        height: 44px !important;
+        font-size: 1.1rem !important;
+        vertical-align: middle !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -435,7 +446,7 @@ with st.form("input_form", clear_on_submit=True):
         )
     with col2:
         # ★ 버튼 위에 여백 추가!
-        st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
+        
         submitted = st.form_submit_button("질문하기", use_container_width=True)
 
     if submitted and question_input:
