@@ -413,10 +413,19 @@ components.html(
 # 1. 입력창 + 질문하기 버튼 (가로로 배치)
 col1, col2 = st.columns([5, 1])
 with col1:
-    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+    question_input = st.text_input(
+        "",  # 레이블은 없음
+        placeholder="궁금한 내용을 입력해 주세요", 
+        key="input_box"
+    )
 with col2:
-    st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)  # 숫자만 계속 바꿔보기!
+    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
     submitted = st.button("질문하기", use_container_width=True)
+
+if submitted and question_input:
+    st.session_state["pending_question"] = question_input
+    st.session_state["input_box"] = ""  # 입력창 자동 초기화
+    st.experimental_rerun()
 
     # 2. 음성인식 버튼
 components.html("""
