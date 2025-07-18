@@ -430,8 +430,26 @@ st.markdown("""
 
  # 2. 음성인식 버튼
 components.html("""
+    <style>
+    #toggleRecord {
+        background: #006400 !important;    /* 진한 녹색 */
+        color: #fff !important;            /* 흰색 글씨 */
+        font-weight: bold !important;      /* 굵은 글씨 */
+        border: none !important;
+        border-radius: 10px !important;
+        font-size: 16px !important;
+        padding: 10px 20px !important;
+        box-shadow: 0 2px 8px rgba(0,64,0,0.10) !important;
+        font-family: 'Nanum Gothic', 'Arial', sans-serif !important;
+        cursor: pointer !important;
+    }
+    #toggleRecord:hover {
+        background: #008000 !important;    /* hover 시 더 밝은 녹색 */
+        color: #fff !important;
+    }
+    </style>
     <div style="display:flex; justify-content: flex-end; align-items:center; gap:10px; margin-bottom:10px;">
-        <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#d32f2f; color:white; border:none; border-radius:10px;">
+        <button id="toggleRecord" style="">
             🎤 음성으로!
         </button>
     </div>
@@ -482,7 +500,6 @@ components.html("""
     </script>
     """, height=50)
 
-
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문하기")
@@ -490,26 +507,6 @@ with st.form("input_form", clear_on_submit=True):
         handle_question(question_input)
         st.rerun()
 
-st.markdown("""
-<style>
-#toggleRecord {
-    background: #006400 !important;    /* 진한 녹색 */
-    color: #fff !important;            /* 흰색 글씨 */
-    font-weight: bold !important;      /* 굵은 글씨 */
-    border: none !important;
-    border-radius: 10px !important;
-    font-size: 16px !important;
-    padding: 10px 20px !important;
-    box-shadow: 0 2px 8px rgba(0,64,0,0.10) !important;
-    font-family: 'Nanum Gothic', 'Arial', sans-serif !important;
-    cursor: pointer !important;
-}
-#toggleRecord:hover {
-    background: #008000 !important;    /* hover 시 더 밝은 녹색 */
-    color: #fff !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
