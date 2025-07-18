@@ -415,7 +415,7 @@ def submit_question():
         st.session_state["pending_question"] = st.session_state["input_box"]
         st.session_state["input_box"] = ""  # 입력창 초기화
 
-# [2] "숨은 폼"으로 엔터 제출 처리
+
 with st.form("input_form", clear_on_submit=True):
     col1, col2 = st.columns([5, 1])
     with col1:
@@ -430,7 +430,7 @@ with st.form("input_form", clear_on_submit=True):
     # 이 if문은 반드시 form 내부에 위치해야 함!
     if submitted and question_input:
         handle_question(question_input)
-        st.session_state["input_box"] = ""  # 실제로는 clear_on_submit=True가 자동 초기화!
+        
         st.rerun()
 
     # 2. 음성인식 버튼
