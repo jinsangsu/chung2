@@ -463,10 +463,10 @@ components.html("""
             recognition.onerror = function (e) {
                 document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
                 isRecording = false;
-                document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+                document.getElementById("toggleRecord").innerText = "🎤 음성으로";
             };
             recognition.onend = function () {
-                document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+                document.getElementById("toggleRecord").innerText = "🎤 음성으로";
                 isRecording = false;
             };
             recognition.start();
@@ -475,7 +475,7 @@ components.html("""
         } else {
             recognition.stop();
             isRecording = false;
-            document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
+            document.getElementById("toggleRecord").innerText = "🎤 음성으로";
             document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
         }
     });
@@ -489,3 +489,34 @@ with st.form("input_form", clear_on_submit=True):
     if submitted and question_input:
         handle_question(question_input)
         st.rerun()
+
+
+st.markdown("""
+<style>
+/* 모바일에서 입력창 하단 고정 및 키보드 위로 올리기 */
+.input-form-fixed {
+    position: fixed !important;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background: #fff;
+    box-shadow: 0 -2px 16px rgba(0,0,0,0.07);
+    padding: 14px 8px 14px 8px;
+}
+@media (max-width: 600px) {
+    .input-form-fixed { padding-bottom: 16px !important; }
+}
+</style>
+<script>
+// 모바일에서 키보드 올라올 때 입력창 자동 스크롤
+window.addEventListener('focusin', function(e) {
+    var el = document.querySelector('.input-form-fixed');
+    if (el) {
+        setTimeout(function() {
+            el.scrollIntoView({behavior: 'smooth', block: 'end'});
+        }, 300);
+    }
+});
+</script>
+""", unsafe_allow_html=True)
