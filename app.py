@@ -440,8 +440,8 @@ with st.form("input_form", clear_on_submit=True):
         components.html("""
             <button id="toggleRecord" type="button" style="
                 padding: 0 0; 
-                min-width: 60px; 
-                max-width: 95px; 
+                min-width: 120px; 
+                max-width: 150px; 
                 width: 90px;
                 height: 44px;
                 font-size:15px;
