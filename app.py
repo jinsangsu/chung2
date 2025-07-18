@@ -459,9 +459,7 @@ with st.form("input_form", clear_on_submit=True):
             </script>
         """, unsafe_allow_html=True)
 
-    # 엔터/버튼 제출 동시 지원은 기존처럼 form_submit_button 사용
-    submitted = st.form_submit_button("질문하기", use_container_width=True)
-
+    
     if submitted and question_input:
         handle_question(question_input)
         st.rerun()
