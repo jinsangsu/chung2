@@ -436,6 +436,17 @@ st.markdown("""
 
 st.markdown("""
     <style>
+    /* 모든 텍스트 입력창의 상하 padding/높이 조절 */
+    input[type="text"] {
+        padding-top: 18px !important;
+        padding-bottom: 18px !important;
+        font-size: 1.15rem !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+    <style>
     /* 버튼 스타일 (form submit button) */
     button[kind="secondaryFormSubmit"] {
         background: linear-gradient(90deg, #003399 60%, #0080ff 100%);
@@ -457,6 +468,8 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+
 with st.form("input_form", clear_on_submit=True):
     col1, col2 = st.columns([5, 1])
     with col1:
