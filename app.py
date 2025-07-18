@@ -443,7 +443,7 @@ with st.form("input_form", clear_on_submit=True):
             key="input_box", 
             placeholder="궁금한 내용을 입력해 주세요"
         )
-     with col2:
+    with col2:
         # ★ 버튼 위에 여백 추가!
         st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
         submitted = st.form_submit_button("CLICK", use_container_width=True)
