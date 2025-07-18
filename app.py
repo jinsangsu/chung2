@@ -410,33 +410,24 @@ components.html(
     scrolling=True
 )
 
-# 1. 입력창 + 질문하기 버튼 (가로로 배치)
+def submit_question():
+    if st.session_state.input_box_key: # input_box_key에 값이 있으면
+        st.session_state.pending_question = st.session_state.input_box_key
+        st.session_state.input_box_key = "" # 입력창 초기화
+        st.experimental_rerun()
 
-# ... (이후)
-# 입력창 렌더링
 col1, col2 = st.columns([5, 1])
 with col1:
-    # 입력창 값 결정: 플래그가 True면 빈칸, 아니면 기존값
-    if st.session_state.get("clear_input", False):
-        question_value = ""
-        st.session_state["clear_input"] = False  # 플래그 리셋
-    else:
-        question_value = st.session_state.get("input_box", "")
-
     question_input = st.text_input(
         "",
-        value=question_value,
+        value=st.session_state.input_value, # 세션 상태 값 사용
         placeholder="궁금한 내용을 입력해 주세요",
-        key="input_box"
+        key="input_box_key", # 새로운 키 사용
+        on_change=submit_question # 엔터 입력 시 submit_question 함수 호출
     )
 with col2:
-    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
-    submitted = st.button("질문하기", use_container_width=True)
-
-if submitted and question_input:
-    st.session_state["pending_question"] = question_input
-    st.session_state["clear_input"] = True   # 입력 초기화 플래그 ON
-    st.experimental_rerun()
+    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True) # 기존 간격 유지
+    submitted_button = st.button("질문하기", use_container_width=True, on_click=submit_question) # 버튼 클릭 시에도 submit_question 함수 호출
 
     # 2. 음성인식 버튼
 components.html("""
