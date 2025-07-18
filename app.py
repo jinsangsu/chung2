@@ -6,30 +6,31 @@ import difflib
 import base64
 import os
 import re
-import requests  # 이미 있을 수 있음
-
-
 
 #다크모드라이트모드적용
 st.markdown("""
 <style>
-.intro-text, .main-text, .highlight-text {
-    transition: color 0.2s;
-}
+/* 다크모드/라이트모드 자동 전환 CSS */
 @media (prefers-color-scheme: dark) {
-    .intro-text, .main-text, .highlight-text { color: #fff !important; }
-    .highlight-text { color: #ff8080 !important; } /* 강조글은 연한빨강 */
-    .main-text { color: #80bfff !important; }      /* 화이팅 등 파랑글은 연한파랑 */
+    .stApp {
+        background-color: #1A1A1A !important;   /* 다크 배경 */
+        color: #eee !important;                /* 다크 글씨 */
+    }
+    html, body, .stTextInput>div>div>input, .stTextArea>div>textarea,
+    .stForm, .stMarkdown, .stSubheader, .stHeader {
+        background-color: #222 !important;
+        color: #fff !important;
+    }
 }
+/* 라이트모드 */
 @media (prefers-color-scheme: light) {
-    .intro-text, .main-text, .highlight-text { color: #222 !important; }
-    .highlight-text { color: #D32F2F !important; }
-    .main-text { color: #003399 !important; }
+    .stApp {
+        background-color: #fff !important;    /* 흰 배경 */
+        color: #222 !important;               /* 검은 글씨 */
+    }
 }
 </style>
 """, unsafe_allow_html=True)
-
-
 
 st.markdown("""
 <style>
@@ -108,20 +109,18 @@ def get_intro_html():
         {img_tag}
         <div>
             <h2 style='margin:0 0 8px 0;font-weight:700;'>사장님, 안녕하세요!!</h2>
-            <p class="intro-text">{config['intro']}</p>
-            <p class="intro-text">궁금하신거 있으시면 <br>
+            <p>{config['intro']}</p>
+            <p>궁금하신거 있으시면 <br>
             여기에서 먼저 물어봐 주세요! <br>
             궁금하신 내용을 입력하시면 되여~</p>
-            <p class="intro-text">예를들면 자동차, 카드등록, 자동이체등...<br>
+            <p>예를들면 자동차, 카드등록, 자동이체등...<br>
             제가 아는 건 친절하게 알려드릴게요!</p>
-            <p class="intro-text">사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
+            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
             늘 옆에서 제가 함께하겠습니다.</p>
-            <p class="highlight-text" style="font-weight:900;">
-                유지율도 조금만 더 챙겨주세요^*^😊
-            </p>
-            <p class="main-text" style="font-weight:900;">
-                사장님!! 오늘도 화이팅!!!
-            </p>
+            <p><strong style="font-weight:900; color:#D32F2F; font-family:'NanumSquare','맑은 고딕','Malgun Gothic',sans-serif;">
+유지율도 조금만 더 챙겨주세요^*^😊
+</strong></p>
+            <strong style="font-weight:900; color:#003399;">사장님!! 오늘도 화이팅!!!</strong>
         </div>
     </div>
     """
@@ -138,7 +137,6 @@ try:
 except Exception as e:
     st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
 
-
 # 5. [채팅 세션/로직/FAQ 등 기존 app.py와 동일하게 복붙]
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = [{"role": "intro", "content": "", "display_type": "intro"}]
@@ -146,6 +144,7 @@ if "scroll_to_bottom_flag" not in st.session_state:
     st.session_state.scroll_to_bottom_flag = False
 if "pending_keyword" not in st.session_state:
     st.session_state.pending_keyword = None
+
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
@@ -160,7 +159,10 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.4
+    SIMILARITY_THRESHOLD = 0.3
+    user_txt = question_input.strip().replace(" ", "").lower()
+def handle_question(question_input):
+    SIMILARITY_THRESHOLD = 0.3
     user_txt = question_input.strip().replace(" ", "").lower()
 
     # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
@@ -285,18 +287,14 @@ def handle_question(question_input):
                 })
             bot_display_type = "multi_answer"
         else:
-
-
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
                 "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
                 "display_type": "single_answer"
             })
-
             st.session_state.scroll_to_bottom_flag = True
             return
-
         if len(matched) > 0:
             st.session_state.chat_log.append({
                 "role": "bot",
@@ -399,10 +397,6 @@ def display_chat_html_content():
     </div>
     {scroll_iframe_script}
     """
-# ✅ [1] rerun 이후 질문 처리 (꼭 맨 위 또는 form 바깥에 위치)
-if "pending_question" in st.session_state:
-    handle_question(st.session_state["pending_question"])
-    del st.session_state["pending_question"]
 
 components.html(
     display_chat_html_content(),
@@ -410,138 +404,9 @@ components.html(
     scrolling=True
 )
 
-def submit_question():
-    if st.session_state["input_box"]:
-        st.session_state["pending_question"] = st.session_state["input_box"]
-        st.session_state["input_box"] = ""  # 입력창 초기화
-
-st.markdown("""
-    <style>
-    /* form/card 상단 여백 제거 */
-    div[data-testid="stForm"] {
-        padding-top: 0rem !important;
-        margin-top: 0rem !important;
-    }
-    /* form 안 컬럼의 세로 정렬을 맨 위로! */
-    div[data-testid="stForm"] div[data-testid="column"] {
-        align-items: flex-start !important;
-        padding-top: 0rem !important;
-    }
-    /* columns 레이아웃 자체를 위로 강제 정렬 */
-    div[data-testid="stHorizontalBlock"] {
-        align-items: flex-start !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-    <style>
-    /* 모든 텍스트 입력창의 상하 padding/높이 조절 */
-    input[type="text"] {
-        padding-top: 20px !important;
-        padding-bottom: 20px !important;
-        font-size: 1.15rem !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-    <style>
-    /* 버튼 스타일 (form submit button) */
-    button[kind="secondaryFormSubmit"] {
-        background: linear-gradient(90deg, #003399 60%, #0080ff 100%);
-        color: #fff !important;
-        border-radius: 10px;
-        border: none;
-        font-weight: bold;
-        font-family: 'Nanum Gothic', 'Arial', sans-serif;
-        font-size: 1.1rem;
-        box-shadow: 0 2px 8px rgba(0,64,128,0.10);
-        padding: 8px 0 8px 0;
-        cursor: url('https://cdn-icons-png.flaticon.com/512/25/25297.png'), pointer !important;
-        transition: background 0.3s, box-shadow 0.3s;
-    }
-    button[kind="secondaryFormSubmit"]:hover {
-        background: linear-gradient(90deg, #0055cc 60%, #00c6ff 100%);
-        color: #ffeb3b !important;
-        box-shadow: 0 4px 12px rgba(0,64,128,0.20);
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-    # 2. 음성인식 버튼
-components.html("""
-    <div style="display:flex; justify-content: flex-end; align-items:center; gap:10px; margin-bottom:10px;">
-        <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#d32f2f; color:white; border:none; border-radius:10px;">
-            🎤 음성으로!
-        </button>
-    </div>
-    <div id="speech_status" style="color:gray; font-size:0.9em; margin-top:5px;"></div>
-    <script>
-    let isRecording = false;
-    let recognition;
-
-    document.getElementById("toggleRecord").addEventListener("click", function () {
-        const input = window.parent.document.querySelector('textarea, input[type=text]');
-        if (input) input.focus();
-        if (!isRecording) {
-            recognition = new webkitSpeechRecognition();
-            recognition.lang = "ko-KR";
-            recognition.interimResults = false;
-            recognition.continuous = true;
-            let fullTranscript = "";
-            recognition.onresult = function (event) {
-                fullTranscript = "";
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    fullTranscript += event.results[i][0].transcript;
-                }
-                const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                setter.call(input, fullTranscript);
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-                input.focus();
-                document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
-            };
-            recognition.onerror = function (e) {
-                document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
-                isRecording = false;
-                document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
-            };
-            recognition.onend = function () {
-                document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
-                isRecording = false;
-            };
-            recognition.start();
-            isRecording = true;
-            document.getElementById("toggleRecord").innerText = "🛑 멈추기";
-        } else {
-            recognition.stop();
-            isRecording = false;
-            document.getElementById("toggleRecord").innerText = "🎤 음성 인식";
-            document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
-        }
-    });
-    </script>
-    """, height=50)
-
 with st.form("input_form", clear_on_submit=True):
-    col1, col2 = st.columns([5, 1])
-    with col1:
-        question_input = st.text_input(
-            "", 
-            key="input_box", 
-            placeholder="궁금한 내용을 입력해 주세요"
-        )
-    with col2:
-        # ★ 버튼 위에 여백 추가!
-        st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
-        submitted = st.form_submit_button("CLICK", use_container_width=True)
-    
+    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+    submitted = st.form_submit_button("질문하기")
     if submitted and question_input:
         handle_question(question_input)
         st.rerun()
-
-   
-   # 3. 질문 제출 이벤트
-if submitted and question_input:
-    st.session_state["pending_question"] = question_input
-    st.experimental_rerun()
