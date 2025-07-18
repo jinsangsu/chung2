@@ -415,7 +415,7 @@ col1, col2 = st.columns([5, 1])
 with col1:
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
 with col2:
-    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)  # 조정해보세요!
+    st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)  # 조정해보세요!
     submitted = st.button("질문하기", use_container_width=True)
 
     # 2. 음성인식 버튼
