@@ -417,23 +417,13 @@ def submit_question():
 
 st.markdown("""
     <style>
-    /* form/card 상단 여백 제거 */
-    div[data-testid="stForm"] {
-        padding-top: 0rem !important;
-        margin-top: 0rem !important;
-    }
-    /* form 안 컬럼의 세로 정렬을 맨 위로! */
-    div[data-testid="stForm"] div[data-testid="column"] {
-        align-items: flex-start !important;
-        padding-top: 0rem !important;
-    }
-    /* columns 레이아웃 자체를 위로 강제 정렬 */
-    div[data-testid="stHorizontalBlock"] {
-        align-items: flex-start !important;
+    input[type="text"] {
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+        font-size: 1.1rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
-
 
 with st.form("input_form", clear_on_submit=True):
     col1, col2 = st.columns([5, 1])
