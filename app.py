@@ -404,6 +404,30 @@ components.html(
     scrolling=True
 )
 
+st.markdown("""
+    <style>
+    /* 버튼 스타일 (form submit button) */
+    button[kind="secondaryFormSubmit"] {
+        background: linear-gradient(90deg, #003399 60%, #0080ff 100%);
+        color: #fff !important;
+        border-radius: 10px;
+        border: none;
+        font-weight: bold;
+        font-family: 'Nanum Gothic', 'Arial', sans-serif;
+        font-size: 1.1rem;
+        box-shadow: 0 2px 8px rgba(0,64,128,0.10);
+        padding: 8px 0 8px 0;
+        cursor: url('https://cdn-icons-png.flaticon.com/512/25/25297.png'), pointer !important;
+        transition: background 0.3s, box-shadow 0.3s;
+    }
+    button[kind="secondaryFormSubmit"]:hover {
+        background: linear-gradient(90deg, #0055cc 60%, #00c6ff 100%);
+        color: #ffeb3b !important;
+        box-shadow: 0 4px 12px rgba(0,64,128,0.20);
+    }
+    </style>
+""", unsafe_allow_html=True)
+
  # 2. 음성인식 버튼
 components.html("""
     <div style="display:flex; justify-content: flex-end; align-items:center; gap:10px; margin-bottom:10px;">
