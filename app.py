@@ -438,8 +438,8 @@ st.markdown("""
     <style>
     /* 모든 텍스트 입력창의 상하 padding/높이 조절 */
     input[type="text"] {
-        padding-top: 18px !important;
-        padding-bottom: 18px !important;
+        padding-top: 20px !important;
+        padding-bottom: 20px !important;
         font-size: 1.15rem !important;
     }
     </style>
@@ -468,24 +468,6 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-
-
-with st.form("input_form", clear_on_submit=True):
-    col1, col2 = st.columns([5, 1])
-    with col1:
-        question_input = st.text_input(
-            "", 
-            key="input_box", 
-            placeholder="궁금한 내용을 입력해 주세요"
-        )
-    with col2:
-        # ★ 버튼 위에 여백 추가!
-        st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
-        submitted = st.form_submit_button("CLICK", use_container_width=True)
-    
-    if submitted and question_input:
-        handle_question(question_input)
-        st.rerun()
 
     # 2. 음성인식 버튼
 components.html("""
@@ -540,6 +522,24 @@ components.html("""
     });
     </script>
     """, height=160)
+
+with st.form("input_form", clear_on_submit=True):
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        question_input = st.text_input(
+            "", 
+            key="input_box", 
+            placeholder="궁금한 내용을 입력해 주세요"
+        )
+    with col2:
+        # ★ 버튼 위에 여백 추가!
+        st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
+        submitted = st.form_submit_button("CLICK", use_container_width=True)
+    
+    if submitted and question_input:
+        handle_question(question_input)
+        st.rerun()
+
    
    # 3. 질문 제출 이벤트
 if submitted and question_input:
