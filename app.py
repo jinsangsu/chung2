@@ -425,12 +425,12 @@ with st.form("input_form", clear_on_submit=True):
             placeholder="궁금한 내용을 입력해 주세요"
         )
     with col2:
+        # ★ 버튼 위에 여백 추가!
+        st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
         submitted = st.form_submit_button("질문하기", use_container_width=True)
 
-    # 이 if문은 반드시 form 내부에 위치해야 함!
     if submitted and question_input:
         handle_question(question_input)
-        
         st.rerun()
 
     # 2. 음성인식 버튼
