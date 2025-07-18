@@ -472,8 +472,8 @@ st.markdown("""
     # 2. 음성인식 버튼
 components.html("""
     <div style="display:flex; justify-content: flex-end; align-items:center; gap:10px; margin-bottom:10px;">
-        <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#003399; color:white; border:none; border-radius:10px;">
-            🎤 음성 인식
+        <button id="toggleRecord" style="padding: 10px 20px; font-size: 16px; background-color:#d32f2f; color:white; border:none; border-radius:10px;">
+            🎤 음성으로!
         </button>
     </div>
     <div id="speech_status" style="color:gray; font-size:0.9em; margin-top:5px;"></div>
