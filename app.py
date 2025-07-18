@@ -411,10 +411,6 @@ components.html(
 )
 
 # 1. 입력창 + 질문하기 버튼 (가로로 배치)
-if submitted and question_input:
-    st.session_state["pending_question"] = question_input
-    st.session_state["clear_input"] = True   # 입력 초기화 플래그 ON
-    st.experimental_rerun()
 
 # ... (이후)
 # 입력창 렌더링
@@ -436,6 +432,12 @@ with col1:
 with col2:
     st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
     submitted = st.button("질문하기", use_container_width=True)
+
+if submitted and question_input:
+    st.session_state["pending_question"] = question_input
+    st.session_state["clear_input"] = True   # 입력 초기화 플래그 ON
+    st.experimental_rerun()
+
     # 2. 음성인식 버튼
 components.html("""
     <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
