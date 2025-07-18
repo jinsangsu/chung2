@@ -490,6 +490,26 @@ with st.form("input_form", clear_on_submit=True):
         handle_question(question_input)
         st.rerun()
 
+st.markdown("""
+<style>
+#toggleRecord {
+    background: #006400 !important;    /* 진한 녹색 */
+    color: #fff !important;            /* 흰색 글씨 */
+    font-weight: bold !important;      /* 굵은 글씨 */
+    border: none !important;
+    border-radius: 10px !important;
+    font-size: 16px !important;
+    padding: 10px 20px !important;
+    box-shadow: 0 2px 8px rgba(0,64,0,0.10) !important;
+    font-family: 'Nanum Gothic', 'Arial', sans-serif !important;
+    cursor: pointer !important;
+}
+#toggleRecord:hover {
+    background: #008000 !important;    /* hover 시 더 밝은 녹색 */
+    color: #fff !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
