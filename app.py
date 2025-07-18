@@ -138,6 +138,7 @@ try:
 except Exception as e:
     st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
 
+
 # 5. [채팅 세션/로직/FAQ 등 기존 app.py와 동일하게 복붙]
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = [{"role": "intro", "content": "", "display_type": "intro"}]
@@ -145,6 +146,11 @@ if "scroll_to_bottom_flag" not in st.session_state:
     st.session_state.scroll_to_bottom_flag = False
 if "pending_keyword" not in st.session_state:
     st.session_state.pending_keyword = None
+# 이곳에 아래 두 줄을 삽입해 주세요.
+if "input_value" not in st.session_state:
+    st.session_state.input_value = ""
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = ""
 
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
