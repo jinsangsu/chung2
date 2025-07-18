@@ -521,7 +521,7 @@ components.html("""
         }
     });
     </script>
-    """, height=160)
+    """, height=60)
 
 with st.form("input_form", clear_on_submit=True):
     col1, col2 = st.columns([5, 1])
