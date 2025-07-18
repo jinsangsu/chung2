@@ -417,17 +417,43 @@ def submit_question():
 
 st.markdown("""
 <style>
-.stForm, .stForm form, .block-container, .element-container, .st-bz, .stColumns, .stColumn {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+.input-row-flex {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
 }
-.stTextInput, .stTextInput > div, .stTextInput input {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
+@media (max-width: 600px) {
+    .input-row-flex {
+        flex-direction: column;
+        gap: 6px;
+        align-items: stretch;
+    }
+    .input-row-flex input, .input-row-flex button {
+        width: 100% !important;
+    }
+}
+.input-row-flex input[type="text"] {
+    flex: 1 1 auto;
+    min-height: 44px;
+    font-size: 1.1rem;
+}
+.input-row-flex button {
+    min-width: 88px;
+    min-height: 44px;
+    font-size: 1.1rem;
+    border-radius: 12px;
 }
 </style>
 """, unsafe_allow_html=True)
 
+components.html("""
+<div class="input-row-flex">
+    <input type="text" placeholder="궁금한 내용을 입력해 주세요" id="custom_q_input">
+    <button onclick="window.parent.document.dispatchEvent(new Event('customSubmit'));">질문하기</button>
+</div>
+""", height=70)
 
 with st.form("input_form", clear_on_submit=True):
     col1, col2 = st.columns([5, 1])
