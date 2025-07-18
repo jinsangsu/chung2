@@ -448,12 +448,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-components.html("""
-<div class="input-row-flex">
-    <input type="text" placeholder="궁금한 내용을 입력해 주세요" id="custom_q_input">
-    <button onclick="window.parent.document.dispatchEvent(new Event('customSubmit'));">질문하기</button>
-</div>
-""", height=70)
 
 with st.form("input_form", clear_on_submit=True):
     col1, col2 = st.columns([5, 1])
