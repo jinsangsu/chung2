@@ -411,24 +411,31 @@ components.html(
 )
 
 def submit_question():
-    if st.session_state.input_box_key: # input_box_key에 값이 있으면
-        st.session_state.pending_question = st.session_state.input_box_key
-        st.session_state.input_box_key = "" # 입력창 초기화
-        st.experimental_rerun()
+    if st.session_state["input_box"]:
+        st.session_state["pending_question"] = st.session_state["input_box"]
+        st.session_state["input_box"] = ""  # 입력창 초기화
 
-col1, col2 = st.columns([5, 1])
-with col1:
+# [2] "숨은 폼"으로 엔터 제출 처리
+with st.form(key="hidden_form", clear_on_submit=True):
     question_input = st.text_input(
         "",
-        value=st.session_state.input_value, # 세션 상태 값 사용
-        placeholder="궁금한 내용을 입력해 주세요",
-        key="input_box_key", # 새로운 키 사용
-        on_change=submit_question # 엔터 입력 시 submit_question 함수 호출
+        key="input_box",
+        placeholder="궁금한 내용을 입력해 주세요"
     )
-with col2:
-    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True) # 기존 간격 유지
-    submitted_button = st.button("질문하기", use_container_width=True, on_click=submit_question) # 버튼 클릭 시에도 submit_question 함수 호출
+    form_submit = st.form_submit_button(label="질문제출(숨김)", on_click=submit_question)  # 버튼 숨김 처리
 
+# [3] columns로 버튼 UI만 옆에 붙이기 (동일 키 사용!)
+col1, col2 = st.columns([5, 1])
+with col1:
+    st.write("")  # 여백(강제)
+with col2:
+    if st.button("질문하기", use_container_width=True):
+        submit_question()
+
+# [4] 질문 제출/답변 처리 (예시)
+if "pending_question" in st.session_state:
+    st.success(f"답변: {st.session_state['pending_question']}에 대한 답변입니다!")
+    del st.session_state["pending_question"]
     # 2. 음성인식 버튼
 components.html("""
     <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
