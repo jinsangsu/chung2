@@ -446,7 +446,7 @@ with st.form("input_form", clear_on_submit=True):
      with col2:
         # ★ 버튼 위에 여백 추가!
         st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
-        submitted = st.form_submit_button("CLICK", use_container_width=True,style="width:100%;height:36px;font-size:1rem;border-radius:8px;background:#003399;color:white;border:none;cursor:pointer;")
+        submitted = st.form_submit_button("CLICK", use_container_width=True)
 
 
     
