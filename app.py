@@ -415,6 +415,14 @@ def submit_question():
         st.session_state["pending_question"] = st.session_state["input_box"]
         st.session_state["input_box"] = ""  # 입력창 초기화
 
+st.markdown("""
+    <style>
+    div[data-testid="stForm"] > div:first-child {
+        margin-top: 0px !important;
+        padding-top: 0px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 with st.form("input_form", clear_on_submit=True):
     col1, col2 = st.columns([5, 1])
