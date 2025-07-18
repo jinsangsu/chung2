@@ -417,20 +417,25 @@ def submit_question():
 
 st.markdown("""
     <style>
-    /* form 전체 카드 패딩/마진 줄이기 */
+    /* form 카드 자체의 모든 위아래 패딩/마진 제거 */
     div[data-testid="stForm"] {
-        padding-top: 0.3rem !important;
-        padding-bottom: 0.3rem !important;
-        margin-top: 0.3rem !important;
-        margin-bottom: 0.3rem !important;
-    }
-    /* form 안의 컬럼 패딩도 최소화 */
-    div[data-testid="stForm"] [data-testid="column"] {
         padding-top: 0rem !important;
-        padding-bottom: 0rem !important;
+        padding-bottom: 0.2rem !important;
+        margin-top: 0rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+    /* form 안 첫 요소 위쪽 여백도 제거 */
+    div[data-testid="stForm"] > div:first-child {
+        margin-top: 0rem !important;
+        padding-top: 0rem !important;
+    }
+    /* form/card 바로 위 block-container도 여백 최소화 */
+    .block-container {
+        padding-top: 0.1rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
+
 with st.form("input_form", clear_on_submit=True):
     col1, col2 = st.columns([5, 1])
     with col1:
