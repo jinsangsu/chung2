@@ -445,8 +445,22 @@ with st.form("input_form", clear_on_submit=True):
         )
     with col2:
         # ★ 버튼 위에 여백 추가!
-        st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
-        submitted = st.form_submit_button("CLICK", use_container_width=True)
+        st.markdown("""
+            <button id="question_submit_btn" style="width:100%;height:36px;font-size:1rem;border-radius:8px;background:#003399;color:white;border:none;cursor:pointer;">
+                질문하기
+            </button>
+            <script>
+            document.getElementById("question_submit_btn").onclick = function() {
+                setTimeout(function() {
+                    const input = window.parent.document.querySelector('input[type="text"][placeholder="궁금한 내용을 입력해 주세요"]');
+                    if(input) input.focus();
+                }, 10);
+            };
+            </script>
+        """, unsafe_allow_html=True)
+
+    # 엔터/버튼 제출 동시 지원은 기존처럼 form_submit_button 사용
+    submitted = st.form_submit_button("질문하기", use_container_width=True)
 
     if submitted and question_input:
         handle_question(question_input)
