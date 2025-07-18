@@ -146,12 +146,6 @@ if "scroll_to_bottom_flag" not in st.session_state:
     st.session_state.scroll_to_bottom_flag = False
 if "pending_keyword" not in st.session_state:
     st.session_state.pending_keyword = None
-# 이곳에 아래 두 줄을 삽입해 주세요.
-if "input_value" not in st.session_state:
-    st.session_state.input_value = ""
-if "pending_question" not in st.session_state:
-    st.session_state.pending_question = ""
-
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
@@ -422,26 +416,23 @@ def submit_question():
         st.session_state["input_box"] = ""  # 입력창 초기화
 
 # [2] "숨은 폼"으로 엔터 제출 처리
-with st.form(key="hidden_form", clear_on_submit=True):
-    question_input = st.text_input(
-        "",
-        key="input_box",
-        placeholder="궁금한 내용을 입력해 주세요"
-    )
-    form_submit = st.form_submit_button(label="질문제출(숨김)", on_click=submit_question)  # 버튼 숨김 처리
+with st.form("input_form", clear_on_submit=True):
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        question_input = st.text_input(
+            "", 
+            key="input_box", 
+            placeholder="궁금한 내용을 입력해 주세요"
+        )
+    with col2:
+        submitted = st.form_submit_button("질문하기", use_container_width=True)
 
-# [3] columns로 버튼 UI만 옆에 붙이기 (동일 키 사용!)
-col1, col2 = st.columns([5, 1])
-with col1:
-    st.write("")  # 여백(강제)
-with col2:
-    if st.button("질문하기", use_container_width=True):
-        submit_question()
+    # 이 if문은 반드시 form 내부에 위치해야 함!
+    if submitted and question_input:
+        handle_question(question_input)
+        st.session_state["input_box"] = ""  # 실제로는 clear_on_submit=True가 자동 초기화!
+        st.rerun()
 
-# [4] 질문 제출/답변 처리 (예시)
-if "pending_question" in st.session_state:
-    st.success(f"답변: {st.session_state['pending_question']}에 대한 답변입니다!")
-    del st.session_state["pending_question"]
     # 2. 음성인식 버튼
 components.html("""
     <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
