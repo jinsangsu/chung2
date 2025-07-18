@@ -442,8 +442,8 @@ with st.form("input_form", clear_on_submit=True):
                 padding: 0 0; 
                 min-width: 120px; 
                 max-width: 150px; 
-                width: 150px;
-                height: 64px;
+                width: 60px;
+                height: 44px;
                 font-size:15px;
                 background-color:#003399; 
                 color:white; 
