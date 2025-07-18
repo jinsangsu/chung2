@@ -429,7 +429,7 @@ st.markdown("""
 
 # 입력/버튼을 감싸는 컨테이너를 만들고
 with st.form("input_form", clear_on_submit=True):
-    col1, col2, col3 = st.columns([3, 1, 1])
+    col1, col2, col3 = st.columns([2.5, 1.5, 1])
     with col1:
         question_input = st.text_input(
             "",
