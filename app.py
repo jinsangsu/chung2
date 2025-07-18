@@ -416,25 +416,18 @@ def submit_question():
         st.session_state["input_box"] = ""  # 입력창 초기화
 
 st.markdown("""
-    <style>
-    .stForm .st-b2, .stForm .st-b1, .stForm .st-b3 {
-        display: flex;
-        align-items: center !important;
-    }
-    .stForm .stTextInput > div, .stForm .stTextInput input {
-        min-height: 44px !important;
-        height: 44px !important;
-        font-size: 1.1rem !important;
-        vertical-align: middle !important;
-    }
-    .stForm .stButton > button {
-        min-height: 44px !important;
-        height: 44px !important;
-        font-size: 1.1rem !important;
-        vertical-align: middle !important;
-    }
-    </style>
+<style>
+.stForm, .stForm form, .block-container, .element-container, .st-bz, .stColumns, .stColumn {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+.stTextInput, .stTextInput > div, .stTextInput input {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+</style>
 """, unsafe_allow_html=True)
+
 
 with st.form("input_form", clear_on_submit=True):
     col1, col2 = st.columns([5, 1])
