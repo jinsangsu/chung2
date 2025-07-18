@@ -432,7 +432,7 @@ st.markdown("""
 components.html("""
     <style>
     #toggleRecord {
-        background: #1ec876 !important;    /* 진한 녹색 */
+        background: #238636 !important;    /* 진한 녹색 */
         color: #fff !important;            /* 흰색 글씨 */
         font-weight: bold !important;      /* 굵은 글씨 */
         border: none !important;
