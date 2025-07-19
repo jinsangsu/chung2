@@ -10,27 +10,75 @@ import re
 #다크모드라이트모드적용
 st.markdown("""
 <style>
-/* 다크모드/라이트모드 자동 전환 CSS */
 @media (prefers-color-scheme: dark) {
-    .stApp {
-        background-color: #1A1A1A !important;   /* 다크 배경 */
-        color: #eee !important;                /* 다크 글씨 */
+    html, body, .stApp {
+        background-color: #1a1a1a !important;
+        color: #eee !important;
     }
-    html, body, .stTextInput>div>div>input, .stTextArea>div>textarea,
-    .stForm, .stMarkdown, .stSubheader, .stHeader {
-        background-color: #222 !important;
+
+    input[type="text"], textarea {
+        background-color: #333 !important;
         color: #fff !important;
+        border: 1px solid #555 !important;
+    }
+
+    ::placeholder {
+        color: #aaa !important;
+        opacity: 1 !important;
+    }
+
+    .stTextInput>div>div>input,
+    .stTextArea>div>textarea {
+        background-color: #333 !important;
+        color: #fff !important;
+        border: 1px solid #555 !important;
+    }
+
+    .input-form-fixed {
+        background-color: #1A1A1A !important;
+        box-shadow: 0 -2px 16px rgba(255,255,255,0.05) !important;
+    }
+
+    #speech_status {
+        color: #ccc !important;
     }
 }
-/* 라이트모드 */
+
 @media (prefers-color-scheme: light) {
-    .stApp {
-        background-color: #fff !important;    /* 흰 배경 */
-        color: #222 !important;               /* 검은 글씨 */
+    html, body, .stApp {
+        background-color: #ffffff !important;
+        color: #111 !important;
+    }
+
+    input[type="text"], textarea {
+        background-color: #ffffff !important;
+        color: #000 !important;
+        border: 1px solid #ccc !important;
+    }
+
+    ::placeholder {
+        color: #888 !important;
+    }
+
+    .stTextInput>div>div>input,
+    .stTextArea>div>textarea {
+        background-color: #fff !important;
+        color: #000 !important;
+        border: 1px solid #ccc !important;
+    }
+
+    .input-form-fixed {
+        background-color: #fff !important;
+        box-shadow: 0 -2px 16px rgba(0,0,0,0.05) !important;
+    }
+
+    #speech_status {
+        color: #444 !important;
     }
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 st.markdown("""
 <style>
