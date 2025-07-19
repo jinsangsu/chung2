@@ -225,7 +225,7 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.4
+    SIMILARITY_THRESHOLD = 0.5
     user_txt = question_input.strip().replace(" ", "").lower()
 
     # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
