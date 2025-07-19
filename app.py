@@ -7,31 +7,36 @@ import base64
 import os
 import re
 
-#다크모드라이트모드적용
 st.markdown("""
 <style>
+/* 1. 챗 말풍선 텍스트 자동 색상 지정 */
+.message-bubble p, .message-bubble strong {
+    color: inherit !important;
+}
+
+/* 2. 다크모드에서는 흰색 계열로 자동 지정 */
 @media (prefers-color-scheme: dark) {
     html, body, .stApp {
         background-color: #1a1a1a !important;
-        color: #eee !important;
+        color: #eeeeee !important;
+    }
+
+    .message-bubble p, .message-bubble strong {
+        color: #eeeeee !important;
+    }
+
+    .intro-bubble h2, .intro-bubble p {
+        color: #eeeeee !important;
     }
 
     input[type="text"], textarea {
         background-color: #333 !important;
         color: #fff !important;
-        border: 1px solid #555 !important;
+        border: 1px solid #666 !important;
     }
 
     ::placeholder {
-        color: #aaa !important;
-        opacity: 1 !important;
-    }
-
-    .stTextInput>div>div>input,
-    .stTextArea>div>textarea {
-        background-color: #333 !important;
-        color: #fff !important;
-        border: 1px solid #555 !important;
+        color: #bbb !important;
     }
 
     .input-form-fixed {
@@ -44,27 +49,29 @@ st.markdown("""
     }
 }
 
+/* 3. 라이트모드는 기존대로 유지 */
 @media (prefers-color-scheme: light) {
     html, body, .stApp {
         background-color: #ffffff !important;
         color: #111 !important;
     }
 
+    .message-bubble p, .message-bubble strong {
+        color: #111 !important;
+    }
+
+    .intro-bubble h2, .intro-bubble p {
+        color: #111 !important;
+    }
+
     input[type="text"], textarea {
-        background-color: #ffffff !important;
+        background-color: #fff !important;
         color: #000 !important;
         border: 1px solid #ccc !important;
     }
 
     ::placeholder {
         color: #888 !important;
-    }
-
-    .stTextInput>div>div>input,
-    .stTextArea>div>textarea {
-        background-color: #fff !important;
-        color: #000 !important;
-        border: 1px solid #ccc !important;
     }
 
     .input-form-fixed {
@@ -78,7 +85,6 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 st.markdown("""
 <style>
