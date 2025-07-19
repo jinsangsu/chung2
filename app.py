@@ -401,7 +401,7 @@ def handle_question(question_input):
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
+                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 급하시면 저한테 와주세요~",
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
