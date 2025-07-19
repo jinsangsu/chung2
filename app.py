@@ -453,33 +453,33 @@ def display_chat_html_content():
     """
 # === 여기서부터 추가 ===
    chat_style = """
-    <style>
-    @media (prefers-color-scheme: dark) {
-        .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble,
-        .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p,
-        .intro-bubble h2, .intro-bubble p {
-            color: #eeeeee !important;
-        }
+<style id="dynamic-color-style">
+.message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble,
+.message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p {
+    color: #eeeeee !important;
+}
+</style>
+<script>
+function updateColorMode() {
+    var isDark = false;
+    // 부모창이 있으면 부모 document의 컬러스킴 감지
+    try {
+        isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch(e) {}
+    var styleTag = document.getElementById('dynamic-color-style');
+    if (isDark) {
+        styleTag.innerHTML = ".message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }";
+    } else {
+        styleTag.innerHTML = ".message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }";
     }
-    @media (prefers-color-scheme: light) {
-        .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble,
-        .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p,
-        .intro-bubble h2, .intro-bubble p {
-            color: #111 !important;
-        }
-    }
-    </style>
-    """
-    scroll_iframe_script = """
-    <script>
-    setTimeout(function () {
-        var anchor = document.getElementById("chat-scroll-anchor");
-        if (anchor) {
-            anchor.scrollIntoView({ behavior: "auto", block: "end" });
-        }
-    }, 0);
-    </script>
-    """
+}
+updateColorMode();
+// 모드가 바뀔 때마다 동적으로 감지
+if (window.parent.matchMedia) {
+    window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
+}
+</script>
+"""
     return f"""
     {chat_style}
     <div id="chat-content-scroll-area">
