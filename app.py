@@ -244,10 +244,7 @@ def extract_representative_keywords(questions, top_n=6):
     return most_common
 
 def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.3
-    user_txt = question_input.strip().replace(" ", "").lower()
-def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.3
+    SIMILARITY_THRESHOLD = 0.4
     user_txt = question_input.strip().replace(" ", "").lower()
 
     # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
