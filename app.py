@@ -29,6 +29,10 @@ st.markdown("""
         color: #eeeeee !important; /* 이 부분 추가 */
     }
 
+    .bot-bubble, .user-bubble, .intro-bubble, .message-bubble {
+        color: #eeeeee !important;
+    }
+
     input[type="text"], textarea {
         background-color: #333 !important;
         color: #fff !important;
