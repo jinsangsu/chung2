@@ -337,8 +337,8 @@ def handle_question(question_input):
                     ),
                     "display_type": "pending"
                 })
-                st.session_state.scroll_to_bottom_flag = True
-                return
+            st.session_state.scroll_to_bottom_flag = True
+            return
 
         if len(matched) == 1:
             bot_answer_content = {
