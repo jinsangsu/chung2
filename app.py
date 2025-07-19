@@ -540,7 +540,7 @@ if st.session_state.pending_examples:
         # 버튼에 대표 키워드만 노출
         btn_label = rep_keywords[idx] if idx < len(rep_keywords) else q["질문"][:10]
         with cols[idx]:
-            if st.button(btn_label, key=f"select_q_{idx}"):
+            if st.button(btn_label, key=f"select_q_{idx}",use_container_width=True):
                 st.session_state.chat_log.append({
                     "role": "bot",
                     "content": {
@@ -550,7 +550,7 @@ if st.session_state.pending_examples:
                     "display_type": "single_answer"
                 })
                 st.session_state.pending_examples = None
-                st.experimental_rerun()
+                st.rerun()
 
 st.markdown("""
     <style>
