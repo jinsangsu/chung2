@@ -22,11 +22,11 @@ st.markdown("""
     }
 
     .message-bubble p, .message-bubble strong {
-        color: #eeeeee !important;
+        color: #eeeeee !important; /* 이 부분 추가 */
     }
 
     .intro-bubble h2, .intro-bubble p {
-        color: #eeeeee !important;
+        color: #eeeeee !important; /* 이 부분 추가 */
     }
 
     input[type="text"], textarea {
@@ -85,6 +85,7 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 st.markdown("""
 <style>
