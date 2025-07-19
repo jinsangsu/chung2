@@ -320,7 +320,7 @@ def handle_question(question_input):
         })
 
         # 매칭 5개 이상시 유도질문
-       if len(matched) >= 5:
+        if len(matched) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
             example_questions = [m["질문"] for m in matched[:5]]
