@@ -452,23 +452,36 @@ def display_chat_html_content():
     </script>
     """
 # === 여기서부터 추가 ===
-    chat_style = """
+   chat_style = """
     <style>
     @media (prefers-color-scheme: dark) {
-        .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p {
+        .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble,
+        .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p,
+        .intro-bubble h2, .intro-bubble p {
             color: #eeeeee !important;
         }
     }
     @media (prefers-color-scheme: light) {
-        .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p {
+        .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble,
+        .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p,
+        .intro-bubble h2, .intro-bubble p {
             color: #111 !important;
         }
     }
     </style>
     """
-    # === 여기까지 추가 ===
-
+    scroll_iframe_script = """
+    <script>
+    setTimeout(function () {
+        var anchor = document.getElementById("chat-scroll-anchor");
+        if (anchor) {
+            anchor.scrollIntoView({ behavior: "auto", block: "end" });
+        }
+    }, 0);
+    </script>
+    """
     return f"""
+    {chat_style}
     <div id="chat-content-scroll-area">
         {chat_html_content}
         <div id="chat-scroll-anchor"></div>
