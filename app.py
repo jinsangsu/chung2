@@ -323,7 +323,9 @@ def handle_question(question_input):
         if len(matched) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
-            if len(main_word) >= 1:
+            example_questions = [m["질문"] for m in matched[:5]]
+            examples_html = "<br>".join([f"예시) {q}" for q in example_questions])
+            
                 st.session_state.pending_keyword = user_input
                 st.session_state.chat_log.append({
                     "role": "bot",
