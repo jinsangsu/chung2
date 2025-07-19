@@ -576,14 +576,7 @@ components.html("""
                 input.focus();
                 document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
             };
-                 // ★★★ 음성입력 완료 후 자동 제출(1초 후)
-                setTimeout(function() {
-                     let btn = document.querySelector('button[type=submit], button[kind="secondaryFormSubmit"]');
-                     if (btn) btn.click();
-                     document.getElementById("speech_status").innerText = "✅ 질문이 자동 제출되었습니다!";
-                }, 1000); // 1초(1000ms) 후 자동 제출
-            };
-
+                 
             recognition.onerror = function (e) {
                 document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
                 isRecording = false;
