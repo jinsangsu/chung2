@@ -512,9 +512,9 @@ st.markdown("""
         border: none;
         font-weight: bold;
         font-family: 'Nanum Gothic', 'Arial', sans-serif;
-        font-size: 1.1rem;
-        box-shadow: 0 2px 8px rgba(0,64,128,0.10);
-        padding: 8px 0 8px 0;
+        font-size: 16px !important;
+        box-shadow: 0 2px 8px rgba(0,64,0,0.10) !important;
+        padding: 10px 20px !important;
         cursor: pointer !important;
         transition: background 0.3s, box-shadow 0.3s;
     }
@@ -576,6 +576,14 @@ components.html("""
                 input.focus();
                 document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
             };
+                 // ★★★ 음성입력 완료 후 자동 제출(1초 후)
+                setTimeout(function() {
+                     let btn = window.parent.document.querySelector('button[type=submit], button[kind="secondaryFormSubmit"]');
+                     if (btn) btn.click();
+                     document.getElementById("speech_status").innerText = "✅ 질문이 자동 제출되었습니다!";
+                }, 1000); // 1초(1000ms) 후 자동 제출
+            };
+
             recognition.onerror = function (e) {
                 document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
                 isRecording = false;
@@ -600,7 +608,7 @@ components.html("""
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
-    submitted = st.form_submit_button("질문하기")
+    submitted = st.form_submit_button("질문")
     if submitted and question_input:
         handle_question(question_input)
         st.rerun()
