@@ -452,7 +452,7 @@ def display_chat_html_content():
     </script>
     """
 # === 여기서부터 추가 ===
-  chat_style = """
+   chat_style = """
 <style id="dynamic-color-style">
 .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble,
 .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p {
@@ -478,7 +478,7 @@ if (window.parent.matchMedia) {
 }
 </script>
 """
-    return f"""
+   return f"""
     {chat_style}
     <div id="chat-content-scroll-area">
         {chat_html_content}
