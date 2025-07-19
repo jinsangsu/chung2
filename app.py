@@ -381,7 +381,7 @@ def display_chat_html_content():
             chat_html_content += (
                 '<div class="message-row user-message-row" style="display:flex;justify-content:flex-end;width:100%;">'
                 '<div class="message-bubble user-bubble" '
-                'style="background:#dcf8c6;color:#111;font-weight:700;'
+                'style="background:#dcf8c6;font-weight:700;'
                 'text-align:center; margin-left:auto; min-width:80px; display:inline-block;'
                 'padding:12px 32px 12px 32px; border-radius:15px;">'
                 f'{user_question}'
