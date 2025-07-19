@@ -323,7 +323,7 @@ def handle_question(question_input):
         if len(matched) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
-            example_questions = [m["질문"] for m in matched[:5]]
+            example_questions = [m["질문"] for m in matched[:3]]
             examples_html = "".join([
                 f"<div class='example-item'>예시) {q}</div>"
                 for q in example_questions
