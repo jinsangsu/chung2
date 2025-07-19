@@ -458,6 +458,8 @@ def display_chat_html_content():
     .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p {
         color: #eeeeee !important;
     }
+    .user-bubble {
+    color: #111 !important;  /* 질문은 항상 검정! */
     </style>
     <script>
     function updateColorMode() {
