@@ -320,25 +320,64 @@ def handle_question(question_input):
         })
 
         # 매칭 5개 이상시 유도질문
-        if len(matched) >= 5:
-            main_word = question_input.strip()
-            main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
-            example_questions = [m["질문"] for m in matched[:5]]
-            examples_html = "<br>".join([f"예시) {q}" for q in example_questions])
-            
-            st.session_state.pending_keyword = user_input
-            st.session_state.chat_log.append({
-                    "role": "bot",
-                    "content": (f"사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요?"
-                                   "유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!"
+       if len(matched) >= 5:
+    main_word = question_input.strip()
+    main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
+    example_questions = [m["질문"] for m in matched[:5]]
+    # 예시마다 예쁘게 박스 처리
+    examples_html = "".join([f"<div class='example-item'>예시) {q}</div>" for q in example_questions])
 
-                                   "<br><b>아래처럼 다시 물어보시면 바로 답변드릴 수 있어요.</b><br>"
-                                   f"{examples_html}"
-                    ),
-                    "display_type": "pending"
-                })
-            st.session_state.scroll_to_bottom_flag = True
-            return
+    st.session_state.pending_keyword = user_input
+    st.session_state.chat_log.append({
+        "role": "bot",
+        "content": (
+            "<div class='example-guide-block'>"
+            f"<span class='example-guide-title'>사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요?</span>"
+            " 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!<br>"
+            "<span class='example-guide-emph'><b>아래처럼 다시 물어보시면 바로 답변드릴 수 있어요.</b></span><br>"
+            f"{examples_html}"
+            "</div>"
+            """
+            <style>
+            .example-guide-block {
+                margin: 10px 0 0 0;
+                font-size: 1.05em;
+            }
+            .example-guide-title {
+                color: #226ed8;
+                font-weight: 700;
+            }
+            .example-guide-emph {
+                color: #d32f2f;
+                font-weight: 700;
+            }
+            .example-item {
+                margin-top: 9px;
+                margin-bottom: 2px;
+                padding-left: 10px;
+                line-height: 1.5;
+                border-left: 3px solid #e3e3e3;
+                background: #f9fafb;
+                border-radius: 5px;
+                font-size: 0.98em;
+            }
+            @media (prefers-color-scheme: dark) {
+                .example-guide-title { color: #64b5f6; }
+                .example-guide-emph { color: #ffab91; }
+                .example-item {
+                    background: #232c3a;
+                    border-left: 3px solid #374151;
+                    color: #eaeaea;
+                }
+            }
+            </style>
+            """
+        ),
+        "display_type": "pending"
+    })
+    st.session_state.scroll_to_bottom_flag = True
+    return
+
 
         if len(matched) == 1:
             bot_answer_content = {
