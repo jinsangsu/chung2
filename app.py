@@ -533,20 +533,24 @@ if st.session_state.pending_examples:
     # 대표 키워드 추출
     questions = [m["질문"] for m in st.session_state.pending_examples]
     rep_keywords = extract_representative_keywords(questions, top_n=len(st.session_state.pending_examples))
+    n_btn = len(st.session_state.pending_examples)
+    cols = st.columns(n_btn)
+    
     for idx, q in enumerate(st.session_state.pending_examples):
         # 버튼에 대표 키워드만 노출
         btn_label = rep_keywords[idx] if idx < len(rep_keywords) else q["질문"][:10]
-        if st.button(btn_label, key=f"select_q_{idx}"):
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": {
-                    "q": q["질문"],
-                    "a": add_friendly_prefix(q["답변"])
-                },
-                "display_type": "single_answer"
-            })
-            st.session_state.pending_examples = None
-            st.experimental_rerun()
+        with cols[idx]:
+            if st.button(btn_label, key=f"select_q_{idx}"):
+                st.session_state.chat_log.append({
+                    "role": "bot",
+                    "content": {
+                        "q": q["질문"],
+                        "a": add_friendly_prefix(q["답변"])
+                    },
+                    "display_type": "single_answer"
+                })
+                st.session_state.pending_examples = None
+                st.experimental_rerun()
 
 st.markdown("""
     <style>
