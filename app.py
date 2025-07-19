@@ -469,7 +469,8 @@ def display_chat_html_content():
         } catch(e) {}
         var styleTag = document.getElementById('dynamic-color-style');
         if (isDark) {
-            styleTag.innerHTML = ".message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }";
+            styleTag.innerHTML = ".message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
+.user-bubble, .user-bubble p { color: #111 !important; }";
         } else {
             styleTag.innerHTML = ".message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }";
         }
