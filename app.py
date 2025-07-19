@@ -226,6 +226,23 @@ def add_friendly_prefix(answer):
     else:
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
+def extract_representative_keywords(questions, top_n=6):
+    from collections import Counter
+    words = []
+    for q in questions:
+        # 한글/영문/숫자만, 2~6글자짜리 단어만 수집
+        for word in re.split(r"[^\w가-힣]", q):
+            if 2 <= len(word) <= 6:
+                words.append(word)
+    # 가장 많이 나온 단어 top_n개 추출 (중복X)
+    most_common = []
+    for w, _ in Counter(words).most_common():
+        if w not in most_common:
+            most_common.append(w)
+        if len(most_common) >= top_n:
+            break
+    return most_common
+
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.3
     user_txt = question_input.strip().replace(" ", "").lower()
@@ -336,15 +353,24 @@ def handle_question(question_input):
             bot_display_type = "single_answer"
 
         elif len(matched) > 1:
-             st.session_state.pending_examples = matched
-             st.session_state.chat_log.append({
-                   "role": "bot",
-                    "content": "사장님, 아래 중에서 궁금한 질문을 선택해 주세요!",
-                    "display_type": "multi_select"
-             })
-             st.session_state.scroll_to_bottom_flag = True
-             return
-
+    		questions = [m["질문"] for m in matched]
+    		rep_keywords = extract_representative_keywords(questions, top_n=6)
+    		rep_questions = []
+    		used_q = set()
+    		for kw in rep_keywords:
+        		for m in matched:
+            			if kw in m["질문"] and m["질문"] not in used_q:
+                		rep_questions.append(m)
+                		used_q.add(m["질문"])
+                		break
+    		st.session_state.pending_examples = rep_questions
+    		st.session_state.chat_log.append({
+        		"role": "bot",
+        		"content": "아래 중 궁금한 키워드를 선택해 주세요!",
+        		"display_type": "multi_select"
+    		})
+    		st.session_state.scroll_to_bottom_flag = True
+    		return
 
         else:
             # [3] 답변이 아예 없을 때 안내멘트
@@ -502,25 +528,28 @@ components.html(
 )
 
 if st.session_state.pending_examples:
-    st.markdown("---")  # 구분선
+    st.markdown("---")
     st.markdown(
         "<div style='font-size:1.13em; color:#226ed8; font-weight:700; margin-bottom:12px;'>"
-        "아래 중 궁금한 질문을 <span style='background:#ffefc3; padding:2px 7px; border-radius:6px;'>터치</span>해 주세요!</div>",
+        "아래 중 궁금한 <b>키워드</b>를 터치해 주세요!</div>",
         unsafe_allow_html=True)
-    cols = st.columns(len(st.session_state.pending_examples))
+    # 대표 키워드 추출
+    questions = [m["질문"] for m in st.session_state.pending_examples]
+    rep_keywords = extract_representative_keywords(questions, top_n=len(st.session_state.pending_examples))
     for idx, q in enumerate(st.session_state.pending_examples):
-        with cols[idx]:
-            if st.button(q["질문"], key=f"select_q_{idx}"):
-                st.session_state.chat_log.append({
-                    "role": "bot",
-                    "content": {
-                        "q": q["질문"],
-                        "a": add_friendly_prefix(q["답변"])
-                    },
-                    "display_type": "single_answer"
-                })
-                st.session_state.pending_examples = None
-                st.experimental_rerun()
+        # 버튼에 대표 키워드만 노출
+        btn_label = rep_keywords[idx] if idx < len(rep_keywords) else q["질문"][:10]
+        if st.button(btn_label, key=f"select_q_{idx}"):
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": {
+                    "q": q["질문"],
+                    "a": add_friendly_prefix(q["답변"])
+                },
+                "display_type": "single_answer"
+            })
+            st.session_state.pending_examples = None
+            st.experimental_rerun()
 
 st.markdown("""
     <style>
