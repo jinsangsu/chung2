@@ -453,34 +453,40 @@ def display_chat_html_content():
     """
 # === 여기서부터 추가 ===
     chat_style = """
-    <style id="dynamic-color-style">
-    .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble,
-    .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p {
-        color: #eeeeee !important;
+<style id="dynamic-color-style">
+.message-row, .message-bubble, .bot-bubble, .intro-bubble,
+.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
+    color: #111 !important;
+}
+.user-bubble, .user-bubble p {
+    color: #111 !important;
+}
+</style>
+<script>
+function updateColorMode() {
+    var isDark = false;
+    try {
+        isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch(e) {}
+    var styleTag = document.getElementById('dynamic-color-style');
+    if (isDark) {
+        styleTag.innerHTML = `
+.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
+.user-bubble, .user-bubble p { color: #111 !important; }
+`;
+    } else {
+        styleTag.innerHTML = `
+.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
+.user-bubble, .user-bubble p { color: #111 !important; }
+`;
     }
-    .user-bubble {
-    color: #111 !important;  /* 질문은 항상 검정! */
-    </style>
-    <script>
-    function updateColorMode() {
-        var isDark = false;
-        try {
-            isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
-        } catch(e) {}
-        var styleTag = document.getElementById('dynamic-color-style');
-        if (isDark) {
-            styleTag.innerHTML = ".message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
-.user-bubble, .user-bubble p { color: #111 !important; }";
-        } else {
-            styleTag.innerHTML = ".message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }";
-        }
-    }
-    updateColorMode();
-    if (window.parent.matchMedia) {
-        window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
-    }
-    </script>
-    """
+}
+updateColorMode();
+if (window.parent.matchMedia) {
+    window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
+}
+</script>
+"""
     return f"""
     {chat_style}
     <div id="chat-content-scroll-area">
