@@ -160,6 +160,11 @@ def get_character_img_base64(img_path):
         with open(img_path, "rb") as img_file:
             b64 = base64.b64encode(img_file.read()).decode("utf-8")
             return f"data:image/webp;base64,{b64}"
+    default_img_path = BRANCH_CONFIG["default"]["image"]
+    if os.path.exists(default_img_path):
+        with open(default_img_path, "rb") as img_file:
+            b64 = base64.b64encode(img_file.read()).decode("utf-8")
+            return f"data:image/webp;base64,{b64}"
     return None
 
 def get_intro_html():
@@ -323,7 +328,7 @@ def handle_question(question_input):
         if len(matched) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
-            example_questions = [m["질문"] for m in matched[:3]]
+            example_questions = [m["질문"] for m in matched[:5]]
             examples_html = "".join([
                 f"<div class='example-item'>예시) {q}</div>"
                 for q in example_questions
