@@ -138,7 +138,7 @@ BRANCH_CONFIG = {
     "is":      {"bot_name": "수빈",    "intro": "익산지점 이쁜이 ‘수빈’입니다.❤️",    "image": "subin_character.webp"},
     "ca":    {"bot_name": "연지",    "intro": "천안지점 희망 ‘연지’입니다.❤️",    "image": "yeonji_character.webp"},
     "yd":     {"bot_name": "상민",    "intro": "예당지점 이쁜이 ‘상민’입니다.❤️",    "image": "sangmin_character.webp"},
-    "djt2": {"bot_name": "영경",    "intro": "대전TC2지점 이쁜이 ‘영경’입니다.❤️", "image": "youngkyung_character.webp"},
+    "dt2": {"bot_name": "영경",    "intro": "대전TC2지점 이쁜이 ‘영경’입니다.❤️", "image": "youngkyung_character.webp"},
     "ctc": {"bot_name": "유림",    "intro": "청주TC지점 이쁜이 ‘유림’입니다.❤️", "image": "youlim_character.webp"},
     "scj": {"bot_name": "혜련",    "intro": "서청주지점 꽃 ‘혜련’이에요❤️", "image": "heryun_character.webp"},
     "yst": {"bot_name": "영주",    "intro": "유성TC지점 이쁜이 ‘영주’에요❤️", "image": "youngju_character.webp"},
@@ -210,6 +210,8 @@ if "scroll_to_bottom_flag" not in st.session_state:
     st.session_state.scroll_to_bottom_flag = False
 if "pending_keyword" not in st.session_state:
     st.session_state.pending_keyword = None
+if "pending_examples" not in st.session_state:
+    st.session_state.pending_examples = None
 
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
@@ -392,14 +394,18 @@ def handle_question(question_input):
                 "a": add_friendly_prefix(matched[0]["답변"])
             }
             bot_display_type = "single_answer"
+
         elif len(matched) > 1:
-            bot_answer_content = []
-            for r in matched:
-                bot_answer_content.append({
-                    "q": r["질문"],
-                    "a": add_friendly_prefix(r["답변"])
-                })
-            bot_display_type = "multi_answer"
+             st.session_state.pending_examples = matched
+             st.session_state.chat_log.append({
+                   "role": "bot",
+                    "content": "사장님, 아래 중에서 궁금한 질문을 선택해 주세요!",
+                    "display_type": "multi_select"
+             })
+             st.session_state.scroll_to_bottom_flag = True
+             return
+
+
         else:
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
@@ -554,6 +560,27 @@ components.html(
     height=520,
     scrolling=True
 )
+
+if st.session_state.pending_examples:
+    st.markdown("---")  # 구분선
+    st.markdown(
+        "<div style='font-size:1.13em; color:#226ed8; font-weight:700; margin-bottom:12px;'>"
+        "아래 중 궁금한 질문을 <span style='background:#ffefc3; padding:2px 7px; border-radius:6px;'>터치</span>해 주세요!</div>",
+        unsafe_allow_html=True)
+    cols = st.columns(len(st.session_state.pending_examples))
+    for idx, q in enumerate(st.session_state.pending_examples):
+        with cols[idx]:
+            if st.button(q["질문"], key=f"select_q_{idx}"):
+                st.session_state.chat_log.append({
+                    "role": "bot",
+                    "content": {
+                        "q": q["질문"],
+                        "a": add_friendly_prefix(q["답변"])
+                    },
+                    "display_type": "single_answer"
+                })
+                st.session_state.pending_examples = None
+                st.experimental_rerun()
 
 st.markdown("""
     <style>
