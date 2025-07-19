@@ -452,7 +452,7 @@ def display_chat_html_content():
     </script>
     """
 # === 여기서부터 추가 ===
-   chat_style = """
+  chat_style = """
 <style id="dynamic-color-style">
 .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble,
 .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p {
@@ -462,7 +462,6 @@ def display_chat_html_content():
 <script>
 function updateColorMode() {
     var isDark = false;
-    // 부모창이 있으면 부모 document의 컬러스킴 감지
     try {
         isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
     } catch(e) {}
@@ -474,7 +473,6 @@ function updateColorMode() {
     }
 }
 updateColorMode();
-// 모드가 바뀔 때마다 동적으로 감지
 if (window.parent.matchMedia) {
     window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
 }
