@@ -451,6 +451,23 @@ def display_chat_html_content():
     }, 0);
     </script>
     """
+# === 여기서부터 추가 ===
+    chat_style = """
+    <style>
+    @media (prefers-color-scheme: dark) {
+        .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p {
+            color: #eeeeee !important;
+        }
+    }
+    @media (prefers-color-scheme: light) {
+        .message-row, .message-bubble, .user-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .user-bubble p, .intro-bubble h2, .intro-bubble p {
+            color: #111 !important;
+        }
+    }
+    </style>
+    """
+    # === 여기까지 추가 ===
+
     return f"""
     <div id="chat-content-scroll-area">
         {chat_html_content}
