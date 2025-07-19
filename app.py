@@ -326,10 +326,12 @@ def handle_question(question_input):
             example_questions = [m["질문"] for m in matched[:5]]
             examples_html = "<br>".join([f"예시) {q}" for q in example_questions])
             
-                st.session_state.pending_keyword = user_input
-                st.session_state.chat_log.append({
+            st.session_state.pending_keyword = user_input
+            st.session_state.chat_log.append({
                     "role": "bot",
-                    "content": f"사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요? 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!",
+                    "content": f"사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요? 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!","<br>
+                                  <br><b>아래처럼 다시 물어보시면 바로 답변드릴 수 있어요.</b><br>"
+                                  f"{examples_html}"
                     "display_type": "pending"
                 })
                 st.session_state.scroll_to_bottom_flag = True
