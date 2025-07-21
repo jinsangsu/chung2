@@ -523,42 +523,55 @@ def display_chat_html_content():
     }, 0);
     </script>
     """
-# === 여기서부터 추가 ===
+
+    # === 여기 추가 ===
+    focus_input_script = """
+    <script>
+    setTimeout(function () {
+        var input = document.getElementById("custom-chat-input");
+        if(input){
+            input.focus();
+            input.scrollIntoView({behavior: "smooth", block: "end"});
+        }
+    }, 400);
+    </script>
+    """
+
     chat_style = """
-<style id="dynamic-color-style">
-.message-row, .message-bubble, .bot-bubble, .intro-bubble,
-.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
-    color: #111 !important;
-}
-.user-bubble, .user-bubble p {
-    color: #111 !important;
-}
-</style>
-<script>
-function updateColorMode() {
-    var isDark = false;
-    try {
-        isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
-    } catch(e) {}
-    var styleTag = document.getElementById('dynamic-color-style');
-    if (isDark) {
-        styleTag.innerHTML = `
-.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
-.user-bubble, .user-bubble p { color: #111 !important; }
-`;
-    } else {
-        styleTag.innerHTML = `
-.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
-.user-bubble, .user-bubble p { color: #111 !important; }
-`;
+    <style id="dynamic-color-style">
+    .message-row, .message-bubble, .bot-bubble, .intro-bubble,
+    .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
+        color: #111 !important;
     }
-}
-updateColorMode();
-if (window.parent.matchMedia) {
-    window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
-}
-</script>
-"""
+    .user-bubble, .user-bubble p {
+        color: #111 !important;
+    }
+    </style>
+    <script>
+    function updateColorMode() {
+        var isDark = false;
+        try {
+            isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
+        } catch(e) {}
+        var styleTag = document.getElementById('dynamic-color-style');
+        if (isDark) {
+            styleTag.innerHTML = `
+    .message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
+    .user-bubble, .user-bubble p { color: #111 !important; }
+    `;
+        } else {
+            styleTag.innerHTML = `
+    .message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
+    .user-bubble, .user-bubble p { color: #111 !important; }
+    `;
+        }
+    }
+    updateColorMode();
+    if (window.parent.matchMedia) {
+        window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
+    }
+    </script>
+    """
     return f"""
     {chat_style}
     <div id="chat-content-scroll-area" style="padding-bottom:90px;">
@@ -566,8 +579,8 @@ if (window.parent.matchMedia) {
         <div id="chat-scroll-anchor"></div>
     </div>
     {scroll_iframe_script}
+    {focus_input_script}   <!-- 요 부분이 핵심입니다! -->
     """
-
 components.html(
     display_chat_html_content(),
     height=520,
@@ -697,9 +710,16 @@ components.html("""
         </form>
     </div>
     <script>
-    // 자동 포커스 및 제출 후 포커스
     var input = document.getElementById("custom-chat-input");
-    if (input) { input.focus(); }
+
+    // 모바일 키보드 올라오면 입력창 자동 스크롤
+    function handleMobileKeyboard(){
+        setTimeout(function(){
+            input.scrollIntoView({behavior: "smooth", block: "end"});
+        }, 300);
+    }
+    input.addEventListener("focus", handleMobileKeyboard);
+
     document.getElementById("custom-chat-form").onsubmit = function(e){
         e.preventDefault();
         var v = input.value.trim();
@@ -707,18 +727,20 @@ components.html("""
             window.parent.postMessage({chat_input: v}, "*");
             input.value = "";
         }
-        input.focus();
+        setTimeout(function(){
+            input.focus();
+            input.scrollIntoView({behavior:"smooth", block:"end"});
+        }, 150);
         return false;
     };
-    // 모바일 키보드 올릴 때 하단 스크롤
-    input.addEventListener("focus", function(){
-        setTimeout(function(){
-            input.scrollIntoView({behavior: "smooth", block: "end"});
-        }, 200);
+
+    window.addEventListener("resize", function(){
+        if(document.activeElement === input){
+            handleMobileKeyboard();
+        }
     });
     </script>
 """, height=85)
-
 
 st.markdown("""
 <style>
