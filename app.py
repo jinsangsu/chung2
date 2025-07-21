@@ -7,6 +7,28 @@ import base64
 import os
 import re
 
+if "last_custom_input" not in st.session_state:
+    st.session_state.last_custom_input = None
+
+components.html("""
+<script>
+window.addEventListener("message", function(event){
+    if (event.data && event.data.chat_input) {
+        window.parent.document.dispatchEvent(new CustomEvent("st_custom_chat_input", {detail: event.data.chat_input}));
+    }
+}, false);
+</script>
+""", height=0)
+
+components.html("""
+<script>
+document.addEventListener("st_custom_chat_input", function(e){
+    window.parent.postMessage({streamlit_set_input: e.detail}, "*");
+});
+</script>
+""", height=0)
+
+
 st.markdown("""
 <style>
 /* 1. 챗 말풍선 텍스트 자동 색상 지정 */
@@ -145,14 +167,19 @@ BRANCH_CONFIG = {
     "gs": {"bot_name": "혜진",    "intro": "군산지점 이쁜이 ‘’혜진이에요❤️", "image": "hejin_character.webp"},
     "ds": {"bot_name": "소정",    "intro": "둔산지점 이쁜이 ‘’소정이에요❤️", "image": "sojung_character.webp"},
     "scjj": {"bot_name": "지영",    "intro": "순천중앙지점 이쁜이 ‘’지영이에요❤️", "image": "jiyoung_character.webp"},
+    "nsj": {"bot_name": "세정",    "intro": "논산지점 이쁜이 ‘’서희이에요❤️", "image": "sejung_character.webp"},
     "smj": {"bot_name": "서희",    "intro": "상무지점 이쁜이 ‘’서희이에요❤️", "image": "seohi_character.webp"},
+    "chjj": {"bot_name": "희정",    "intro": "청주제일지점 겸둥이 ‘’희정이에요❤️", "image": "hijung_character.webp"},
     "chj": {"bot_name": "소영",    "intro": "청주지점 이쁜이 ‘’소영이에요❤️", "image": "soyoung_character.webp"},
+    "cjj": {"bot_name": "윤희", "intro": "충주지점 이쁜이 '윤희에요❤️'", "image": "yunhi_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
 }
 
 # 2. [지점 파라미터 추출]
-branch = st.query_params.get('branch', ['default'])
-branch = str(branch).lower() if branch and str(branch).lower() != "none" else "default"
+branch = st.query_params.get('branch', 'default')
+if isinstance(branch, list):
+    branch = branch[0]
+branch = branch.lower().strip() if branch and branch.lower() != "none" else "default"
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
 
 # 3. [캐릭터 이미지 불러오기]
@@ -200,12 +227,13 @@ try:
 
     json_key_dict = json.loads(st.secrets["gcp_service_account"])
     credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
-  
     gc = gspread.authorize(credentials)
     # ★ 공용 질의응답시트 키만 아래에 넣으세요!
     sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
 except Exception as e:
     st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
+
+
 
 # 5. [채팅 세션/로직/FAQ 등 기존 app.py와 동일하게 복붙]
 if "chat_log" not in st.session_state:
@@ -214,8 +242,6 @@ if "scroll_to_bottom_flag" not in st.session_state:
     st.session_state.scroll_to_bottom_flag = False
 if "pending_keyword" not in st.session_state:
     st.session_state.pending_keyword = None
-if "pending_examples" not in st.session_state:
-    st.session_state.pending_examples = None
 
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
@@ -230,31 +256,14 @@ def add_friendly_prefix(answer):
     else:
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
-def extract_representative_keywords(questions, top_n=6):
-    from collections import Counter
-    words = []
-    for q in questions:
-        # 한글/영문/숫자만, 2~6글자짜리 단어만 수집
-        for word in re.split(r"[^\w가-힣]", q):
-            if 2 <= len(word) <= 6:
-                words.append(word)
-    # 가장 많이 나온 단어 top_n개 추출 (중복X)
-    most_common = []
-    for w, _ in Counter(words).most_common():
-        if w not in most_common:
-            most_common.append(w)
-        if len(most_common) >= top_n:
-            break
-    return most_common
-
 def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.3
+    SIMILARITY_THRESHOLD = 0.5
     user_txt = question_input.strip().replace(" ", "").lower()
 
-    # [1] 잡담/감정/상황 패턴
+    # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
     chit_chat_patterns = [
         (["사랑", "좋아해"], "사장님, 저도 사랑합니다! 💛 언제나 사장님 곁에 있을게요!"),
-        (["잘지냈", "안녕"], "네! 사장님 덕분에 잘 지내고 있습니다😊 사장님은 잘 지내셨어요?"),
+        (["잘지내", "안녕"], "네! 사장님 덕분에 잘 지내고 있습니다😊 사장님은 잘 지내셨어요?"),
         (["보고싶"], "저도 사장님 보고 싶었어요! 곁에서 항상 응원하고 있습니다💛"),
         (["고마워", "감사"], "항상 사장님께 감사드립니다! 도움이 되어드릴 수 있어 행복해요😊"),
         (["힘들", "지쳤", "속상"], "많이 힘드셨죠? 언제든 제가 사장님 곁을 지키고 있습니다. 파이팅입니다!"),
@@ -282,8 +291,7 @@ def handle_question(question_input):
             })
             st.session_state.scroll_to_bottom_flag = True
             return
-
-    # [2] "애순"이 들어간 인삿말
+# [2] "애순"이 들어간 인삿말 (기존 + return 추가)
     if "애순" in user_txt:
         st.session_state.chat_log.append({
             "role": "user",
@@ -345,42 +353,91 @@ def handle_question(question_input):
             "display_type": "question"
         })
 
+        # 매칭 5개 이상시 유도질문
+        if len(matched) >= 5:
+            main_word = question_input.strip()
+            main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
+            example_questions = [m["질문"] for m in matched[:5]]
+            examples_html = "".join([
+                f"<div class='example-item'>예시) {q}</div>"
+                for q in example_questions
+            ])
+
+            st.session_state.pending_keyword = user_input
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": (
+                    "<div class='example-guide-block'>"
+                    f"<span class='example-guide-title'>사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요?</span>"
+                    " 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!<br>"
+                    "<span class='example-guide-emph'><b>아래처럼 다시 물어보시면 바로 답변드릴 수 있어요.</b></span><br>"
+                    f"{examples_html}"
+                    "</div>"
+                    """
+                    <style>
+                    .example-guide-block {
+                        margin: 10px 0 0 0;
+                        font-size: 1.05em;
+                    }
+                    .example-guide-title {
+                        color: #226ed8;
+                        font-weight: 700;
+                    }
+                    .example-guide-emph {
+                        color: #d32f2f;
+                        font-weight: 700;
+                    }
+                    .example-item {
+                        margin-top: 9px;
+                        margin-bottom: 2px;
+                        padding-left: 10px;
+                        line-height: 1.5;
+                        border-left: 3px solid #e3e3e3;
+                        background: #f9fafb;
+                        border-radius: 5px;
+                        font-size: 0.98em;
+                    }
+                    @media (prefers-color-scheme: dark) {
+                        .example-guide-title { color: #64b5f6; }
+                        .example-guide-emph { color: #ffab91; }
+                        .example-item {
+                            background: #232c3a;
+                            border-left: 3px solid #374151;
+                            color: #eaeaea;
+                        }
+                    }
+                    </style>
+                    """
+                ),
+                "display_type": "pending"
+            })
+            st.session_state.scroll_to_bottom_flag = True
+            return
+
+
         if len(matched) == 1:
             bot_answer_content = {
                 "q": matched[0]["질문"],
                 "a": add_friendly_prefix(matched[0]["답변"])
             }
             bot_display_type = "single_answer"
-
         elif len(matched) > 1:
-            questions = [m["질문"] for m in matched]
-            rep_keywords = extract_representative_keywords(questions, top_n=6)
-            rep_questions = []
-            used_q = set()
-            for kw in rep_keywords:
-                for m in matched:
-                    if kw in m["질문"] and m["질문"] not in used_q:
-                        rep_questions.append(m)
-                        used_q.add(m["질문"])
-                        break
-            st.session_state.pending_examples = rep_questions
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": "아래 중 궁금한 키워드를 선택해 주세요!",
-                "display_type": "multi_select"
-            })
-            st.session_state.scroll_to_bottom_flag = True
-            return
-
+            bot_answer_content = []
+            for r in matched:
+                bot_answer_content.append({
+                    "q": r["질문"],
+                    "a": add_friendly_prefix(r["답변"])
+                })
+            bot_display_type = "multi_answer"
         else:
+            # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~ ㅠ,ㅠ 준비 안된 질문이에요. 저에게 오시면 알려드릴께요^*^",
+                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 급하시면 저한테 와주세요~",
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
             return
-
         if len(matched) > 0:
             st.session_state.chat_log.append({
                 "role": "bot",
@@ -388,7 +445,6 @@ def handle_question(question_input):
                 "display_type": bot_display_type
             })
         st.session_state.scroll_to_bottom_flag = True
-
     except Exception as e:
         st.session_state.chat_log.append({
             "role": "bot",
@@ -396,7 +452,7 @@ def handle_question(question_input):
             "display_type": "llm_answer"
         })
         st.session_state.scroll_to_bottom_flag = True
-        
+
 def display_chat_html_content():
     chat_html_content = ""
     for entry in st.session_state.chat_log:
@@ -477,84 +533,78 @@ def display_chat_html_content():
     }, 0);
     </script>
     """
-# === 여기서부터 추가 ===
+
+    # === 여기 추가 ===
+    focus_input_script = """
+    <script>
+    setTimeout(function () {
+        var input = document.getElementById("custom-chat-input");
+        if(input){
+            input.focus();
+            input.scrollIntoView({behavior: "smooth", block: "end"});
+        }
+    }, 400);
+    </script>
+    """
+
     chat_style = """
-<style id="dynamic-color-style">
-.message-row, .message-bubble, .bot-bubble, .intro-bubble,
-.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
-    color: #111 !important;
-}
-.user-bubble, .user-bubble p {
-    color: #111 !important;
-}
-</style>
-<script>
-function updateColorMode() {
-    var isDark = false;
-    try {
-        isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
-    } catch(e) {}
-    var styleTag = document.getElementById('dynamic-color-style');
-    if (isDark) {
-        styleTag.innerHTML = `
-.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
-.user-bubble, .user-bubble p { color: #111 !important; }
-`;
-    } else {
-        styleTag.innerHTML = `
-.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
-.user-bubble, .user-bubble p { color: #111 !important; }
-`;
+    <style id="dynamic-color-style">
+    .message-row, .message-bubble, .bot-bubble, .intro-bubble,
+    .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
+        color: #111 !important;
     }
-}
-updateColorMode();
-if (window.parent.matchMedia) {
-    window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
-}
-</script>
-"""
+    .user-bubble, .user-bubble p {
+        color: #111 !important;
+    }
+    </style>
+    <script>
+    function updateColorMode() {
+        var isDark = false;
+        try {
+            isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
+        } catch(e) {}
+        var styleTag = document.getElementById('dynamic-color-style');
+        if (isDark) {
+            styleTag.innerHTML = `
+    .message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
+    .user-bubble, .user-bubble p { color: #111 !important; }
+    `;
+        } else {
+            styleTag.innerHTML = `
+    .message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
+    .user-bubble, .user-bubble p { color: #111 !important; }
+    `;
+        }
+    }
+    updateColorMode();
+    if (window.parent.matchMedia) {
+        window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
+    }
+    </script>
+    """
     return f"""
     {chat_style}
-    <div id="chat-content-scroll-area">
+    <div id="chat-content-scroll-area" style="padding-bottom:90px;">
         {chat_html_content}
         <div id="chat-scroll-anchor"></div>
     </div>
     {scroll_iframe_script}
+    {focus_input_script}   <!-- 요 부분이 핵심입니다! -->
     """
-
 components.html(
     display_chat_html_content(),
     height=520,
     scrolling=True
 )
 
-if st.session_state.pending_examples:
-    st.markdown("---")
-    st.markdown(
-        "<div style='font-size:1.13em; color:#226ed8; font-weight:700; margin-bottom:12px;'>"
-        "아래 중 궁금한 <b>키워드</b>를 터치해 주세요!</div>",
-        unsafe_allow_html=True)
-    # 대표 키워드 추출
-    questions = [m["질문"] for m in st.session_state.pending_examples]
-    rep_keywords = extract_representative_keywords(questions, top_n=len(st.session_state.pending_examples))
-    n_btn = len(st.session_state.pending_examples)
-    cols = st.columns(n_btn)
-    
-    for idx, q in enumerate(st.session_state.pending_examples):
-        # 버튼에 대표 키워드만 노출
-        btn_label = rep_keywords[idx] if idx < len(rep_keywords) else q["질문"][:10]
-        with cols[idx]:
-            if st.button(btn_label, key=f"select_q_{idx}",use_container_width=True):
-                st.session_state.chat_log.append({
-                    "role": "bot",
-                    "content": {
-                        "q": q["질문"],
-                        "a": add_friendly_prefix(q["답변"])
-                    },
-                    "display_type": "single_answer"
-                })
-                st.session_state.pending_examples = None
-                st.rerun()
+# ---- 5-2 단계: 바로 아래에 붙이세요! ----
+
+custom_input = st.query_params.get('streamlit_set_input', [None])[0]
+if custom_input and custom_input != st.session_state.last_custom_input:
+    handle_question(custom_input)
+    st.session_state.last_custom_input = custom_input
+    st.rerun()
+
 
 st.markdown("""
     <style>
@@ -653,14 +703,54 @@ components.html("""
     </script>
     """, height=50)
 
-with st.form("input_form", clear_on_submit=True):
-    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
-    submitted = st.form_submit_button("질문")
-    if submitted and question_input:
-        st.session_state.pending_examples = None
-        handle_question(question_input)
-        st.rerun()
+# with st.form("input_form", clear_on_submit=True):
+#  question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+#  submitted = st.form_submit_button("질문")
+#  if submitted and question_input:
+#      handle_question(question_input)
+#      st.rerun()
 
+import streamlit.components.v1 as components
+
+components.html("""
+    <div id="custom-input-area" class="input-form-fixed" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#fff;box-shadow:0 -2px 16px rgba(0,0,0,0.07);padding:14px 8px;">
+        <form id="custom-chat-form" style="display:flex;gap:8px;">
+            <input id="custom-chat-input" type="text" placeholder="궁금한 내용을 입력해 주세요" style="flex:1;font-size:17px;padding:10px 16px;border-radius:10px;border:1px solid #ddd;" autocomplete="off" />
+            <button type="submit" style="background:#238636;color:#fff;border-radius:10px;border:none;font-weight:bold;font-size:16px;padding:10px 20px;cursor:pointer;">질문</button>
+        </form>
+    </div>
+    <script>
+    var input = document.getElementById("custom-chat-input");
+
+    // 모바일 키보드 올라오면 입력창 자동 스크롤
+    function handleMobileKeyboard(){
+        setTimeout(function(){
+            input.scrollIntoView({behavior: "smooth", block: "end"});
+        }, 300);
+    }
+    input.addEventListener("focus", handleMobileKeyboard);
+
+    document.getElementById("custom-chat-form").onsubmit = function(e){
+        e.preventDefault();
+        var v = input.value.trim();
+        if (v.length > 0) {
+            window.parent.postMessage({chat_input: v}, "*");
+            input.value = "";
+        }
+        setTimeout(function(){
+            input.focus();
+            input.scrollIntoView({behavior:"smooth", block:"end"});
+        }, 150);
+        return false;
+    };
+
+    window.addEventListener("resize", function(){
+        if(document.activeElement === input){
+            handleMobileKeyboard();
+        }
+    });
+    </script>
+""", height=85)
 
 st.markdown("""
 <style>
