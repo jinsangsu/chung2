@@ -1,14 +1,5 @@
 import streamlit as st
-st.write("BRANCH_CONFIG 선언부:", BRANCH_CONFIG)
-st.write("BRANCH_CONFIG.keys():", list(BRANCH_CONFIG.keys()))
-st.write("branch 원본:", st.query_params.get('branch'))
-branch = st.query_params.get('branch', 'default')
-if isinstance(branch, list):
-    branch = branch[0]
-branch = branch.lower().strip() if branch and branch.lower() != "none" else "default"
-st.write("정제된 branch:", branch)
-config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
-st.write("선택된 config:", config)
+
 import gspread
 from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
