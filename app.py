@@ -7,19 +7,17 @@ import base64
 import os
 import json
 
-# [스타일] 챗UI 및 하단고정 입력창
+# ======= 스타일 =======
 st.markdown("""
 <style>
-.stApp { padding-bottom: 110px !important; }
+.stApp { padding-bottom: 120px !important; }
 .input-form-fixed { position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#fff;
-  box-shadow:0 -2px 16px rgba(0,0,0,0.07);padding:14px 8px; }
+  box-shadow:0 -2px 16px rgba(0,0,0,0.07);padding:12px 8px 12px 8px;}
 @media (max-width: 600px) { .input-form-fixed { padding-bottom: 16px !important; } }
-.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong { color: #222 !important; }
-.user-bubble, .user-bubble p { color: #222 !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# 1. 캐릭터/인사말(필요시 추가)
+# ======= 캐릭터/인사말 =======
 def get_intro_html():
     img_path = "managerbot_character.webp"
     if os.path.exists(img_path):
@@ -43,7 +41,7 @@ def get_intro_html():
     </div>
     """
 
-# 2. 구글시트 연결(시트ID/시트명만 바꾸면 됨)
+# ======= 구글시트 연결 =======
 SHEET_ID = "1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo"
 SHEET_NAME = "질의응답시트"
 sheet = None
@@ -56,12 +54,13 @@ try:
 except Exception as e:
     st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
 
-# 3. 챗봇 세션
+# ======= 세션 초기화 =======
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = [{"role": "intro", "content": "", "display_type": "intro"}]
 if "pending_keyword" not in st.session_state:
     st.session_state.pending_keyword = None
 
+# ======= 챗봇 답변 =======
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 def normalize_text(text):
@@ -72,7 +71,6 @@ def add_friendly_prefix(answer):
         return answer
     else:
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
-
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.5
     user_txt = question_input.strip().replace(" ", "").lower()
@@ -110,14 +108,12 @@ def handle_question(question_input):
             "role": "bot", "content": reply, "display_type": "single_answer"
         })
         return
-
     # ↓↓↓ Q&A 챗봇 처리 ↓↓↓
     if st.session_state.pending_keyword:
         user_input = st.session_state.pending_keyword + " " + question_input
         st.session_state.pending_keyword = None
     else:
         user_input = question_input
-
     try:
         records = sheet.get_all_records()
         q_input_norm = normalize_text(user_input)
@@ -179,6 +175,7 @@ def handle_question(question_input):
             "role": "bot", "content": f"❌ 오류 발생: {e}", "display_type": "llm_answer"
         })
 
+# ======= 챗UI =======
 def display_chat_html_content():
     chat_html_content = ""
     for entry in st.session_state.chat_log:
@@ -246,7 +243,7 @@ def display_chat_html_content():
         if (anchor) {
             anchor.scrollIntoView({ behavior: "auto", block: "end" });
         }
-    }, 0);
+    }, 100);
     </script>
     """
     return f"""
@@ -260,21 +257,70 @@ def display_chat_html_content():
 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 st.components.v1.html(display_chat_html_content(), height=520, scrolling=True)
 
-# 4. 하단 입력창(엔터+버튼 모두 지원)
-def on_submit():
-    if st.session_state.input_box.strip():
-        handle_question(st.session_state.input_box)
-        st.session_state.input_box = ""  # 입력창 초기화
-        st.rerun()
+# ======= 하단 입력 + 음성버튼 (HTML/JS) =======
+import streamlit.components.v1 as components
 
-with st.container():
-    st.markdown('<div class="input-form-fixed"></div>', unsafe_allow_html=True)
-    col1, col2 = st.columns([8,1])
-    with col1:
-        question_input = st.text_input(
-            "궁금한 내용을 입력해 주세요", "",
-            key="input_box", label_visibility="collapsed", on_change=on_submit
-        )
-    with col2:
-        if st.button("질문", use_container_width=True):
-            on_submit()
+components.html("""
+<div class="input-form-fixed">
+    <form id="custom-chat-form" style="display:flex;gap:8px;">
+        <button id="micBtn" type="button" style="background:#238636;color:#fff;border-radius:10px;border:none;font-weight:bold;font-size:16px;padding:10px 14px;cursor:pointer;">🎤</button>
+        <input id="custom-chat-input" type="text" placeholder="궁금한 내용을 입력해 주세요" style="flex:1;font-size:17px;padding:10px 16px;border-radius:10px;border:1px solid #ddd;" autocomplete="off" />
+        <button type="submit" style="background:#238636;color:#fff;border-radius:10px;border:none;font-weight:bold;font-size:16px;padding:10px 20px;cursor:pointer;">질문</button>
+    </form>
+    <div id="speech_status" style="color:#777;font-size:0.95em;margin-top:3px;"></div>
+</div>
+<script>
+var input = document.getElementById("custom-chat-input");
+document.getElementById("custom-chat-form").onsubmit = function(e){
+    e.preventDefault();
+    var v = input.value.trim();
+    if (v.length > 0) {
+        window.parent.postMessage({chat_input: v}, "*");
+        input.value = "";
+    }
+    setTimeout(function(){
+        input.focus();
+        input.scrollIntoView({behavior:"smooth", block:"end"});
+    }, 150);
+    return false;
+};
+input.addEventListener("keydown", function(e){
+    if(e.key==="Enter"){ document.getElementById("custom-chat-form").dispatchEvent(new Event("submit")); }
+});
+document.getElementById("micBtn").onclick = function(){
+    var status = document.getElementById("speech_status");
+    var input = document.getElementById("custom-chat-input");
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+        status.innerText = "음성 인식이 지원되지 않습니다.";
+        return;
+    }
+    var recog = new (window.SpeechRecognition||window.webkitSpeechRecognition)();
+    recog.lang = "ko-KR";
+    recog.interimResults = false;
+    recog.onresult = function(event){
+        var txt = "";
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+            txt += event.results[i][0].transcript;
+        }
+        input.value = txt;
+        status.innerText = "🎤 인식됨: " + txt;
+        setTimeout(()=>{ status.innerText=""; }, 2000);
+    };
+    recog.onerror = function(e){
+        status.innerText = "⚠️ 오류: " + e.error;
+        setTimeout(()=>{ status.innerText=""; }, 2000);
+    };
+    recog.start();
+    status.innerText = "🎤 음성 인식 중입니다...";
+};
+</script>
+""", height=100)
+
+# ======= Streamlit 질문 입력 감지 & 처리 =======
+custom_input = st.query_params.get('streamlit_set_input', [None])[0]
+if "last_custom_input" not in st.session_state:
+    st.session_state.last_custom_input = None
+if custom_input and custom_input != st.session_state.last_custom_input:
+    handle_question(custom_input)
+    st.session_state.last_custom_input = custom_input
+    st.experimental_rerun()
