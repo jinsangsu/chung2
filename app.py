@@ -175,8 +175,11 @@ BRANCH_CONFIG = {
 
 # 2. [지점 파라미터 추출]
 branch = st.query_params.get('branch', ['default'])
-branch = str(branch).lower() if branch and str(branch).lower() != "none" else "default"
+if isinstance(branch, list):
+    branch = branch[0]
+branch = branch.lower() if branch and branch.lower() != "none" else "default"
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
+
 
 # 3. [캐릭터 이미지 불러오기]
 def get_character_img_base64(img_path):
