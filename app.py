@@ -146,8 +146,11 @@ BRANCH_CONFIG = {
     "ds": {"bot_name": "소정",    "intro": "둔산지점 이쁜이 ‘’소정이에요❤️", "image": "sojung_character.webp"},
     "scjj": {"bot_name": "지영",    "intro": "순천중앙지점 이쁜이 ‘’지영이에요❤️", "image": "jiyoung_character.webp"},
     "smj": {"bot_name": "서희",    "intro": "상무지점 이쁜이 ‘’서희이에요❤️", "image": "seohi_character.webp"},
+    "cjj": {"bot_name": "윤희",    "intro": "충주지점 이쁜이 ‘’윤희에요❤️", "image": "yunhi_character.webp"},
+    "ns": {"bot_name": "세정",    "intro": "논산지점 이쁜이 ‘’세정이에요❤️", "image": "sejung_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
 }
+
 
 # 2. [지점 파라미터 추출]
 branch = st.query_params.get('branch', ['default'])
@@ -227,7 +230,10 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.5
+    SIMILARITY_THRESHOLD = 0.3
+    user_txt = question_input.strip().replace(" ", "").lower()
+def handle_question(question_input):
+    SIMILARITY_THRESHOLD = 0.3
     user_txt = question_input.strip().replace(" ", "").lower()
 
     # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
@@ -327,10 +333,11 @@ def handle_question(question_input):
         if len(matched) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
-            example_questions = [m["질문"] for m in matched[:5]]
+            
+            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in matched[:5]]
             examples_html = "".join([
-                f"<div class='example-item'>예시) {q}</div>"
-                for q in example_questions
+                f"<div class='example-item'>예시) <b>{q}</b><br>👉 <b>답변:</b> {a}</div>"
+                for q, a in example_pairs
             ])
 
             st.session_state.pending_keyword = user_input
@@ -403,7 +410,7 @@ def handle_question(question_input):
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 급하시면 저한테 와주세요~",
+                "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
@@ -687,4 +694,4 @@ window.addEventListener('focusin', function(e) {
     }
 });
 </script>
-""", unsafe_allow_html=True) 
+""", unsafe_allow_html=True)
