@@ -168,18 +168,21 @@ BRANCH_CONFIG = {
     "ds": {"bot_name": "소정",    "intro": "둔산지점 이쁜이 ‘’소정이에요❤️", "image": "sojung_character.webp"},
     "scjj": {"bot_name": "지영",    "intro": "순천중앙지점 이쁜이 ‘’지영이에요❤️", "image": "jiyoung_character.webp"},
     "smj": {"bot_name": "서희",    "intro": "상무지점 이쁜이 ‘’서희이에요❤️", "image": "seohi_character.webp"},
-    "cjj": {"bot_name": "윤희",    "intro": "충주지점 이쁜이 ‘’윤희에요❤️", "image": "yunhi_character.webp"},
-    "nsj": {"bot_name": "세정",    "intro": "논산지점 이쁜이 ‘’세정이에요❤️", "image": "sejung_character.webp"},
+    "cj": {"bot_name": "윤희",    "intro": "충주지점 이쁜이 ‘’윤희에요❤️", "image": "yunhi_character.webp"},
+    "ns": {"bot_name": "세정",    "intro": "논산지점 이쁜이 ‘’세정이에요❤️", "image": "sejung_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
 }
 
 # 2. [지점 파라미터 추출]
 branch = st.query_params.get('branch', ['default'])
+print("branch 파라미터:", branch, type(branch))
 if isinstance(branch, list):
     branch = branch[0]
+print("branch 처리 후:", branch, type(branch))
 branch = branch.lower() if branch and branch.lower() != "none" else "default"
+print("branch 최종:", branch, type(branch))
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
-
+print("선택된 config:", config)
 
 # 3. [캐릭터 이미지 불러오기]
 def get_character_img_base64(img_path):
