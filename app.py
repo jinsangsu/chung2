@@ -168,7 +168,7 @@ BRANCH_CONFIG = {
     "gs": {"bot_name": "혜진",    "intro": "군산지점 이쁜이 ‘’혜진이에요❤️", "image": "hejin_character.webp"},
     "ds": {"bot_name": "소정",    "intro": "둔산지점 이쁜이 ‘’소정이에요❤️", "image": "sojung_character.webp"},
     "scjj": {"bot_name": "지영",    "intro": "순천중앙지점 이쁜이 ‘’지영이에요❤️", "image": "jiyoung_character.webp"},
-    "ns": {"bot_name": "세정",    "intro": "논산지점 이쁜이 ‘’서희이에요❤️", "image": "sejung_character.webp"},
+    "nt": {"bot_name": "세정",    "intro": "논산지점 이쁜이 ‘’서희이에요❤️", "image": "sejung_character.webp"},
     "smj": {"bot_name": "서희",    "intro": "상무지점 이쁜이 ‘’서희이에요❤️", "image": "seohi_character.webp"},
     
     "cjj": {"bot_name": "윤희", "intro": "충주지점 이쁜이 '윤희에요❤️'", "image": "yunhi_character.webp"},
