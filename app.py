@@ -1,10 +1,5 @@
 import streamlit as st
-st.write("====== 앱이 실행되고 있습니다! ======")
-branch = st.query_params.get('branch', 'default')
-if isinstance(branch, list):
-    branch = branch[0]
-branch = branch.lower().strip() if branch and branch.lower() != "none" else "default"
-st.write("branch:", branch)
+
 import gspread
 from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
@@ -173,8 +168,9 @@ BRANCH_CONFIG = {
     "gs": {"bot_name": "혜진",    "intro": "군산지점 이쁜이 ‘’혜진이에요❤️", "image": "hejin_character.webp"},
     "ds": {"bot_name": "소정",    "intro": "둔산지점 이쁜이 ‘’소정이에요❤️", "image": "sojung_character.webp"},
     "scjj": {"bot_name": "지영",    "intro": "순천중앙지점 이쁜이 ‘’지영이에요❤️", "image": "jiyoung_character.webp"},
+    "ns": {"bot_name": "세정",    "intro": "논산지점 이쁜이 ‘’서희이에요❤️", "image": "sejung_character.webp"},
     "smj": {"bot_name": "서희",    "intro": "상무지점 이쁜이 ‘’서희이에요❤️", "image": "seohi_character.webp"},
-    "ns": {"bot_name": "세정", "intro": "논산지점 이쁜이 '세정이에요❤️'", "image": "sejung_character.webp"},
+    
     "cjj": {"bot_name": "윤희", "intro": "충주지점 이쁜이 '윤희에요❤️'", "image": "yunhi_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
 }
