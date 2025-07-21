@@ -180,6 +180,9 @@ if isinstance(branch, list):
     branch = branch[0]
 branch = branch.lower().strip() if branch and branch.lower() != "none" else "default"
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
+st.write("branch:", branch)
+st.write("BRANCH_CONFIG.keys():", list(BRANCH_CONFIG.keys()))
+st.write("config:", config)
 
 # 3. [캐릭터 이미지 불러오기]
 def get_character_img_base64(img_path):
