@@ -195,9 +195,7 @@ def get_intro_html():
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    import json
-
-    json_key_dict = json.loads(st.secrets["gcp_service_account"])
+    json_key_dict = st.secrets["gcp_service_account"]
     credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
     gc = gspread.authorize(credentials)
     # ★ 공용 질의응답시트 키만 아래에 넣으세요!
@@ -227,10 +225,7 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.3
-    user_txt = question_input.strip().replace(" ", "").lower()
-def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.3
+    SIMILARITY_THRESHOLD = 0.5
     user_txt = question_input.strip().replace(" ", "").lower()
 
     # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
@@ -406,7 +401,7 @@ def handle_question(question_input):
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
+                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 급하시면 저한테 와주세요~",
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
@@ -690,4 +685,4 @@ window.addEventListener('focusin', function(e) {
     }
 });
 </script>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True) 
