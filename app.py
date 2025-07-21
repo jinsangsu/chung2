@@ -7,6 +7,28 @@ import base64
 import os
 import re
 
+if "last_custom_input" not in st.session_state:
+    st.session_state.last_custom_input = None
+
+components.html("""
+<script>
+window.addEventListener("message", function(event){
+    if (event.data && event.data.chat_input) {
+        window.parent.document.dispatchEvent(new CustomEvent("st_custom_chat_input", {detail: event.data.chat_input}));
+    }
+}, false);
+</script>
+""", height=0)
+
+components.html("""
+<script>
+document.addEventListener("st_custom_chat_input", function(e){
+    window.parent.postMessage({streamlit_set_input: e.detail}, "*");
+});
+</script>
+""", height=0)
+
+
 st.markdown("""
 <style>
 /* 1. 챗 말풍선 텍스트 자동 색상 지정 */
@@ -199,6 +221,8 @@ try:
 
     json_key_dict = json.loads(st.secrets["gcp_service_account"])
     credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
+
+    
     gc = gspread.authorize(credentials)
     # ★ 공용 질의응답시트 키만 아래에 넣으세요!
     sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
@@ -227,10 +251,7 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.3
-    user_txt = question_input.strip().replace(" ", "").lower()
-def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.3
+    SIMILARITY_THRESHOLD = 0.5
     user_txt = question_input.strip().replace(" ", "").lower()
 
     # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
@@ -406,7 +427,7 @@ def handle_question(question_input):
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
+                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 급하시면 저한테 와주세요~",
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
@@ -506,56 +527,78 @@ def display_chat_html_content():
     }, 0);
     </script>
     """
-# === 여기서부터 추가 ===
+
+    # === 여기 추가 ===
+    focus_input_script = """
+    <script>
+    setTimeout(function () {
+        var input = document.getElementById("custom-chat-input");
+        if(input){
+            input.focus();
+            input.scrollIntoView({behavior: "smooth", block: "end"});
+        }
+    }, 400);
+    </script>
+    """
+
     chat_style = """
-<style id="dynamic-color-style">
-.message-row, .message-bubble, .bot-bubble, .intro-bubble,
-.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
-    color: #111 !important;
-}
-.user-bubble, .user-bubble p {
-    color: #111 !important;
-}
-</style>
-<script>
-function updateColorMode() {
-    var isDark = false;
-    try {
-        isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
-    } catch(e) {}
-    var styleTag = document.getElementById('dynamic-color-style');
-    if (isDark) {
-        styleTag.innerHTML = 
-.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
-.user-bubble, .user-bubble p { color: #111 !important; }
-;
-    } else {
-        styleTag.innerHTML = 
-.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
-.user-bubble, .user-bubble p { color: #111 !important; }
-;
+    <style id="dynamic-color-style">
+    .message-row, .message-bubble, .bot-bubble, .intro-bubble,
+    .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
+        color: #111 !important;
     }
-}
-updateColorMode();
-if (window.parent.matchMedia) {
-    window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
-}
-</script>
-"""
+    .user-bubble, .user-bubble p {
+        color: #111 !important;
+    }
+    </style>
+    <script>
+    function updateColorMode() {
+        var isDark = false;
+        try {
+            isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
+        } catch(e) {}
+        var styleTag = document.getElementById('dynamic-color-style');
+        if (isDark) {
+            styleTag.innerHTML = 
+    .message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
+    .user-bubble, .user-bubble p { color: #111 !important; }
+    ;
+        } else {
+            styleTag.innerHTML = 
+    .message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
+    .user-bubble, .user-bubble p { color: #111 !important; }
+    ;
+        }
+    }
+    updateColorMode();
+    if (window.parent.matchMedia) {
+        window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
+    }
+    </script>
+    """
     return f"""
     {chat_style}
-    <div id="chat-content-scroll-area">
+    <div id="chat-content-scroll-area" style="padding-bottom:90px;">
         {chat_html_content}
         <div id="chat-scroll-anchor"></div>
     </div>
     {scroll_iframe_script}
+    {focus_input_script}   <!-- 요 부분이 핵심입니다! -->
     """
-
 components.html(
     display_chat_html_content(),
     height=520,
     scrolling=True
 )
+
+# ---- 5-2 단계: 바로 아래에 붙이세요! ----
+
+custom_input = st.experimental_get_query_params().get('streamlit_set_input', [None])[0]
+if custom_input and custom_input != st.session_state.last_custom_input:
+    handle_question(custom_input)
+    st.session_state.last_custom_input = custom_input
+    st.rerun()
+
 
 st.markdown("""
     <style>
@@ -654,13 +697,54 @@ components.html("""
     </script>
     """, height=50)
 
-with st.form("input_form", clear_on_submit=True):
-    question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
-    submitted = st.form_submit_button("질문")
-    if submitted and question_input:
-        handle_question(question_input)
-        st.rerun()
+# with st.form("input_form", clear_on_submit=True):
+#  question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
+#  submitted = st.form_submit_button("질문")
+#  if submitted and question_input:
+#      handle_question(question_input)
+#      st.rerun()
 
+import streamlit.components.v1 as components
+
+components.html("""
+    <div id="custom-input-area" class="input-form-fixed" style="position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#fff;box-shadow:0 -2px 16px rgba(0,0,0,0.07);padding:14px 8px;">
+        <form id="custom-chat-form" style="display:flex;gap:8px;">
+            <input id="custom-chat-input" type="text" placeholder="궁금한 내용을 입력해 주세요" style="flex:1;font-size:17px;padding:10px 16px;border-radius:10px;border:1px solid #ddd;" autocomplete="off" />
+            <button type="submit" style="background:#238636;color:#fff;border-radius:10px;border:none;font-weight:bold;font-size:16px;padding:10px 20px;cursor:pointer;">질문</button>
+        </form>
+    </div>
+    <script>
+    var input = document.getElementById("custom-chat-input");
+
+    // 모바일 키보드 올라오면 입력창 자동 스크롤
+    function handleMobileKeyboard(){
+        setTimeout(function(){
+            input.scrollIntoView({behavior: "smooth", block: "end"});
+        }, 300);
+    }
+    input.addEventListener("focus", handleMobileKeyboard);
+
+    document.getElementById("custom-chat-form").onsubmit = function(e){
+        e.preventDefault();
+        var v = input.value.trim();
+        if (v.length > 0) {
+            window.parent.postMessage({chat_input: v}, "*");
+            input.value = "";
+        }
+        setTimeout(function(){
+            input.focus();
+            input.scrollIntoView({behavior:"smooth", block:"end"});
+        }, 150);
+        return false;
+    };
+
+    window.addEventListener("resize", function(){
+        if(document.activeElement === input){
+            handleMobileKeyboard();
+        }
+    });
+    </script>
+""", height=85)
 
 st.markdown("""
 <style>
