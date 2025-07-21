@@ -2,12 +2,12 @@ import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
 import difflib
+import re
 import base64
 import os
-import re
 import json
 
-# 0. 스타일(하단고정, 챗 스타일)
+# [스타일] 챗UI 및 하단고정 입력창
 st.markdown("""
 <style>
 .stApp { padding-bottom: 110px !important; }
@@ -19,58 +19,44 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 1. 지점설정
-BRANCH_CONFIG = {
-    "cb":   {"bot_name": "현의",    "intro": "충북지점 엄마 ‘현의’입니다.❤️",    "image": "hyuni_character.webp"},
-    "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
-}
-branch = st.query_params.get('branch', 'default')
-if isinstance(branch, list): branch = branch[0]
-branch = branch.lower().strip() if branch and branch.lower() != "none" else "default"
-config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
-
-# 2. 캐릭터 이미지
-def get_character_img_base64(img_path):
+# 1. 캐릭터/인사말(필요시 추가)
+def get_intro_html():
+    img_path = "managerbot_character.webp"
     if os.path.exists(img_path):
         with open(img_path, "rb") as img_file:
             b64 = base64.b64encode(img_file.read()).decode("utf-8")
-            return f"data:image/webp;base64,{b64}"
-    return None
-
-def get_intro_html():
-    char_img = get_character_img_base64(config["image"])
-    img_tag = f'<img src="{char_img}" width="75" style="margin-right:17px; border-radius:16px; border:1px solid #eee;">' if char_img else ''
+            img_tag = f'<img src="data:image/webp;base64,{b64}" width="75" style="margin-right:17px; border-radius:16px; border:1px solid #eee;">'
+    else:
+        img_tag = ''
     return f"""
     <div style="display: flex; align-items: flex-start; margin-bottom:18px;">
         {img_tag}
         <div>
             <h2 style='margin:0 0 8px 0;font-weight:700;'>사장님, 안녕하세요!!</h2>
-            <p>{config['intro']}</p>
-            <p>궁금하신거 있으시면 <br>
-            여기에서 먼저 물어봐 주세요! <br>
-            궁금하신 내용을 입력하시면 되여~</p>
-            <p>예를들면 자동차, 카드등록, 자동이체등...<br>
-            제가 아는 건 친절하게 알려드릴게요!</p>
-            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
-            늘 옆에서 제가 함께하겠습니다.</p>
+            <p>충청호남본부 도우미 ‘애순이’에요.❤️</p>
+            <p>궁금하신거 있으시면<br>여기서 먼저 물어봐 주세요!<br>궁금하신 내용을 입력하시면 되여~</p>
+            <p>예를들면 자동차, 카드등록, 자동이체 등...<br>제가 아는 건 친절하게 알려드릴게요!</p>
+            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록<br>늘 옆에서 제가 함께하겠습니다.</p>
             <p><strong style="font-weight:900; color:#D32F2F;">유지율도 조금만 더 챙겨주세요^*^😊</strong></p>
             <strong style="font-weight:900; color:#003399;">사장님!! 오늘도 화이팅!!!</strong>
         </div>
     </div>
     """
 
-# 3. 구글시트 연결
+# 2. 구글시트 연결(시트ID/시트명만 바꾸면 됨)
+SHEET_ID = "1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo"
+SHEET_NAME = "질의응답시트"
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     json_key_dict = json.loads(st.secrets["gcp_service_account"])
     credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
     gc = gspread.authorize(credentials)
-    sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
+    sheet = gc.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 except Exception as e:
     st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
 
-# 4. 챗봇 상태
+# 3. 챗봇 세션
 if "chat_log" not in st.session_state:
     st.session_state.chat_log = [{"role": "intro", "content": "", "display_type": "intro"}]
 if "pending_keyword" not in st.session_state:
@@ -78,10 +64,8 @@ if "pending_keyword" not in st.session_state:
 
 def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
-
 def normalize_text(text):
     return re.sub(r"[^가-힣a-zA-Z0-9]", "", text.lower())
-
 def add_friendly_prefix(answer):
     answer = answer.strip()
     if answer[:7].replace(" ", "").startswith("사장님"):
@@ -117,31 +101,15 @@ def handle_question(question_input):
                 "role": "bot", "content": reply, "display_type": "single_answer"
             })
             return
-
     if "애순" in user_txt:
         st.session_state.chat_log.append({
             "role": "user", "content": question_input, "display_type": "question"
         })
-        if user_txt in ["애순", "애순아"]:
-            reply = "안녕하세요, 사장님! 궁금하신 점 언제든 말씀해 주세요 😊"
-        else:
-            reply = "사장님! 애순이 항상 곁에 있어요 😊 궁금한 건 뭐든 말씀해 주세요!"
+        reply = "사장님! 애순이 항상 곁에 있어요 😊 궁금한 건 뭐든 말씀해 주세요!"
         st.session_state.chat_log.append({
             "role": "bot", "content": reply, "display_type": "single_answer"
         })
         return
-
-    bot_names = [v["bot_name"] for k, v in BRANCH_CONFIG.items()]
-    for bot_name in bot_names:
-        if bot_name in user_txt:
-            st.session_state.chat_log.append({
-                "role": "user", "content": question_input, "display_type": "question"
-            })
-            reply = f"안녕하세요, 사장님! 저는 항상 곁에 있는 {bot_name}입니다 😊 궁금한 건 뭐든 말씀해 주세요!"
-            st.session_state.chat_log.append({
-                "role": "bot", "content": reply, "display_type": "single_answer"
-            })
-            return
 
     # ↓↓↓ Q&A 챗봇 처리 ↓↓↓
     if st.session_state.pending_keyword:
@@ -165,7 +133,6 @@ def handle_question(question_input):
         st.session_state.chat_log.append({
             "role": "user", "content": question_input, "display_type": "question"
         })
-
         if len(matched) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
@@ -185,7 +152,6 @@ def handle_question(question_input):
                     "</div>"), "display_type": "pending"
             })
             return
-
         if len(matched) == 1:
             bot_answer_content = {
                 "q": matched[0]["질문"], "a": add_friendly_prefix(matched[0]["답변"])
@@ -294,17 +260,21 @@ def display_chat_html_content():
 st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 st.components.v1.html(display_chat_html_content(), height=520, scrolling=True)
 
-# 5. 질문 입력창(하단 고정, 텍스트+버튼)
+# 4. 하단 입력창(엔터+버튼 모두 지원)
+def on_submit():
+    if st.session_state.input_box.strip():
+        handle_question(st.session_state.input_box)
+        st.session_state.input_box = ""  # 입력창 초기화
+        st.rerun()
+
 with st.container():
     st.markdown('<div class="input-form-fixed"></div>', unsafe_allow_html=True)
     col1, col2 = st.columns([8,1])
     with col1:
-        question_input = st.text_input("궁금한 내용을 입력해 주세요", "", key="input_box", label_visibility="collapsed")
+        question_input = st.text_input(
+            "궁금한 내용을 입력해 주세요", "",
+            key="input_box", label_visibility="collapsed", on_change=on_submit
+        )
     with col2:
-        submitted = st.button("질문", use_container_width=True)
-    if submitted and question_input.strip():
-        handle_question(question_input)
-        st.experimental_rerun()  # 바로 반영
-
-# --- (필요하면 음성버튼 추가, 아래코드 삽입)
-# st.components.v1.html( ... 음성버튼 JS ... )
+        if st.button("질문", use_container_width=True):
+            on_submit()
