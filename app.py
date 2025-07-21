@@ -195,7 +195,9 @@ def get_intro_html():
 sheet = None
 try:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    json_key_dict = st.secrets["gcp_service_account"]
+    import json
+
+    json_key_dict = json.loads(st.secrets["gcp_service_account"])
     credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
     gc = gspread.authorize(credentials)
     # ★ 공용 질의응답시트 키만 아래에 넣으세요!
