@@ -185,6 +185,7 @@ st.write("정제된 branch:", branch)
 st.write("BRANCH_CONFIG.keys():", list(BRANCH_CONFIG.keys()))
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
 st.write("선택된 config:", config)
+
 # 3. [캐릭터 이미지 불러오기]
 def get_character_img_base64(img_path):
     if os.path.exists(img_path):
