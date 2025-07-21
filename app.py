@@ -174,15 +174,9 @@ BRANCH_CONFIG = {
 }
 
 # 2. [지점 파라미터 추출]
-branch = st.query_params.get('branch', ['default'])
-print("branch 파라미터:", branch, type(branch))
-if isinstance(branch, list):
-    branch = branch[0]
-print("branch 처리 후:", branch, type(branch))
-branch = branch.lower() if branch and branch.lower() != "none" else "default"
-print("branch 최종:", branch, type(branch))
+branch = st.query_params.get('branch', 'default')
+branch = branch.lower().strip() if branch and branch.lower() != "none" else "default"
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
-print("선택된 config:", config)
 
 # 3. [캐릭터 이미지 불러오기]
 def get_character_img_base64(img_path):
