@@ -257,6 +257,9 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
+    st.write("handle_question 진입:", question_input)
+    st.write("custom_input:", custom_input)
+    st.write("last_custom_input:", st.session_state.last_custom_input)
     SIMILARITY_THRESHOLD = 0.5
     user_txt = question_input.strip().replace(" ", "").lower()
 
