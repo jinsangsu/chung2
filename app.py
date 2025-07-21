@@ -454,7 +454,7 @@ def handle_question(question_input):
         st.session_state.scroll_to_bottom_flag = True
 
 def display_chat_html_content():
-st.write("현재 채팅 로그:", st.session_state.chat_log)
+    st.write("현재 채팅 로그:", st.session_state.chat_log)
     chat_html_content = ""
     for entry in st.session_state.chat_log:
         if entry["role"] == "intro":
