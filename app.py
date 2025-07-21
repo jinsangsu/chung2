@@ -599,7 +599,7 @@ components.html(
 
 # ---- 5-2 단계: 바로 아래에 붙이세요! ----
 
-custom_input = st.experimental_get_query_params().get('streamlit_set_input', [None])[0]
+custom_input = st.query_params.get('streamlit_set_input', [None])[0]
 if custom_input and custom_input != st.session_state.last_custom_input:
     handle_question(custom_input)
     st.session_state.last_custom_input = custom_input
