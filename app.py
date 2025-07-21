@@ -1,4 +1,10 @@
 import streamlit as st
+st.write("====== 앱이 실행되고 있습니다! ======")
+branch = st.query_params.get('branch', 'default')
+if isinstance(branch, list):
+    branch = branch[0]
+branch = branch.lower().strip() if branch and branch.lower() != "none" else "default"
+st.write("branch:", branch)
 import gspread
 from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
