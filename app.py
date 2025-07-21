@@ -175,6 +175,9 @@ BRANCH_CONFIG = {
 
 # 2. [지점 파라미터 추출]
 branch = st.query_params.get('branch', 'default')
+# 혹시 모를 list로 들어올 경우 대비!
+if isinstance(branch, list):
+    branch = branch[0]
 branch = branch.lower().strip() if branch and branch.lower() != "none" else "default"
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
 
