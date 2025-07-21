@@ -332,8 +332,8 @@ def handle_question(question_input):
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
             example_questions = [m["질문"] for m in matched[:5]]
             examples_html = "".join([
-                f"<div class='example-item'>예시) {q}</div>"
-                for q in example_questions
+                f"<div class='example-item'>예시) <b>{q}</b><br>👉 <b>답변:</b> {a}</div>"
+                for q, a in example_pairs
             ])
 
             st.session_state.pending_keyword = user_input
