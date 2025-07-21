@@ -258,8 +258,7 @@ def add_friendly_prefix(answer):
 
 def handle_question(question_input):
     st.write("handle_question 진입:", question_input)
-    st.write("custom_input:", custom_input)
-    st.write("last_custom_input:", st.session_state.last_custom_input)
+    
     SIMILARITY_THRESHOLD = 0.5
     user_txt = question_input.strip().replace(" ", "").lower()
 
@@ -604,7 +603,10 @@ components.html(
 # ---- 5-2 단계: 바로 아래에 붙이세요! ----
 
 custom_input = st.query_params.get('streamlit_set_input', [None])[0]
+st.write("custom_input:", custom_input)
+st.write("last_custom_input:", st.session_state.last_custom_input)
 if custom_input and custom_input != st.session_state.last_custom_input:
+    st.write("handle_question 호출됨!", custom_input)
     handle_question(custom_input)
     st.session_state.last_custom_input = custom_input
     st.rerun()
