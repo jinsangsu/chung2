@@ -424,7 +424,7 @@ def handle_question(question_input):
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 급하시면 저한테 와주세요~",
+                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~",
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
@@ -481,6 +481,7 @@ def display_chat_html_content():
                 elif entry.get("display_type") == "multi_answer":
                     chat_html_content += "<div class='message-row bot-message-row'><div class='message-bubble bot-bubble'>"
                     chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+                if isinstance(entry["content"], list):
                     for i, pair in enumerate(entry["content"]):
                         q = pair['q'].replace('\n', '<br>')
                         a = pair['a'].replace('\n', '<br>')
