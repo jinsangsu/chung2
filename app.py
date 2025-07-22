@@ -586,79 +586,93 @@ st.markdown("""
 
  # 2. 음성인식 버튼
 components.html("""
-    <style>
-    #toggleRecord {
-        background: #238636 !important;    /* 진한 녹색 */
-        color: #fff !important;            /* 흰색 글씨 */
-        font-weight: bold !important;      /* 굵은 글씨 */
-        border: none !important;
-        border-radius: 10px !important;
-        font-size: 16px !important;
-        padding: 10px 20px !important;
-        box-shadow: 0 2px 8px rgba(0,64,0,0.10) !important;
-        font-family: 'Nanum Gothic', 'Arial', sans-serif !important;
-        cursor: pointer !important;
-    }
-    #toggleRecord:hover {
-        background: #008000 !important;    /* hover 시 더 밝은 녹색 */
-        color: #fff !important;
-    }
-    </style>
-    <div class="input-form-fixed" style="padding: 8px 12px;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <button id="toggleRecord" style="flex:1; margin-right:10px;">
-            🎤 음성으로!
-        </button>
-        <div id="speech_status" style="flex:2; font-size:0.9em; color:#238636;"></div>
-    </div>
-    </div>
-    <script>
-    let isRecording = false;
-    let recognition;
+<style>
+#voice-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
 
-    document.getElementById("toggleRecord").addEventListener("click", function () {
-        const input = window.parent.document.querySelector('textarea, input[type=text]');
-        if (input) input.focus();
-        if (!isRecording) {
-            recognition = new webkitSpeechRecognition();
-            recognition.lang = "ko-KR";
-            recognition.interimResults = false;
-            recognition.continuous = true;
-            let fullTranscript = "";
-            recognition.onresult = function (event) {
-                fullTranscript = "";
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    fullTranscript += event.results[i][0].transcript;
-                }
-                const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-                setter.call(input, fullTranscript);
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-                input.focus();
-                document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
-            };
-                 
-            recognition.onerror = function (e) {
-                document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
-                isRecording = false;
-                document.getElementById("toggleRecord").innerText = "🎤 음성으로";
-            };
-            recognition.onend = function () {
-                document.getElementById("toggleRecord").innerText = "🎤 음성으로";
-                isRecording = false;
-            };
-            recognition.start();
-            isRecording = true;
-            document.getElementById("toggleRecord").innerText = "🛑 멈추기";
-        } else {
-            recognition.stop();
+#toggleRecord {
+    background: #238636;
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    padding: 8px 18px;
+    box-shadow: 0 2px 8px rgba(0,64,0,0.10);
+    font-family: 'Nanum Gothic', 'Arial', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 38px;
+    min-width: 80px;
+}
+
+#toggleRecord:hover {
+    background: #008000;
+    color: #ffeb3b;
+}
+
+#speech_status {
+    font-size: 0.9em;
+    color: #1b5e20;
+    margin-left: 8px;
+}
+</style>
+
+<div id="voice-row">
+    <button id="toggleRecord">🎤 음성으로</button>
+    <div id="speech_status">🛑 음성 인식 종료되었습니다.</div>
+</div>
+
+<script>
+let isRecording = false;
+let recognition;
+
+document.getElementById("toggleRecord").addEventListener("click", function () {
+    const input = window.parent.document.querySelector('textarea, input[type=text]');
+    if (input) input.focus();
+    if (!isRecording) {
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = "ko-KR";
+        recognition.interimResults = false;
+        recognition.continuous = true;
+        let fullTranscript = "";
+        recognition.onresult = function (event) {
+            fullTranscript = "";
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                fullTranscript += event.results[i][0].transcript;
+            }
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+            setter.call(input, fullTranscript);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.focus();
+            document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
+        };
+        recognition.onerror = function (e) {
+            document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
             isRecording = false;
             document.getElementById("toggleRecord").innerText = "🎤 음성으로";
+        };
+        recognition.onend = function () {
+            document.getElementById("toggleRecord").innerText = "🎤 음성으로";
+            isRecording = false;
             document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
-        }
-    });
-    </script>
-    """, height=50)
-
+        };
+        recognition.start();
+        isRecording = true;
+        document.getElementById("toggleRecord").innerText = "🛑 멈추기";
+    } else {
+        recognition.stop();
+        isRecording = false;
+        document.getElementById("toggleRecord").innerText = "🎤 음성으로";
+        document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
+    }
+});
+</script>
+""", height=70)
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문")
