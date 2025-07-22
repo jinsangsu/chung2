@@ -95,7 +95,7 @@ st.markdown("""
 <style>
 /* 전체 앱 상단·하단 공백 최소화 */
 .stApp {
-    padding-top: 20px !important;
+    padding-top: 10px !important;
     margin-top: 0px !important;
     padding-bottom: 0px !important;
     margin-bottom: 0px !important;
@@ -105,7 +105,7 @@ st.markdown("""
 .block-container, .element-container, .stContainer, .stMarkdown, .stHeader, .stSubheader, .stTextInput, .stTextArea, .stButton {
     margin-top: 0px !important;
     margin-bottom: 0px !important;
-    padding-top: 14px !important;
+    padding-top: 10px !important;
     padding-bottom: 0px !important;
 }
 /* columns(이미지+인사말) 좌우 여백도 최소화 */
