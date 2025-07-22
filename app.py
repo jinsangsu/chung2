@@ -223,6 +223,16 @@ def get_similarity_score(a, b):
 def normalize_text(text):
     return re.sub(r"[^가-힣a-zA-Z0-9]", "", text.lower())
 
+def extract_keywords(text):
+    stopwords = [
+        "이", "가", "은", "는", "을", "를", "에", "의", "로", "으로", "도", "만", "께", "에서", "하고", "보다", "부터", "까지", "와", "과",
+        "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
+        "어떻게", "어떡해", "방법", "알려줘", "알려줘요", "알려주세요", "무엇", "무엇인가요", "뭐", "뭔가요", "뭔데요", "뭡니까", "도와줘", "도와줘요", "하나요", "하는법"
+    ]
+    text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
+    words = [w for w in text.split() if w not in stopwords and len(w) > 1]
+    return words
+
 def add_friendly_prefix(answer):
     answer = answer.strip()
     if answer[:7].replace(" ", "").startswith("사장님"):
@@ -312,15 +322,20 @@ def handle_question(question_input):
     try:
         records = sheet.get_all_records()
         q_input_norm = normalize_text(user_input)
+        q_input_keywords = extract_keywords(user_input)
         matched = []
         for r in records:
             sheet_q_norm = normalize_text(r["질문"])
-            if (
-                (q_input_norm in sheet_q_norm) or
-                (sheet_q_norm in q_input_norm) or
-                (get_similarity_score(q_input_norm, sheet_q_norm) >= SIMILARITY_THRESHOLD)
-            ):
+            sheet_keywords = extract_keywords(r["질문"])
+
+            # 1) 핵심 키워드가 최소 1개 이상 겹치면 매칭
+            keyword_match = any(kw in sheet_keywords for kw in q_input_keywords)
+
+            # 2) (보조) 기존 부분포함/유사도 매칭도 같이 허용(불용어만 입력된 경우엔 매칭 X)
+            # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
+            if keyword_match:
                 matched.append(r)
+
         st.session_state.chat_log.append({
             "role": "user",
             "content": question_input,
@@ -466,16 +481,16 @@ def display_chat_html_content():
             elif entry.get("display_type") == "multi_answer":
                 chat_html_content += "<div class='message-row bot-message-row'><div class='message-bubble bot-bubble'>"
                 chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
-                if isinstance(entry["content"], list):
-                    for i, pair in enumerate(entry["content"]):
-                        q = pair['q'].replace('\n', '<br>')
-                        a = pair['a'].replace('\n', '<br>')
-                        chat_html_content += f"""
-                        <p class='chat-multi-item' style="margin-bottom: 10px;">
-                            <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
-                            👉 <strong>답변:</strong> {a}
-                        </p>
-                        """
+                for i, pair in enumerate(entry["content"]):
+                    q = pair['q'].replace('\n', '<br>')
+                    a = pair['a'].replace('\n', '<br>')
+                    chat_html_content += f"""
+                    <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
+                           <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
+                           👉 <strong>답변:</strong> {a}
+                    </div>
+                    """
+
                 elif isinstance(entry["content"], dict):
                     q = entry["content"].get('q', '').replace('\n', '<br>')
                     a = entry["content"].get('a', '').replace('\n', '<br>')
