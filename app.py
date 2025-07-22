@@ -349,7 +349,14 @@ def handle_question(question_input):
             
             example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in matched[:5]]
             examples_html = "".join([
-                f"<div class='example-item'>예시) <b>{q}</b><br>👉 <b>답변:</b> {a}</div>"
+                f"""
+                <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
+                     <strong style="color:#003399;">예시) {q}</strong><br>
+                     
+                    👉 <strong>답변:</strong> {a}
+                </div>
+                """
+                
                 for q, a in example_pairs
             ])
 
