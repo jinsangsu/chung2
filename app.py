@@ -327,14 +327,16 @@ def handle_question(question_input):
         })
 
         # 매칭 5개 이상시 유도질문
-        if len(matched) >= 5:
+         if len(matched) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
-            example_questions = [m["질문"] for m in matched[:5]]
+            
+            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in matched[:5]]
             examples_html = "".join([
-                f"<div class='example-item'>예시) {q}</div>"
-                for q in example_questions
+                f"<div class='example-item'>예시) <b>{q}</b><br>👉 <b>답변:</b> {a}</div>"
+                for q, a in example_pairs
             ])
+
 
             st.session_state.pending_keyword = user_input
             st.session_state.chat_log.append({
