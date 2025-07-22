@@ -604,12 +604,14 @@ components.html("""
         color: #fff !important;
     }
     </style>
-    <div style="display:flex; justify-content: flex-end; align-items:center; gap:10px; margin-bottom:10px;">
-        <button id="toggleRecord" style="">
+    <div class="input-form-fixed" style="padding: 8px 12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <button id="toggleRecord" style="flex:1; margin-right:10px;">
             🎤 음성으로!
         </button>
+        <div id="speech_status" style="flex:2; font-size:0.9em; color:#238636;"></div>
     </div>
-    <div id="speech_status" style="color:gray; font-size:0.9em; margin-top:5px;"></div>
+    </div>
     <script>
     let isRecording = false;
     let recognition;
