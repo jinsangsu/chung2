@@ -186,7 +186,7 @@ def get_intro_html():
             제가 아는 건 친절하게 알려드릴게요!</p>
             <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
             늘 옆에서 제가 함께하겠습니다.</p>
-            <p style="font-weight:900; color:#d32f2f !important; font-size:1.15em; font-family:'궁서', 'Gungsuh', serif;">
+            <p style="font-weight:700; color:#d32f2f !important; font-size:1.15em; font-family:'궁서', 'Gungsuh', serif;">
     유지율도 조금만 더 챙겨주실거죠? 사랑해요~~^*^😊
 </p>
 
