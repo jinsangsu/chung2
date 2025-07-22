@@ -478,18 +478,18 @@ def display_chat_html_content():
                         f"<p>🧾 <strong>답변:</strong><br>{bot_answer}</p>"
                         '</div></div>'
                     )
-            elif entry.get("display_type") == "multi_answer":
-                chat_html_content += "<div class='message-row bot-message-row'><div class='message-bubble bot-bubble'>"
-                chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
-                for i, pair in enumerate(entry["content"]):
-                    q = pair['q'].replace('\n', '<br>')
-                    a = pair['a'].replace('\n', '<br>')
-                    chat_html_content += f"""
-                    <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
-                           <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
-                           👉 <strong>답변:</strong> {a}
-                    </div>
-                    """
+                elif entry.get("display_type") == "multi_answer":
+                    chat_html_content += "<div class='message-row bot-message-row'><div class='message-bubble bot-bubble'>"
+                    chat_html_content += "<p>🔎 유사한 질문이 여러 개 있습니다:</p>"
+                    for i, pair in enumerate(entry["content"]):
+                        q = pair['q'].replace('\n', '<br>')
+                        a = pair['a'].replace('\n', '<br>')
+                        chat_html_content += f"""
+                        <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
+                             <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
+                             👉 <strong>답변:</strong> {a}
+                        </div>
+                        """
 
                 elif isinstance(entry["content"], dict):
                     q = entry["content"].get('q', '').replace('\n', '<br>')
