@@ -606,7 +606,7 @@ components.html("""
     cursor: pointer;
     transition: all 0.3s ease;
     height: 36px;
-    min-width: 78px;
+    min-width: 80px;
     margin-bottom: 2px;
 }
 
@@ -619,7 +619,7 @@ components.html("""
     font-size: 0.85em;
     color: #1b5e20;
     margin-left: 4px;
-    display: none;
+    display: none;  /* 처음엔 숨김 */
 }
 </style>
 
@@ -641,29 +641,19 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
         recognition = new webkitSpeechRecognition();
         recognition.lang = "ko-KR";
         recognition.interimResults = false;
-        recognition.continuous = false;
+        recognition.continuous = true;
 
         recognition.onresult = function (event) {
             let fullTranscript = "";
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 fullTranscript += event.results[i][0].transcript;
             }
-
             const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
             setter.call(input, fullTranscript);
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.focus();
             status.style.display = "inline";
-            status.innerText = "🎤 음성 입력 완료! 질문을 제출합니다.";
-
-            // 🔥 엔터 키 자동 입력
-            const enterEvent = new KeyboardEvent("keydown", {
-                bubbles: true,
-                cancelable: true,
-                key: "Enter",
-                code: "Enter"
-            });
-            input.dispatchEvent(enterEvent);
+            status.innerText = "🎤 음성 입력 중!";
         };
 
         recognition.onerror = function (e) {
@@ -676,6 +666,8 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
         recognition.onend = function () {
             isRecording = false;
             document.getElementById("toggleRecord").innerText = "🎤 음성";
+            status.style.display = "inline";
+            status.innerText = "🛑 음성 인식 종료되었습니다.";
         };
 
         recognition.start();
@@ -692,7 +684,8 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
     }
 });
 </script>
-""", height=60)
+""", height=50)
+
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("Enter")
