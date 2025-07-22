@@ -229,7 +229,11 @@ def extract_keywords(text):
         "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
         "어떻게", "어떡해", "방법", "알려줘", "알려줘요", "알려주세요", "무엇", "무엇인가요", "뭐", "뭔가요", "뭔데요", "뭡니까", "도와줘", "도와줘요", "하나요", "하는법"
     ]
-    text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
+    # 1. "자동이체는", "자동이체를" → "자동이체"로 변환
+    text = re.sub(r"([가-힣]+)[은는이가를의도]", r"\1 ", text.lower())
+    # 2. 특수문자/숫자 제거
+    text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text)
+    # 3. 불용어 제거
     words = [w for w in text.split() if w not in stopwords and len(w) > 1]
     return words
 
@@ -336,6 +340,9 @@ def handle_question(question_input):
         matched = []
         for r in records:
             sheet_keywords = extract_keywords(r["질문"])
+            joined_keywords = ["".join(sheet_keywords)]  # "자동이체신청"
+            all_keywords = set(sheet_keywords) | set(joined_keywords)
+    # 사용자가 '자동이체'라고만 입력한 경우 '자동이체신청'도 같이 잡히도록
             # 반드시 키워드 1개 이상 일치할 때만 매칭
             if any(kw in sheet_keywords for kw in q_input_keywords):
                 matched.append(r)
