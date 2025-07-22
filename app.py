@@ -561,27 +561,26 @@ components.html(
 )
 
 st.markdown("""
-    <style>
-    /* 버튼 스타일 (form submit button) */
-    button[kind="secondaryFormSubmit"] {
-        background: #238636 !important;    
-        color: #fff !important;
-        border-radius: 10px;
-        border: none;
-        font-weight: bold;
-        font-family: 'Nanum Gothic', 'Arial', sans-serif;
-        font-size: 16px !important;
-        box-shadow: 0 2px 8px rgba(0,64,0,0.10) !important;
-        padding: 10px 20px !important;
-        cursor: pointer !important;
-        transition: background 0.3s, box-shadow 0.3s;
-    }
-    button[kind="secondaryFormSubmit"]:hover {
-        background: #008000 !important; 
-        color: #ffeb3b !important;
-        box-shadow: 0 4px 12px rgba(0,64,128,0.20);
-    }
-    </style>
+<style>
+button[kind="secondaryFormSubmit"] {
+    background: #238636 !important;
+    color: #fff !important;
+    border-radius: 6px !important;
+    border: none !important;
+    font-weight: 600 !important;
+    font-family: 'Nanum Gothic', 'Arial', sans-serif !important;
+    font-size: 16px !important;
+    padding: 4px 16px !important;
+    height: 34px !important;
+    min-width: 72px !important;
+    box-shadow: none !important;
+}
+
+button[kind="secondaryFormSubmit"]:hover {
+    background: #008000 !important;
+    color: #ffeb3b !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
  # 2. 음성인식 버튼
