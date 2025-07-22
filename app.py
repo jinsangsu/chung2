@@ -230,10 +230,7 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.3
-    user_txt = question_input.strip().replace(" ", "").lower()
-def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.3
+    SIMILARITY_THRESHOLD = 0.5
     user_txt = question_input.strip().replace(" ", "").lower()
 
     # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
@@ -333,11 +330,10 @@ def handle_question(question_input):
         if len(matched) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
-            
-            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in matched[:5]]
+            example_questions = [m["질문"] for m in matched[:5]]
             examples_html = "".join([
-                f"<div class='example-item'>예시) <b>{q}</b><br>👉 <b>답변:</b> {a}</div>"
-                for q, a in example_pairs
+                f"<div class='example-item'>예시) {q}</div>"
+                for q in example_questions
             ])
 
             st.session_state.pending_keyword = user_input
@@ -410,7 +406,7 @@ def handle_question(question_input):
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
-                "content": "사장님~~ 음~ 답변이 준비 안된 질문이에요. 진짜 궁금한거로 말씀해 주세요^*^",
+                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 급하시면 저한테 와주세요~",
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
@@ -694,4 +690,4 @@ window.addEventListener('focusin', function(e) {
     }
 });
 </script>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True) 
