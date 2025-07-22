@@ -321,19 +321,23 @@ def handle_question(question_input):
 
     try:
         records = sheet.get_all_records()
-        q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
+
+        # [추가] 만약 키워드가 하나도 없을 때 안내
+        if not q_input_keywords:
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": "사장님, 궁금하신 주요 단어나 내용을 조금 더 구체적으로 입력해 주시면 더 정확한 안내가 가능합니다!",
+                "display_type": "single_answer"
+            })
+            st.session_state.scroll_to_bottom_flag = True
+            return
+
         matched = []
         for r in records:
-            sheet_q_norm = normalize_text(r["질문"])
             sheet_keywords = extract_keywords(r["질문"])
-
-            # 1) 핵심 키워드가 최소 1개 이상 겹치면 매칭
-            keyword_match = any(kw in sheet_keywords for kw in q_input_keywords)
-
-            # 2) (보조) 기존 부분포함/유사도 매칭도 같이 허용(불용어만 입력된 경우엔 매칭 X)
-            # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
-            if keyword_match:
+            # 반드시 키워드 1개 이상 일치할 때만 매칭
+            if any(kw in sheet_keywords for kw in q_input_keywords):
                 matched.append(r)
 
         st.session_state.chat_log.append({
