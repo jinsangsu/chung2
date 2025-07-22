@@ -555,7 +555,7 @@ if (window.parent.matchMedia) {
 
 components.html(
     display_chat_html_content(),
-    height=520,
+    height=400,
     scrolling=True
 )
 
