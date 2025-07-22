@@ -567,7 +567,7 @@ button[kind="secondaryFormSubmit"] {
     color: #fff !important;
     border-radius: 6px !important;
     border: none !important;
-    font-weight: 600 !important;
+    font-weight: bold !important;
     font-family: 'Nanum Gothic', 'Arial', sans-serif !important;
     font-size: 16px !important;
     padding: 4px 16px !important;
