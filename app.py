@@ -178,7 +178,7 @@ def get_intro_html():
         {img_tag}
         <div>
             <h2 style='margin:0 0 8px 0;font-weight:700;'>사장님, 안녕하세요!!</h2>
-            <p>{config['intro']}</p>
+            <p style="font-weight: 700;">{config['intro']}</p>
             <p>궁금하신거 있으시면 <br>
             여기에서 먼저 물어봐 주세요! <br>
             궁금하신 내용을 입력하시면 되여~</p>
