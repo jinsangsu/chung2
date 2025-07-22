@@ -587,11 +587,11 @@ st.markdown("""
  # 2. 음성인식 버튼
 components.html("""
 <style>
-#voice-row {
+#voice-block {
+    margin-bottom: 4px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    gap: 10px;
 }
 
 #toggleRecord {
@@ -599,15 +599,16 @@ components.html("""
     color: #fff;
     font-weight: bold;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     font-size: 15px;
-    padding: 8px 18px;
+    padding: 6px 16px;
     box-shadow: 0 2px 8px rgba(0,64,0,0.10);
     font-family: 'Nanum Gothic', 'Arial', sans-serif;
     cursor: pointer;
     transition: all 0.3s ease;
-    height: 38px;
-    min-width: 80px;
+    height: 36px;
+    min-width: 78px;
+    margin-bottom: 2px;
 }
 
 #toggleRecord:hover {
@@ -616,13 +617,13 @@ components.html("""
 }
 
 #speech_status {
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: #1b5e20;
-    margin-left: 8px;
+    margin-left: 4px;
 }
 </style>
 
-<div id="voice-row">
+<div id="voice-block">
     <button id="toggleRecord">🎤 음성으로</button>
     <div id="speech_status">🛑 음성 인식 종료되었습니다.</div>
 </div>
@@ -672,7 +673,9 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
     }
 });
 </script>
-""", height=70)
+""", height=60)
+
+
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("질문")
