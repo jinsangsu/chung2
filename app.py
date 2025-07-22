@@ -607,7 +607,7 @@ components.html("""
     cursor: pointer;
     transition: all 0.3s ease;
     height: 36px;
-    min-width: 78px;
+    min-width: 80px;
     margin-bottom: 2px;
 }
 
@@ -620,12 +620,13 @@ components.html("""
     font-size: 0.85em;
     color: #1b5e20;
     margin-left: 4px;
+    display: none;  /* 처음엔 숨김 */
 }
 </style>
 
 <div id="voice-block">
-    <button id="toggleRecord">🎤 음성으로</button>
-    <div id="speech_status">🛑 음성 인식 종료되었습니다.</div>
+    <button id="toggleRecord">🎤 음성</button>
+    <div id="speech_status"></div>
 </div>
 
 <script>
@@ -634,15 +635,17 @@ let recognition;
 
 document.getElementById("toggleRecord").addEventListener("click", function () {
     const input = window.parent.document.querySelector('textarea, input[type=text]');
+    const status = document.getElementById("speech_status");
+
     if (input) input.focus();
     if (!isRecording) {
         recognition = new webkitSpeechRecognition();
         recognition.lang = "ko-KR";
         recognition.interimResults = false;
         recognition.continuous = true;
-        let fullTranscript = "";
+
         recognition.onresult = function (event) {
-            fullTranscript = "";
+            let fullTranscript = "";
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 fullTranscript += event.results[i][0].transcript;
             }
@@ -650,31 +653,39 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
             setter.call(input, fullTranscript);
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.focus();
-            document.getElementById("speech_status").innerText = "🎤 음성 입력 중!";
+            status.style.display = "inline";
+            status.innerText = "🎤 음성 입력 중!";
         };
+
         recognition.onerror = function (e) {
-            document.getElementById("speech_status").innerText = "⚠️ 오류 발생: " + e.error;
+            status.style.display = "inline";
+            status.innerText = "⚠️ 오류 발생: " + e.error;
             isRecording = false;
-            document.getElementById("toggleRecord").innerText = "🎤 음성으로";
+            document.getElementById("toggleRecord").innerText = "🎤 음성";
         };
+
         recognition.onend = function () {
-            document.getElementById("toggleRecord").innerText = "🎤 음성으로";
             isRecording = false;
-            document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
+            document.getElementById("toggleRecord").innerText = "🎤 음성";
+            status.style.display = "inline";
+            status.innerText = "🛑 음성 인식 종료되었습니다.";
         };
+
         recognition.start();
         isRecording = true;
         document.getElementById("toggleRecord").innerText = "🛑 멈추기";
+        status.style.display = "inline";
+        status.innerText = "🎤 음성 입력을 시작합니다.";
     } else {
         recognition.stop();
         isRecording = false;
-        document.getElementById("toggleRecord").innerText = "🎤 음성으로";
-        document.getElementById("speech_status").innerText = "🛑 음성 인식 종료되었습니다.";
+        document.getElementById("toggleRecord").innerText = "🎤 음성";
+        status.style.display = "inline";
+        status.innerText = "🛑 음성 인식 종료되었습니다.";
     }
 });
 </script>
-""", height=60)
-
+""", height=50)
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
