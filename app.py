@@ -688,7 +688,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
-    submitted = st.form_submit_button("질문")
+    submitted = st.form_submit_button("Enter")
     if submitted and question_input:
         handle_question(question_input)
         st.rerun()
