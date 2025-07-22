@@ -684,7 +684,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
     }
 });
 </script>
-""", height=40)
+""", height=45)
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
