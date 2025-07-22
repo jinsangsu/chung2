@@ -351,7 +351,7 @@ def handle_question(question_input):
             examples_html = "".join([
                 f"""
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
-                     <strong style="color:#003399;">예시) {q}</strong><br>
+                     <strong style="color:#003399;">질문) {q}</strong><br>
                      
                     👉 <strong>답변:</strong> {a}
                 </div>
