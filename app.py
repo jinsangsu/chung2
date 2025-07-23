@@ -343,8 +343,12 @@ def handle_question(question_input):
             joined_keyword = "".join(sheet_keywords)
             all_keywords = set(sheet_keywords)
             all_keywords.add(joined_keyword)
-            if any(kw in all_keywords for kw in q_input_keywords):
-                matched.append(r)
+            if (
+                 any(kw in all_keywords for kw in q_input_keywords)
+                 or
+                 any(kw in q_input_keywords for kw in all_keywords)
+            ):
+                 matched.append(r)
 
         st.session_state.chat_log.append({
             "role": "user",
