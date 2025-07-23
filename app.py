@@ -353,7 +353,8 @@ def handle_question(question_input):
                if any(keyword in user_kw for user_kw in q_input_keywords):          
                   match_flag = True
                   break            
-
+            if match_flag:
+               matched.append(r)
 
         st.session_state.chat_log.append({
             "role": "user",
