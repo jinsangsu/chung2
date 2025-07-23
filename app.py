@@ -349,7 +349,7 @@ def handle_question(question_input):
                if any(user_kw in keyword for keyword in all_keywords):          
                   match_flag = True
                   break      
-             for keyword in all_keywords:
+            for keyword in all_keywords:
                if any(keyword in user_kw for user_kw in q_input_keywords):          
                   match_flag = True
                   break            
