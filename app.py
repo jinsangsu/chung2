@@ -335,7 +335,7 @@ def handle_question(question_input):
             # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
             if keyword_match:
                similarity = get_similarity_score(sheet_q_norm, q_input_norm)
-               if len(q_input_keywords) >= 2 and similarity > 0.75:
+               if len(q_input_keywords) >= 1 and similarity > 0.5:
                   matched.append(r)
 
         st.session_state.chat_log.append({
