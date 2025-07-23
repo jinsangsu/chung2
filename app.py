@@ -338,7 +338,7 @@ def handle_question(question_input):
             return
 
         matched = []
-       for r in records:
+        for r in records:
             sheet_keywords = extract_keywords(r["질문"])
             joined_keyword = "".join(sheet_keywords)
             all_keywords = set(sheet_keywords)
