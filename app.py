@@ -438,7 +438,13 @@ def handle_question(question_input):
                 "q": matched[0]["질문"],
                 "a": add_friendly_prefix(matched[0]["답변"])
             }
-            bot_display_type = "single_answer"
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": bot_answer_content,
+                "display_type": "single_answer"
+             })
+
+
         elif len(matched) > 1:
             bot_answer_content = []
             for r in matched:
@@ -446,7 +452,12 @@ def handle_question(question_input):
                     "q": r["질문"],
                     "a": add_friendly_prefix(r["답변"])
                 })
-            bot_display_type = "multi_answer"
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": bot_answer_content,
+                "display_type": "multi_answer" 
+             })
+   
         else:
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
@@ -455,14 +466,13 @@ def handle_question(question_input):
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
+            st.session_state.pending_keyword = None
             return
-        if len(matched) > 0:
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": bot_answer_content,
-                "display_type": bot_display_type
-            })
+        
         st.session_state.scroll_to_bottom_flag = True
+        st.session_state.pending_keyword = None
+
+
     except Exception as e:
         st.session_state.chat_log.append({
             "role": "bot",
