@@ -334,9 +334,9 @@ def handle_question(question_input):
             # 2) (보조) 기존 부분포함/유사도 매칭도 같이 허용(불용어만 입력된 경우엔 매칭 X)
             # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
             if keyword_match:
-                 similarity = get_similarity_score(sheet_q_norm, q_input_norm)
-                 if len(q_input_keywords) >= 2 and similarity > 0.75:
-                 matched.append(r)
+               similarity = get_similarity_score(sheet_q_norm, q_input_norm)
+               if len(q_input_keywords) >= 2 and similarity > 0.75:
+               matched.append(r)
 
         st.session_state.chat_log.append({
             "role": "user",
