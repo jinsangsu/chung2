@@ -336,7 +336,7 @@ def handle_question(question_input):
             if keyword_match:
                similarity = get_similarity_score(sheet_q_norm, q_input_norm)
                if len(q_input_keywords) >= 2 and similarity > 0.75:
-               matched.append(r)
+                  matched.append(r)
 
         st.session_state.chat_log.append({
             "role": "user",
