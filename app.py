@@ -229,11 +229,7 @@ def extract_keywords(text):
         "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
         "어떻게", "어떡해", "방법", "알려줘", "알려줘요", "알려주세요", "무엇", "무엇인가요", "뭐", "뭔가요", "뭔데요", "뭡니까", "도와줘", "도와줘요", "하나요", "하는법"
     ]
-    # 1. "자동이체는", "자동이체를" → "자동이체"로 변환
-    text = re.sub(r"([가-힣]+)[은는이가를의도]", r"\1 ", text.lower())
-    # 2. 특수문자/숫자 제거
-    text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text)
-    # 3. 불용어 제거
+    text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
     words = [w for w in text.split() if w not in stopwords and len(w) > 1]
     return words
 
@@ -325,36 +321,20 @@ def handle_question(question_input):
 
     try:
         records = sheet.get_all_records()
+        q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
-
-        # [추가] 만약 키워드가 하나도 없을 때 안내
-        if not q_input_keywords:
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": "사장님, 궁금하신 주요 단어나 내용을 조금 더 구체적으로 입력해 주시면 더 정확한 안내가 가능합니다!",
-                "display_type": "single_answer"
-            })
-            st.session_state.scroll_to_bottom_flag = True
-            return
-
         matched = []
         for r in records:
+            sheet_q_norm = normalize_text(r["질문"])
             sheet_keywords = extract_keywords(r["질문"])
-            joined_keyword = "".join(sheet_keywords)
-            all_keywords = set(sheet_keywords)
-            all_keywords.add(joined_keyword)
-            match_flag = False
 
-            for user_kw in q_input_keywords:
-               if any(user_kw in keyword for keyword in all_keywords):          
-                  match_flag = True
-                  break      
-            for keyword in all_keywords:
-               if any(keyword in user_kw for user_kw in q_input_keywords):          
-                  match_flag = True
-                  break            
-            if match_flag:
-               matched.append(r)
+            # 1) 핵심 키워드가 최소 1개 이상 겹치면 매칭
+            keyword_match = any(kw in sheet_keywords for kw in q_input_keywords)
+
+            # 2) (보조) 기존 부분포함/유사도 매칭도 같이 허용(불용어만 입력된 경우엔 매칭 X)
+            # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
+            if keyword_match:
+                matched.append(r)
 
         st.session_state.chat_log.append({
             "role": "user",
@@ -438,13 +418,7 @@ def handle_question(question_input):
                 "q": matched[0]["질문"],
                 "a": add_friendly_prefix(matched[0]["답변"])
             }
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": bot_answer_content,
-                "display_type": "single_answer"
-             })
-
-
+            bot_display_type = "single_answer"
         elif len(matched) > 1:
             bot_answer_content = []
             for r in matched:
@@ -452,12 +426,7 @@ def handle_question(question_input):
                     "q": r["질문"],
                     "a": add_friendly_prefix(r["답변"])
                 })
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": bot_answer_content,
-                "display_type": "multi_answer" 
-             })
-   
+            bot_display_type = "multi_answer"
         else:
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
@@ -466,13 +435,14 @@ def handle_question(question_input):
                 "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
-            st.session_state.pending_keyword = None
             return
-        
+        if len(matched) > 0:
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": bot_answer_content,
+                "display_type": bot_display_type
+            })
         st.session_state.scroll_to_bottom_flag = True
-        st.session_state.pending_keyword = None
-
-
     except Exception as e:
         st.session_state.chat_log.append({
             "role": "bot",
