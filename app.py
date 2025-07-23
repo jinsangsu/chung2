@@ -338,14 +338,12 @@ def handle_question(question_input):
             return
 
         matched = []
-        for r in records:
+       for r in records:
             sheet_keywords = extract_keywords(r["질문"])
-            joined_keyword = ["".join(sheet_keywords)]  # "자동이체신청"
-            all_keywords = set(sheet_keywords) 
+            joined_keyword = "".join(sheet_keywords)
+            all_keywords = set(sheet_keywords)
             all_keywords.add(joined_keyword)
-    # 사용자가 '자동이체'라고만 입력한 경우 '자동이체신청'도 같이 잡히도록
-            # 반드시 키워드 1개 이상 일치할 때만 매칭
-            if any(kw in sheet_keywords for kw in q_input_keywords):
+            if any(kw in all_keywords for kw in q_input_keywords):
                 matched.append(r)
 
         st.session_state.chat_log.append({
