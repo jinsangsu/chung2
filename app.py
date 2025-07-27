@@ -222,13 +222,15 @@ def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
 def normalize_text(text):
-    return re.sub(r"[^가-힣a-zA-Z0-9]", "", text.lower())
+    text = re.sub(r"(시|요|가요|인가요|하나요|할까요|할게요|하죠|할래요)$", "", text.lower())
+    return re.sub(r"[^가-힣a-zA-Z0-9]", "", text)
 
 def extract_keywords(text):
     stopwords = [
         "이", "가", "은", "는", "을", "를", "에", "의", "로", "으로", "도", "만", "께", "에서", "하고", "보다", "부터", "까지", "와", "과",
-        "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
-        "어떻게", "어떡해", "방법", "알려줘", "알려줘요", "알려주세요", "무엇", "무엇인가요", "뭐", "뭔가요", "뭔데요", "뭡니까", "도와줘", "도와줘요", "하나요", "하는법"
+    "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
+    "어떻게", "어떡해", "방법", "알려줘", "알려줘요", "알려주세요", "무엇", "무엇인가요", "뭐", "뭔가요", "뭔데요", "뭡니까",
+    "도와줘", "도와줘요", "하나요", "하는법", "되나요", "인가요", "있나요", "되었나요", "있습니까"
     ]
     text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
     words = [w for w in text.split() if w not in stopwords and len(w) > 1]
@@ -350,8 +352,16 @@ def handle_question(question_input):
             if match_score >= 1 or sim_score >= 0.45:
                 matched.append((total_score, r))
         matched.sort(key=lambda x: x[0], reverse=True)
+        seen_questions = set()
+        unique_matched = []
+        for score, r in matched:
+            if r["질문"] not in seen_questions:
+                unique_matched.append((score, r))
+                seen_questions.add(r["질문"])
+        matched = unique_matched
         top_matches = [r for _, r in matched[:10]]
-
+        if len(top_matches) == 1 and len(matched) >= 3:
+           top_matches = [r for _, r in matched[:3]]
         st.session_state.chat_log.append({
             "role": "user",
             "content": question_input,
@@ -429,7 +439,7 @@ def handle_question(question_input):
             return
 
 
-        if len(matched) == 1:
+        if len(top_matches) == 1:
             bot_answer_content = {
                 "q": top_matches[0]["질문"],
                 "a": add_friendly_prefix(top_matches[0]["답변"])
@@ -452,7 +462,7 @@ def handle_question(question_input):
             })
             st.session_state.scroll_to_bottom_flag = True
             return
-        if len(matched) > 0:
+        if len(top_matches) > 0:
             st.session_state.chat_log.append({
                 "role": "bot",
                 "content": bot_answer_content,
