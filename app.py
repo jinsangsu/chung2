@@ -331,6 +331,7 @@ def handle_question(question_input):
         records = sheet.get_all_records()
         q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
+
         matched = []
         # ✅ [2단계 추가] 이전에 남은 keyword가 있고, 이번에 매칭이 충분하지 않으면 초기화
         if st.session_state.pending_keyword:
@@ -341,12 +342,15 @@ def handle_question(question_input):
             sheet_keywords = extract_keywords(r["질문"])
 
             # 1) 핵심 키워드가 최소 1개 이상 겹치면 매칭
-            keyword_match = any(kw in sheet_keywords for kw in q_input_keywords)
-
-            # 2) (보조) 기존 부분포함/유사도 매칭도 같이 허용(불용어만 입력된 경우엔 매칭 X)
+            match_score = sum(1 for kw in q_input_keywords if kw in sheet_keywords)
+            sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
+            total_score = match_score + sim_score  # ➤ 가중치 없이 단순 합산
+            
             # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
-            if keyword_match:
-                matched.append(r)
+            if match_score > 0:  # 적어도 하나의 키워드 겹치면 추가
+                matched.append((total_score, r))
+        matched.sort(key=lambda x: x[0], reverse=True)
+        top_matches = [r for _, r in matched[:10]]
 
         st.session_state.chat_log.append({
             "role": "user",
@@ -355,11 +359,11 @@ def handle_question(question_input):
         })
 
         # 매칭 5개 이상시 유도질문
-        if len(matched) >= 5:
+        if len(top_matches) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
             
-            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in matched[:5]]
+            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in top_matches[:5]]
             examples_html = "".join([
                 f"""
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
@@ -427,19 +431,19 @@ def handle_question(question_input):
 
         if len(matched) == 1:
             bot_answer_content = {
-                "q": matched[0]["질문"],
-                "a": add_friendly_prefix(matched[0]["답변"])
+                "q": top_matches[0]["질문"],
+                "a": add_friendly_prefix(top_matches[0]["답변"])
             }
             bot_display_type = "single_answer"
-        elif len(matched) > 1:
+        elif 2 <= len(top_matches) <= 4:
             bot_answer_content = []
-            for r in matched:
+            for r in top_matches:
                 bot_answer_content.append({
                     "q": r["질문"],
                     "a": add_friendly_prefix(r["답변"])
                 })
             bot_display_type = "multi_answer"
-        else:
+        elif len(top_matches) == 0:
             # [3] 답변이 아예 없을 때 안내멘트
             st.session_state.chat_log.append({
                 "role": "bot",
