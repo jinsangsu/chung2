@@ -242,8 +242,15 @@ def add_friendly_prefix(answer):
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
-    SIMILARITY_THRESHOLD = 0.6
+    SIMILARITY_THRESHOLD = 0.7
     user_txt = question_input.strip().replace(" ", "").lower()
+
+# ✅ [1단계 추가] 이전에 남아있는 pending_keyword 강제 초기화 (질문 바뀐 경우)
+    if st.session_state.pending_keyword:
+        prev = normalize_text(st.session_state.pending_keyword)
+        now = normalize_text(question_input)
+        if prev != now:
+            st.session_state.pending_keyword = None
 
     # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
     chit_chat_patterns = [
@@ -325,6 +332,10 @@ def handle_question(question_input):
         q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
         matched = []
+        # ✅ [2단계 추가] 이전에 남은 keyword가 있고, 이번에 매칭이 충분하지 않으면 초기화
+        if st.session_state.pending_keyword:
+            st.session_state.pending_keyword = None
+        
         for r in records:
             sheet_q_norm = normalize_text(r["질문"])
             sheet_keywords = extract_keywords(r["질문"])
