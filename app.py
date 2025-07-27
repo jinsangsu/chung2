@@ -222,9 +222,8 @@ def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
 def normalize_text(text):
-    text = re.sub(r"(시|요|가요|인가요|하나요|할까요|할게요|하죠|할래요)$", "", text.lower())
+    text = re.sub(r"(시|요|가요|인가요|하나요|할까요|할게요|하죠|할래요|습니까|나요|지요|죠|죠요|되나요|되었나요|되니)$", "", text.lower())
     return re.sub(r"[^가-힣a-zA-Z0-9]", "", text)
-
 def extract_keywords(text):
     stopwords = [
         "이", "가", "은", "는", "을", "를", "에", "의", "로", "으로", "도", "만", "께", "에서", "하고", "보다", "부터", "까지", "와", "과",
@@ -346,7 +345,7 @@ def handle_question(question_input):
             # 1) 핵심 키워드가 최소 1개 이상 겹치면 매칭
             match_score = sum(1 for kw in q_input_keywords if kw in sheet_keywords)
             sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
-            total_score = match_score + sim_score  # ➤ 가중치 없이 단순 합산
+            total_score = (match_score * 1.5) + (sim_score * 1.0)
             
             # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
             if match_score >= 1 or sim_score >= 0.45:
