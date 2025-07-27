@@ -345,7 +345,7 @@ def handle_question(question_input):
             # 1) 핵심 키워드가 최소 1개 이상 겹치면 매칭
             match_score = sum(1 for kw in q_input_keywords if kw in sheet_keywords)
             sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
-            total_score = (match_score * 1.5) + (sim_score * 1.0)
+            total_score = (match_score * 2.0) + (sim_score * 1.0)
             
             # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
             if match_score >= 1 or sim_score >= 0.45:
