@@ -232,7 +232,8 @@ def extract_keywords(text):
     "도와줘", "도와줘요", "하나요", "하는법", "되나요", "인가요", "있나요", "되었나요", "있습니까"
     ]
     text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
-    words = [w for w in text.split() if w not in stopwords and len(w) > 1]
+    # words = [w for w in text.split() if w not in stopwords and len(w) > 1]
+    words = [w for w in text.split() if w not in stopwords]
     return words
 
 def add_friendly_prefix(answer):
@@ -360,26 +361,22 @@ def handle_question(question_input):
         matched = unique_matched
         
         top_matches_candidates = []
-        if len(q_input_keywords) == 1:
-        # 질문 키워드가 하나일 경우, 해당 키워드를 포함하는 모든 질문을 우선적으로 후보군에 넣습니다.
-            keyword = q_input_keywords[0]
-            for score, r in matched:
-                if keyword in extract_keywords(r["질문"]):
+        if q_input_keywords: # 질문 키워드가 존재할 경우
+            user_main_keyword_norm = normalize_text(q_input_keywords[0]) # 첫 번째 키워드를 정규화된 대표 키워드로 사용
+            for score, r in unique_matched: # 점수순으로 정렬된 매칭 리스트를 순회
+                # 시트 질문의 정규화된 텍스트에 사용자 대표 키워드가 포함되어 있으면 추가
+                if user_main_keyword_norm in normalize_text(r["질문"]):
                     top_matches_candidates.append(r)
-        # 만약 키워드 매칭된 것이 없다면, 기존의 상위 10개 매칭을 사용
-            if not top_matches_candidates:
-                top_matches_candidates = [r for _, r in matched[:10]]
+            
+            # 키워드 필터링된 결과가 있다면 해당 결과 중 최대 4개 사용
+            if top_matches_candidates:
+                top_matches = top_matches_candidates[:min(len(top_matches_candidates), 4)]
+            else:
+                # 키워드 필터링된 결과가 없으면, 전체 unique_matched에서 점수 높은 상위 4개 사용
+                top_matches = [r for _, r in unique_matched[:4]]
         else:
-        # 키워드가 여러 개이거나, 단일 키워드 매칭 후 후보군이 없으면 기존 로직대로 상위 10개
-            top_matches_candidates = [r for _, r in matched[:10]]
-
-    # 최종 top_matches는 최대 4개로 제한하여 multi_answer로 유도
-    # (5개 이상일 경우 유도 질문으로 넘어가므로, 그 미만으로 조정)
-        top_matches = top_matches_candidates[:min(len(top_matches_candidates), 4)]
-
-    # 아래 기존 로직은 삭제하거나 주석 처리합니다. 위의 로직에서 이미 최적의 top_matches를 선정합니다.
-    # if len(top_matches) == 1 and len(matched) >= 3:
-    #    top_matches = [r for _, r in matched[:3]]
+            # q_input_keywords가 비어있는 경우 (단어 추출 실패 등), 전체 unique_matched에서 상위 4개 사용
+            top_matches = [r for _, r in unique_matched[:4]]
         
         st.session_state.chat_log.append({
             "role": "user",
