@@ -231,7 +231,7 @@ def extract_keywords(text):
     "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
     "어떻게", "어떡해", "방법", "알려줘", "알려줘요", "알려주세요", "무엇", "무엇인가요", "뭐", "뭔가요", "뭔데요", "뭡니까",
     "도와줘", "도와줘요", "하나요", "하는법", "되나요", "인가요", "있나요", "되었나요", "있습니까", "하나", "진행하나요", "되니", "되냐", "하냐"
-    ]
+]
     text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
     # words = [w for w in text.split() if w not in stopwords and len(w) > 1]
     words = [w for w in text.split() if w not in stopwords]
