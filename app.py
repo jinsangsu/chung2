@@ -226,10 +226,11 @@ def normalize_text(text):
     return re.sub(r"[^가-힣a-zA-Z0-9]", "", text)
 def extract_keywords(text):
     stopwords = [
-        "이", "가", "은", "는", "을", "를", "에", "의", "로", "으로", "도", "만", "께", "에서", "하고", "보다", "부터", "까지", "와", "과",
+        stopwords = [
+    "이", "가", "은", "는", "을", "를", "에", "의", "로", "으로", "도", "만", "께", "에서", "하고", "보다", "부터", "까지", "와", "과",
     "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
     "어떻게", "어떡해", "방법", "알려줘", "알려줘요", "알려주세요", "무엇", "무엇인가요", "뭐", "뭔가요", "뭔데요", "뭡니까",
-    "도와줘", "도와줘요", "하나요", "하는법", "되나요", "인가요", "있나요", "되었나요", "있습니까"
+    "도와줘", "도와줘요", "하나요", "하는법", "되나요", "인가요", "있나요", "되었나요", "있습니까", "하나", "진행하나요", "되니", "되냐", "하냐"
     ]
     text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
     # words = [w for w in text.split() if w not in stopwords and len(w) > 1]
@@ -360,23 +361,15 @@ def handle_question(question_input):
                 seen_questions.add(r["질문"])
         matched = unique_matched
         
-        top_matches_candidates = []
-        if q_input_keywords: # 질문 키워드가 존재할 경우
-            user_main_keyword_norm = normalize_text(q_input_keywords[0]) # 첫 번째 키워드를 정규화된 대표 키워드로 사용
-            for score, r in unique_matched: # 점수순으로 정렬된 매칭 리스트를 순회
-                # 시트 질문의 정규화된 텍스트에 사용자 대표 키워드가 포함되어 있으면 추가
-                if user_main_keyword_norm in normalize_text(r["질문"]):
-                    top_matches_candidates.append(r)
-            
-            # 키워드 필터링된 결과가 있다면 해당 결과 중 최대 4개 사용
-            if top_matches_candidates:
-                top_matches = top_matches_candidates[:min(len(top_matches_candidates), 4)]
+        if q_input_keywords:
+            keyword_norm = normalize_text(q_input_keywords[0])
+            top_matches = [r for _, r in matched if keyword_norm in normalize_text(r["질문"])]
+            if not top_matches:
+                top_matches = [r for _, r in matched[:4]]
             else:
-                # 키워드 필터링된 결과가 없으면, 전체 unique_matched에서 점수 높은 상위 4개 사용
-                top_matches = [r for _, r in unique_matched[:4]]
+                top_matches = top_matches[:10]
         else:
-            # q_input_keywords가 비어있는 경우 (단어 추출 실패 등), 전체 unique_matched에서 상위 4개 사용
-            top_matches = [r for _, r in unique_matched[:4]]
+            top_matches = [r for _, r in matched[:4]]
         
         st.session_state.chat_log.append({
             "role": "user",
