@@ -359,6 +359,10 @@ def handle_question(question_input):
                 seen_questions.add(r["질문"])
         matched = unique_matched
         top_matches = [r for _, r in matched[:10]]
+        if len(q_input_keywords) == 1:
+           keyword = q_input_keywords[0]
+           top_matches = [r for _, r in matched if keyword in extract_keywords(r["질문"])]
+
         if len(top_matches) == 1 and len(matched) >= 3:
            top_matches = [r for _, r in matched[:3]]
         st.session_state.chat_log.append({
