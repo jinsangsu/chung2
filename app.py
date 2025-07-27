@@ -343,7 +343,20 @@ def handle_question(question_input):
         records = sheet.get_all_records()
         q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
-
+        
+        if not q_input_keywords or all(len(k) < 2 for k in q_input_keywords):
+           st.session_state.chat_log.append({
+               "role": "user",
+               "content": question_input,
+               "display_type": "question"
+           })
+           st.session_state.chat_log.append({
+                "role": "bot",
+                "content": "사장님~ 궁금하신 키워드를 한두 단어라도 입력해 주세요! 예: '카드', '자동이체', '해지' 등 😊",
+                "display_type": "single_answer"
+           })
+           st.session_state.scroll_to_bottom_flag = True
+           return
         matched = []
         # ✅ [2단계 추가] 이전에 남은 keyword가 있고, 이번에 매칭이 충분하지 않으면 초기화
         if st.session_state.pending_keyword:
