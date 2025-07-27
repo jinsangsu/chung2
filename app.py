@@ -233,9 +233,18 @@ def extract_keywords(text):
     "도와줘", "도와줘요", "하나요", "하는법", "되나요", "인가요", "있나요", "되었나요", "있습니까", "하나", "진행하나요", "되니", "되냐", "하냐"
 ]
     text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
-    words = [normalize_text(w) for w in text.split() if w not in stopwords and len(w) > 1]
+    words = [w for w in text.split() if w not in stopwords and len(w) > 1]
+    # words = [normalize_text(w) for w in text.split() if w not in stopwords and len(w) > 1]
     # words = [w for w in text.split() if w not in stopwords]
-    return words
+    decomposed = set()
+    for word in words:
+        decomposed.add(word)
+        if len(word) >= 4:
+            for i in range(2, len(word)):
+                decomposed.add(word[:i])
+                decomposed.add(word[i:])
+    return list(decomposed)
+    # return words
 
 def add_friendly_prefix(answer):
     answer = answer.strip()
