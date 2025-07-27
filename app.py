@@ -233,8 +233,8 @@ def extract_keywords(text):
     "도와줘", "도와줘요", "하나요", "하는법", "되나요", "인가요", "있나요", "되었나요", "있습니까", "하나", "진행하나요", "되니", "되냐", "하냐"
 ]
     text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
-    # words = [w for w in text.split() if w not in stopwords and len(w) > 1]
-    words = [w for w in text.split() if w not in stopwords]
+    words = [normalize_text(w) for w in text.split() if w not in stopwords and len(w) > 1]
+    # words = [w for w in text.split() if w not in stopwords]
     return words
 
 def add_friendly_prefix(answer):
@@ -363,7 +363,7 @@ def handle_question(question_input):
         
         if q_input_keywords:
             keyword_norm = normalize_text(q_input_keywords[0])
-            top_matches = [r for _, r in matched if keyword_norm in normalize_text(r["질문"])]
+            top_matches = [r for _, r in matched if keyword_norm in extract_text(r["질문"])]
             if not top_matches:
                 top_matches = [r for _, r in matched[:4]]
             else:
