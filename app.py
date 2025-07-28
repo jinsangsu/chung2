@@ -5,7 +5,7 @@ def get_auto_faq_list():
 
         for row in all_rows:
             q = row.get("질문", "")
-            if len(q) <= 25 and any(k in q for k in ["카드", "계약", "자동", "이체", "해지", "등록", "납부", "변경", "서류"]):
+            if len(q) <= 25 and any(k in q for k in ["카드", "구비서류", "자동차", "자동이체", "계약자 변경"]):
                 faq_candidates.append(q)
         return faq_candidates[:5]
     except:
