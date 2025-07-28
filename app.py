@@ -397,7 +397,7 @@ def handle_question(question_input):
             
             # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
             if len(q_input_keywords) == 1:
-                if q_input_keywords[0] in sheet_q_norm:
+                if q_input_keywords[0] in sheet_keywords:
                     matched.append((total_score, r))
 # 두 개 이상 키워드면 → 기존 match_score + sim_score 기준 사용
             else:
