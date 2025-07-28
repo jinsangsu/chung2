@@ -520,12 +520,15 @@ def handle_question(question_input):
                 })
             bot_display_type = "multi_answer"
         elif len(top_matches) == 0:
-            # [3] 답변이 아예 없을 때 안내멘트
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~",
-                "display_type": "single_answer"
-            })
+    # 키워드 자체가 부족했던 경우는 이미 위에서 안내했으므로, 이중 응답 막기
+            if len(q_input_keywords) == 0 or all(len(k) < 2 for k in q_input_keywords):
+                return  # 이미 위에서 안내 멘트 출력됨
+            else:
+                st.session_state.chat_log.append({
+                    "role": "bot",
+                    "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~",
+                    "display_type": "single_answer"
+                })
             st.session_state.scroll_to_bottom_flag = True
             return
         if len(top_matches) > 0:
