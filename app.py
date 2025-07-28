@@ -418,7 +418,7 @@ def handle_question(question_input):
             top_matches = [
                 r for _, r in matched
                 if keyword_norm in normalize_text(r["질문"])
-                or any(keyword_norm in k or k in keyword_norm for k in extract_keywords(r["질문"]))
+                and q_input_norm in normalize_text(r["질문"])
     
             ]
             if not top_matches:
