@@ -396,7 +396,7 @@ def handle_question(question_input):
             total_score = (match_score * 1.5) + (sim_score * 1.0)
             
             # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
-            if match_score >= 1 and sim_score >= 0.55:
+            if match_score >= 1 or (len(q_input_keywords) == 1 and q_input_keywords[0] in sheet_q_norm):
                 matched.append((total_score, r))
         matched.sort(key=lambda x: x[0], reverse=True)
         seen_questions = set()
