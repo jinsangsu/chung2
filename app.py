@@ -1,3 +1,15 @@
+def get_auto_faq_list():
+    try:
+        all_rows = sheet.get_all_records()
+        faq_candidates = []
+
+        for row in all_rows:
+            q = row.get("질문", "")
+            if len(q) <= 25 and any(k in q for k in ["카드", "계약", "자동", "이체", "해지", "등록", "납부", "변경", "서류"]):
+                faq_candidates.append(q)
+        return faq_candidates[:5]
+    except:
+        return []
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -174,6 +186,17 @@ def get_character_img_base64(img_path):
 def get_intro_html():
     char_img = get_character_img_base64(config["image"])
     img_tag = f'<img src="{char_img}" width="75" style="margin-right:17px; border-radius:16px; border:1px solid #eee;">' if char_img else ''
+    
+    faq_items = get_auto_faq_list()
+    faq_html = "".join([f"<li>📌 {q}</li>" for q in faq_items])
+    faq_block = f"""
+        <p style="margin-top:14px;"><strong>자주 묻는 질문 🔍</strong></p>
+        <ul style="padding-left:18px; font-size:0.95em;">
+            {faq_html}
+        </ul>
+    """ if faq_items else ""
+    
+
     return f"""
     <div style="display: flex; align-items: flex-start; margin-bottom:18px;">
         {img_tag}
@@ -188,7 +211,7 @@ def get_intro_html():
             <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
             늘 옆에서 제가 함께하겠습니다.</p>
             <p style="font-weight:700; color:#d32f2f !important; font-size:1.15em; font-family:'궁서', 'Gungsuh', serif;">
-    유지율도 조금만 더 챙겨주실거죠? 사랑해요~~^*^😊
+    유지율도 조금만 더 챙겨주실거죠? 사랑합니다~~^*^😊
 </p>
 
             <strong style="font-weight:900; color:#003399;">사장님!! 오늘도 화이팅!!!</strong>
