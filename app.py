@@ -401,7 +401,7 @@ def handle_question(question_input):
                     matched.append((total_score, r))
 # 두 개 이상 키워드면 → 기존 match_score + sim_score 기준 사용
             else:
-                 if match_score >= 1 and sim_score >= 0.55:
+                 if match_score >= 1 or sim_score >= 0.55:
                      matched.append((total_score, r))
 
         matched.sort(key=lambda x: x[0], reverse=True)
