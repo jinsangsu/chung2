@@ -188,12 +188,14 @@ def get_intro_html():
     img_tag = f'<img src="{char_img}" width="75" style="margin-right:17px; border-radius:16px; border:1px solid #eee;">' if char_img else ''
     
     faq_items = get_auto_faq_list()
-    faq_html = "".join([f"<li>📌 {q}</li>" for q in faq_items])
+    faq_inner = "".join([f"<li style='margin:4px 0;'>📌 {q}</li>" for q in faq_items])
     faq_block = f"""
-        <p style="margin-top:14px;"><strong>자주 묻는 질문 🔍</strong></p>
-        <ul style="padding-left:18px; font-size:0.95em;">
-            {faq_html}
-        </ul>
+        <details style='margin-top:14px; font-size:1em;'>
+            <summary style='cursor:pointer; font-weight:bold; color:#d32f2f;'>📋 자주 묻는 질문 🔍</summary>
+            <ul style='padding-left:20px; margin-top:8px;'>
+                {faq_inner}
+            </ul>
+        </details>
     """ if faq_items else ""
     
 
