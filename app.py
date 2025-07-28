@@ -207,7 +207,7 @@ def get_intro_html():
             여기에서 먼저 물어봐 주세요! <br>
             궁금하신 내용을 입력하시면 되여~</p>
             <p>예를들면 자동차, 카드등록, 자동이체등...<br>
-            제가 아는 건 친절하게 알려드릴게요!</p>
+            </p>
             <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
             늘 옆에서 제가 함께하겠습니다.</p>
             <p style="font-weight:700; color:#d32f2f !important; font-size:1.15em; font-family:'궁서', 'Gungsuh', serif;">
