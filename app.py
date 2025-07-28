@@ -215,6 +215,7 @@ def get_intro_html():
 </p>
 
             <strong style="font-weight:900; color:#003399;">사장님!! 오늘도 화이팅!!!</strong>
+            {faq_block} 
         </div>
     </div>
     """
