@@ -206,13 +206,11 @@ def get_intro_html():
         <div>
             <h2 style='margin:0 0 8px 0;font-weight:700;'>사장님, 안녕하세요!!</h2>
             <p style="font-weight: 700;">{config['intro']}</p>
-            <p>궁금하신거 있으시면 <br>
-            여기에서 먼저 물어봐 주세요! <br>
-            궁금하신 내용을 입력하시면 되여~</p>
+            <p>궁금하신거 있으시면 '애순이'에게<br>
+            먼저 궁금하신 내용을 물어봐주세요! <br></p>
             <p>예를들면 자동차, 카드등록, 자동이체등...<br>
             </p>
-            <p>사장님들이 더 빠르고, 더 편하게 영업하실 수 있도록
-            늘 옆에서 제가 함께하겠습니다.</p>
+            <p>사장님들이 더 편하게 영업하실 수 있도록 늘 함께할께요~~</p>
             <p style="font-weight:700; color:#d32f2f !important; font-size:1.15em; font-family:'궁서', 'Gungsuh', serif;">
     유지율도 조금만 더 챙겨주실거죠? 사랑합니다~~^*^😊
 </p>
