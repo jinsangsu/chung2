@@ -162,6 +162,7 @@ BRANCH_CONFIG = {
     "ns": {"bot_name": "세정",    "intro": "논산지점 이쁜이 세정이에요❤️", "image": "sejung_character.webp"},
     "sjj": {"bot_name": "효인",    "intro": "세종지점 이쁜 효인이에요❤️", "image": "hyoin_character.webp"},
     "mpj": {"bot_name": "아름",    "intro": "목포지점 이쁜이 아름이에요❤️", "image": "arum_character.webp"},
+    "gjj": {"bot_name": "상아",    "intro": "광주중앙의 이쁜이 상아에요❤️", "image": "sanga_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
 }
 
