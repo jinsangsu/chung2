@@ -154,13 +154,14 @@ BRANCH_CONFIG = {
     "ctc": {"bot_name": "유림",    "intro": "청주TC지점 이쁜이 ‘유림’입니다.❤️", "image": "youlim_character.webp"},
     "scj": {"bot_name": "혜련",    "intro": "서청주지점 꽃 ‘혜련’이에요❤️", "image": "heryun_character.webp"},
     "yst": {"bot_name": "영주",    "intro": "유성TC지점 이쁜이 ‘영주’에요❤️", "image": "youngju_character.webp"},
-    "gs": {"bot_name": "혜진",    "intro": "군산지점 이쁜이 ‘’혜진이에요❤️", "image": "hejin_character.webp"},
-    "ds": {"bot_name": "소정",    "intro": "둔산지점 이쁜이 ‘’소정이에요❤️", "image": "sojung_character.webp"},
-    "scjj": {"bot_name": "지영",    "intro": "순천중앙지점 이쁜이 ‘’지영이에요❤️", "image": "jiyoung_character.webp"},
-    "smj": {"bot_name": "서희",    "intro": "상무지점 이쁜이 ‘’서희이에요❤️", "image": "seohi_character.webp"},
-    "cjj": {"bot_name": "윤희",    "intro": "충주지점 이쁜이 ‘’윤희에요❤️", "image": "yunhi_character.webp"},
-    "ns": {"bot_name": "세정",    "intro": "논산지점 이쁜이 ‘’세정이에요❤️", "image": "sejung_character.webp"},
-    "sjj": {"bot_name": "효인",    "intro": "세종지점 이쁜 ‘’효인이에요❤️", "image": "hyoin_character.webp"},
+    "gs": {"bot_name": "혜진",    "intro": "군산지점 이쁜이 혜진이에요❤️", "image": "hejin_character.webp"},
+    "ds": {"bot_name": "소정",    "intro": "둔산지점 이쁜이 소정이에요❤️", "image": "sojung_character.webp"},
+    "scjj": {"bot_name": "지영",    "intro": "순천중앙지점 이쁜이 지영이에요❤️", "image": "jiyoung_character.webp"},
+    "smj": {"bot_name": "서희",    "intro": "상무지점 이쁜이 서희이에요❤️", "image": "seohi_character.webp"},
+    "cjj": {"bot_name": "윤희",    "intro": "충주지점 이쁜이 윤희에요❤️", "image": "yunhi_character.webp"},
+    "ns": {"bot_name": "세정",    "intro": "논산지점 이쁜이 세정이에요❤️", "image": "sejung_character.webp"},
+    "sjj": {"bot_name": "효인",    "intro": "세종지점 이쁜 효인이에요❤️", "image": "hyoin_character.webp"},
+    "mpj": {"bot_name": "아름",    "intro": "목포지점 이쁜이 아름이에요❤️", "image": "arum_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
 }
 
