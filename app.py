@@ -247,17 +247,20 @@ def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
 def normalize_text(text):
-    text = re.sub(r"(시|요|가요|인가요|하나요|할까요|할게요|하죠|할래요|습니까|나요|지요|죠|죠요|되나요|되었나요|되니)$", "", text.lower())
+    text = text.lower()
+    # ✅ 조사 제거: '김호진은', '매출의', '7월에' → '김호진', '매출', '7월'
+    text = re.sub(r"\b([가-힣]{2,10})(은|는|이|가|을|를|에|의|로|으로|도|만|께|에서|까지|보다|부터|한테|에게|하고|와|과)\b", r"\1", text)
+    text = re.sub(r"(시|요|가요|인가요|하나요|할까요|할게요|하죠|할래요|습니까|나요|지요|죠|죠요|되나요|되었나요|되니)$", "", text)
     return re.sub(r"[^가-힣a-zA-Z0-9]", "", text)
 def extract_keywords(text):
     stopwords = [
         
-    "이", "가", "은", "는", "을", "를", "에", "의", "로", "으로", "도", "만", "께", "에서", "하고", "보다", "부터", "까지", "와", "과",
-    "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
-    "어떻게", "어떡해", "방법", "알려줘", "알려줘요", "알려주세요", "무엇", "무엇인가요", "뭐", "뭔가요", "뭔데요", "뭡니까",
-    "도와줘", "도와줘요", "하나요", "하는법", "되나요", "인가요", "있나요", "되었나요", "있습니까", "하나", "진행하나요", "되니", "되냐", "하냐"
-]
-    text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text.lower())
+        "이", "가", "은", "는", "을", "를", "에", "의", "로", "으로", "도", "만", "께", "에서", "부터", "까지", "보다", "와", "과", "하고", "한테", "에게",
+        "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
+        "어떻게", "방법", "알려줘", "무엇", "뭐", "도와줘", "하나요", "되나요", "인가요", "되었나요", "하나", "진행하나요", "되니", "되냐", "하냐"
+    ]
+    text = re.sub(r"\b([가-힣]{2,10})(은|는|이|가|을|를|에|의|로|으로|도|만|께|에서|까지|보다|부터|한테|에게|하고|와|과)\b", r"\1", text.lower())
+    text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text)
     words = [w for w in text.split() if w not in stopwords and len(w) > 1]
     # words = [normalize_text(w) for w in text.split() if w not in stopwords and len(w) > 1]
     # words = [w for w in text.split() if w not in stopwords]
@@ -413,21 +416,22 @@ def handle_question(question_input):
                 unique_matched.append((score, r))
                 seen_questions.add(r["질문"])
         matched = unique_matched
-        
+        filtered_matches = [(score, r) for score, r in matched if score >= 2.0]
+
         if q_input_keywords:
             keyword_norm = normalize_text(q_input_keywords[0])
             top_matches = [
-                r for _, r in matched
+                r for score, r in filtered_matches
                 if keyword_norm in normalize_text(r["질문"])
                 and q_input_norm in normalize_text(r["질문"])
     
             ]
             if not top_matches:
-                top_matches = [r for _, r in matched[:4]]
+                top_matches = [r for score, r in filtered_matches[:4]]
             else:
                 top_matches = top_matches[:10]
         else:
-            top_matches = [r for _, r in matched[:4]]
+            top_matches = [r for score, r in filtered_matches[:4]]
         
         st.session_state.chat_log.append({
             "role": "user",
