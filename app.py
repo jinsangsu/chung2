@@ -188,6 +188,7 @@ BRANCH_CONFIG = {
     "dt1":   {"bot_name": "태연",    "intro": "대전TC1지점의 꽃 ‘태연’이예요.❤️",  "image": "taeyeon1_character.webp"},
     "mpt1":   {"bot_name": "지영",    "intro": "목포TC1지점의 꽃 ‘지영’이예요.❤️",  "image": "jiyoung1_character.webp"},
     "cjjj":   {"bot_name": "희정",    "intro": "청주제일지점의 꽃 ‘희정’이예요.❤️",  "image": "hijung_character.webp"},
+    "chj":   {"bot_name": "소영",    "intro": "청주지점의 꽃 ‘소영’이예요.❤️",  "image": "soyoung_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
 }
 
