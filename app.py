@@ -165,7 +165,7 @@ BRANCH_CONFIG = {
     "mpj": {"bot_name": "아름",    "intro": "목포지점 이쁜이 아름이에요❤️", "image": "arum_character.webp"},
     "gjj": {"bot_name": "상아",    "intro": "광주중앙의 이쁜이 상아에요❤️", "image": "sanga_character.webp"},
     "mdj": {"bot_name": "정아",    "intro": "무등지점의 꽃 정아에요❤️", "image": "junga_character.webp"},
-    "br": {"bot_name": "윤희",    "intro": "보령지점의 꽃 윤희에요❤️", "image": "yunhi_character.webp"},
+    "br": {"bot_name": "윤희",    "intro": "보령지점의 꽃 윤희에요❤️", "image": "yunhi1_character.webp"},
     "gr": {"bot_name": "혜진",    "intro": "계룡지점의 꽃 혜진에요❤️", "image": "hyejin_character.webp"},
     "as": {"bot_name": "규희",    "intro": "아산지점의 꽃 규희에요❤️", "image": "kyuhi_character.webp"},
     "dst": {"bot_name": "나라",    "intro": "둔산TC지점의 꽃 나라에요❤️", "image": "nara_character.webp"},
