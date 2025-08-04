@@ -180,7 +180,7 @@ BRANCH_CONFIG = {
     "caj":   {"bot_name": "지원",    "intro": "천안제일의 꽃 ‘지원’이예요.❤️",  "image": "jiwon_character.webp"},
     "dmj":   {"bot_name": "은채",    "intro": "미래지점의 꽃 ‘은채’예요.❤️",  "image": "enchae_character.webp"},
     "cat":   {"bot_name": "지현",    "intro": "천안TC지점의 꽃 ‘지현’이예요.❤️",  "image": "jiheon_character.webp"},
-    "mpt2":   {"bot_name": "정옥",    "intro": "목포 TC2 지점의 꽃 ‘정옥’이예요.❤️",  "image": "jeongok_character.webp"},
+    "mpt2":   {"bot_name": "정옥",    "intro": "목포 TC2 지점의 꽃 ‘정옥’이예요.❤️",  "image": "jungok_character.webp"},
     "ma":   {"bot_name": "진남",    "intro": "모악지점의 꽃 ‘진남’이예요.❤️",  "image": "jinnam_character.webp"},
     "sgs":   {"bot_name": "은선",    "intro": "새군산지점의 꽃 ‘은선’이예요.❤️",  "image": "ensun_character.webp"},
     "jb":   {"bot_name": "현숙",    "intro": "전북지점의 꽃 ‘현숙’이예요.❤️",  "image": "hunsuk_character.webp"},
