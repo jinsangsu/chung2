@@ -495,6 +495,7 @@ def handle_question(question_input):
                 "role": "bot",
                 "content": (
                     "<div class='example-guide-block'>"
+                    f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'>"
                     f"<span class='example-guide-title'>사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요?</span>"
                     " 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!<br>"
                     "<span class='example-guide-emph'><b>아래처럼 다시 물어보시면 바로 답변드릴 수 있어요.</b></span><br>"
