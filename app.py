@@ -308,6 +308,7 @@ def add_friendly_prefix(answer):
 
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.7
+    aesoon_icon = get_character_img_base64("managerbot_character.webp")
     user_txt = question_input.strip().replace(" ", "").lower()
 
 # ✅ [1단계 추가] 이전에 남아있는 pending_keyword 강제 초기화 (질문 바뀐 경우)
