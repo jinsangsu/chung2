@@ -426,8 +426,10 @@ def handle_question(question_input):
             
             # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
             if len(q_input_keywords) == 1:
-                if q_input_keywords[0] in sheet_keywords:
+                if any(q_input_keywords[0] in kw for kw in sheet_keywords):
                     matched.append((total_score, r))
+
+
 # 두 개 이상 키워드면 → 기존 match_score + sim_score 기준 사용
             else:
                  if match_score >= 1 or sim_score >= 0.55:
@@ -441,7 +443,12 @@ def handle_question(question_input):
                 unique_matched.append((score, r))
                 seen_questions.add(r["질문"])
         matched = unique_matched
-        filtered_matches = [(score, r) for score, r in matched if score >= 2.0]
+        if len(q_input_keywords) == 1:
+    # 단일 키워드는 점수 기준 없이 모두 허용
+            filtered_matches = matched
+        else:
+    # 복합 키워드는 기존 점수 필터 유지
+            filtered_matches = [(score, r) for score, r in matched if score >= 2.0]
 
         if q_input_keywords:
             keyword_norm = normalize_text(q_input_keywords[0])
@@ -550,6 +557,7 @@ def handle_question(question_input):
                 })
             bot_display_type = "multi_answer"
         elif len(top_matches) == 0:
+
     # 키워드 자체가 부족했던 경우는 이미 위에서 안내했으므로, 이중 응답 막기
             if len(q_input_keywords) == 0 or all(len(k) < 2 for k in q_input_keywords):
                 return  # 이미 위에서 안내 멘트 출력됨
