@@ -309,6 +309,7 @@ def add_friendly_prefix(answer):
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.7
     aesoon_icon = get_character_img_base64(config["image"])
+    bot_name = config["bot_name"]
     user_txt = question_input.strip().replace(" ", "").lower()
 
 # ✅ [1단계 추가] 이전에 남아있는 pending_keyword 강제 초기화 (질문 바뀐 경우)
@@ -483,7 +484,7 @@ def handle_question(question_input):
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                      <strong style="color:#003399;">질문) {q}</strong><br>
                      
-                    👉 <strong>애순:</strong> {a}
+                    👉 <strong>{bot_name}:</strong> {a}
                 </div>
                 """
                 
