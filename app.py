@@ -585,6 +585,7 @@ def handle_question(question_input):
         st.session_state.scroll_to_bottom_flag = True
 
 def display_chat_html_content():
+    aesoon_icon = get_character_img_base64("managerbot_character.webp")
     chat_html_content = ""
     for entry in st.session_state.chat_log:
         if entry["role"] == "intro":
@@ -608,14 +609,14 @@ def display_chat_html_content():
                     chat_html_content += (
                         '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
                         f"<p style='margin-bottom: 8px;'><strong style='color:#003399;'>질문: {q}</strong></p>"
-                        f"<p>👉 <strong>애순:</strong> {a}</p>"
+                        f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> <strong>애순:</strong><br>{bot_answer}</p>"
                         '</div></div>'
                     )
                 else:
                     bot_answer = str(entry["content"]).replace("\n", "<br>")
                     chat_html_content += (
                         '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
-                        f"<p>🧾 <strong>애순:</strong><br>{bot_answer}</p>"
+                        f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> <strong>애순:</strong><br>{bot_answer}</p>"
                         '</div></div>'
                     )
             elif entry.get("display_type") == "multi_answer":
@@ -628,7 +629,7 @@ def display_chat_html_content():
                         chat_html_content += f"""
                         <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                             <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
-                            👉 <strong>애순:</strong> {a}
+                            <img src='{aesoon_icon}' width='22' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> <strong>애순:</strong> {a}
                         </div>
                         """
                 elif isinstance(entry["content"], dict):
@@ -637,7 +638,7 @@ def display_chat_html_content():
                     chat_html_content += f"""
                         <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                             <strong style="color:#003399;">질문: {q}</strong><br>
-                            👉 <strong>애순:</strong> {a}
+                            <img src='{aesoon_icon}' width='22' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> <strong>애순:</strong> {a}
                         </div>
                         """
                 chat_html_content += "</div></div>"
@@ -651,7 +652,7 @@ def display_chat_html_content():
                 bot_answer = str(entry["content"]).replace("\n", "<br>")
                 chat_html_content += (
                     '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
-                    f"<p>🧾 <strong>애순:</strong><br>{bot_answer}</p>"
+                    f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> <strong>애순:</strong><br>{bot_answer}</p>"
                     '</div></div>'
                 )
     scroll_iframe_script = """
