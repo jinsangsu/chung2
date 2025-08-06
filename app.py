@@ -233,7 +233,7 @@ def get_intro_html():
         <div>
             <h2 style='margin:0 0 8px 0;font-weight:700;'>사장님, 안녕하세요!!</h2>
             <p style="font-weight: 700;">{config['intro']}</p>
-            <p>궁금하신 내용은 여기 애순이에게 먼저 물어봐 주세요!<br></p>
+            <p>궁금하신 내용은 여기 <strong>애순이</strong>에게 먼저 물어봐 주세요!<br></p>
             <p>예를들면 자동차, 카드등록, 자동이체등...<br></p>
             <p>사장님들이 더 편하게 영업하실 수 있도록 늘 함께할께요~~</p>
             <p style="font-weight:700; color:#d32f2f !important; font-size:1.15em; font-family:'궁서', 'Gungsuh', serif;">
@@ -482,7 +482,7 @@ def handle_question(question_input):
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                      <strong style="color:#003399;">질문) {q}</strong><br>
                      
-                    👉 <strong>답변:</strong> {a}
+                    👉 <strong>애순:</strong> {a}
                 </div>
                 """
                 
@@ -608,14 +608,14 @@ def display_chat_html_content():
                     chat_html_content += (
                         '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
                         f"<p style='margin-bottom: 8px;'><strong style='color:#003399;'>질문: {q}</strong></p>"
-                        f"<p>👉 <strong>답변:</strong> {a}</p>"
+                        f"<p>👉 <strong>애순:</strong> {a}</p>"
                         '</div></div>'
                     )
                 else:
                     bot_answer = str(entry["content"]).replace("\n", "<br>")
                     chat_html_content += (
                         '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
-                        f"<p>🧾 <strong>답변:</strong><br>{bot_answer}</p>"
+                        f"<p>🧾 <strong>애순:</strong><br>{bot_answer}</p>"
                         '</div></div>'
                     )
             elif entry.get("display_type") == "multi_answer":
@@ -628,7 +628,7 @@ def display_chat_html_content():
                         chat_html_content += f"""
                         <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                             <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
-                            👉 <strong>답변:</strong> {a}
+                            👉 <strong>애순:</strong> {a}
                         </div>
                         """
                 elif isinstance(entry["content"], dict):
@@ -637,7 +637,7 @@ def display_chat_html_content():
                     chat_html_content += f"""
                         <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                             <strong style="color:#003399;">질문: {q}</strong><br>
-                            👉 <strong>답변:</strong> {a}
+                            👉 <strong>애순:</strong> {a}
                         </div>
                         """
                 chat_html_content += "</div></div>"
@@ -651,7 +651,7 @@ def display_chat_html_content():
                 bot_answer = str(entry["content"]).replace("\n", "<br>")
                 chat_html_content += (
                     '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
-                    f"<p>🧾 <strong>답변:</strong><br>{bot_answer}</p>"
+                    f"<p>🧾 <strong>애순:</strong><br>{bot_answer}</p>"
                     '</div></div>'
                 )
     scroll_iframe_script = """
