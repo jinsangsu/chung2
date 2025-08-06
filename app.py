@@ -219,7 +219,7 @@ def get_intro_html():
     faq_inner = "".join([f"<li style='margin:4px 0;'>📌 {q}</li>" for q in faq_items])
     faq_block = f"""
         <details style='margin-top:14px; font-size:1em;'>
-            <summary style='cursor:pointer; font-weight:bold; color:#d32f2f;'>📋 자주 묻는 질문 🔍</summary>
+            <summary style='cursor:pointer; font-weight:bold; color:#d32f2f;'><img src='{aesoon_icon}' width='22' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> 자주 묻는 질문 🔍</summary>
             <ul style='padding-left:20px; margin-top:8px;'>
                 {faq_inner}
             </ul>
