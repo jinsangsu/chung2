@@ -147,7 +147,7 @@ BRANCH_CONFIG = {
     "cb":   {"bot_name": "현의",    "intro": "음성의 희망 ‘현의’입니다.❤️",    "image": "hyuni_character.webp"},
     "cb1":   {"bot_name": "보라",    "intro": "제천의 희망 ‘보라’입니다.❤️",    "image": "bora_character.webp"},
     "sc":   {"bot_name": "주희",    "intro": "순천지점 이쁜이 ‘주희’입니다❤️.",    "image": "juhee_character.webp"},
-    "jj":     {"bot_name": "삼숙",    "intro": "전주지점 엄마 ‘삼숙’입니다.❤️",    "image": "samsook_character.webp"},
+    "jj":     {"bot_name": "삼숙",    "intro": "전주지점의 희망 ‘삼숙’입니다.❤️",    "image": "samsook_character.webp"},
     "is":      {"bot_name": "수빈",    "intro": "익산지점 이쁜이 ‘수빈’입니다.❤️",    "image": "subin_character.webp"},
     "ca":    {"bot_name": "연지",    "intro": "천안지점의 꽃 ‘연지’입니다.❤️",    "image": "yeonji_character.webp"},
     "yd":     {"bot_name": "상민",    "intro": "예당지점 이쁜이 ‘상민’입니다.❤️",    "image": "sangmin_character.webp"},
