@@ -615,7 +615,7 @@ def display_chat_html_content():
                     chat_html_content += (
                         '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
                         f"<p style='margin-bottom: 8px;'><strong style='color:#003399;'>질문: {q}</strong></p>"
-                        f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> <strong>{bot_name}:</strong><br>{bot_answer}</p>"
+                        f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> <strong>{bot_name}:</strong><br>{a}</p>"
                         '</div></div>'
                     )
                 else:
