@@ -589,6 +589,8 @@ def handle_question(question_input):
 
 def display_chat_html_content():
     aesoon_icon = get_character_img_base64(config["image"])
+    if not aesoon_icon:
+        aesoon_icon = get_character_img_base64(BRANCH_CONFIG["default"]["image"])
     bot_name = config["bot_name"]
     chat_html_content = ""
     for entry in st.session_state.chat_log:
