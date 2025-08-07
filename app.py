@@ -304,7 +304,7 @@ def add_friendly_prefix(answer):
     if answer[:7].replace(" ", "").startswith("사장님"):
         return answer
     else:
-        return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
+        return f"<strong>{bot_name}:</strong> 사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.7
@@ -478,7 +478,7 @@ def handle_question(question_input):
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
             
-            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in top_matches[:5]]
+            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"], bot_name)) for m in top_matches[:5]]
             examples_html = "".join([
                 f"""
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
@@ -548,7 +548,7 @@ def handle_question(question_input):
         if len(top_matches) == 1:
             bot_answer_content = {
                 "q": top_matches[0]["질문"],
-                "a": add_friendly_prefix(top_matches[0]["답변"])
+                "a": add_friendly_prefix(top_matches[0]["답변"],bot_name)
             }
             bot_display_type = "single_answer"
         elif 2 <= len(top_matches) <= 4:
