@@ -478,7 +478,7 @@ def handle_question(question_input):
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
             
-            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"], bot_name)) for m in top_matches[:5]]
+            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in top_matches[:5]]
             examples_html = "".join([
                 f"""
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
