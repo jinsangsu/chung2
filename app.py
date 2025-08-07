@@ -305,7 +305,7 @@ def add_friendly_prefix(answer, bot_name=""):
     if answer[:7].replace(" ", "").startswith("사장님"):
         return f"{bot_name}: {answer}"
     else:
-        return f"<strong>{bot_name}:</strong> 사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
+        return f"<strong>{bot_name}</strong> 사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.7
