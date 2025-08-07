@@ -548,7 +548,7 @@ def handle_question(question_input):
         if len(top_matches) == 1:
             bot_answer_content = {
                 "q": top_matches[0]["질문"],
-                "a": add_friendly_prefix(top_matches[0]["답변"],bot_name)
+                "a": add_friendly_prefix(top_matches[0]["답변"])
             }
             bot_display_type = "single_answer"
         elif 2 <= len(top_matches) <= 4:
