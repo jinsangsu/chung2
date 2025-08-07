@@ -484,7 +484,7 @@ def handle_question(question_input):
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                      <strong style="color:#003399;">질문) {q}</strong><br>
                      
-                    👉 <strong>{bot_name}:</strong> {a}
+                     <img src="{aesoon_icon}" width="22" style="vertical-align:middle; margin-right:6px; border-radius:6px;"> <strong>{bot_name}:</strong> {a}
                 </div>
                 """
                 
