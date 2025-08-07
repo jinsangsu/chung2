@@ -299,7 +299,7 @@ def extract_keywords(text):
     return list(decomposed)
     # return words
 
-def add_friendly_prefix(answer,bot_name):
+def add_friendly_prefix(answer, bot_name="애순이"):
     answer = answer.strip()
     answer = re.sub(r"^(.*?:)\s*", "", answer)
     if answer[:7].replace(" ", "").startswith("사장님"):
