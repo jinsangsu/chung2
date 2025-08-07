@@ -301,6 +301,7 @@ def extract_keywords(text):
 
 def add_friendly_prefix(answer,bot_name="애순이"):
     answer = answer.strip()
+    answer = re.sub(r"^(.*?:)\s*", "", answer)
     if answer[:7].replace(" ", "").startswith("사장님"):
         return f"{bot_name}: {answer}"
     else:
