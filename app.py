@@ -302,7 +302,7 @@ def extract_keywords(text):
 def add_friendly_prefix(answer,bot_name="애순이"):
     answer = answer.strip()
     if answer[:7].replace(" ", "").startswith("사장님"):
-        return f"{answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
+        return f"{bot_name}: {answer}"
     else:
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
@@ -478,7 +478,7 @@ def handle_question(question_input):
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
             
-            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"],bot_name)) for m in top_matches[:5]]
+            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"], bot_name)) for m in top_matches[:5]]
             examples_html = "".join([
                 f"""
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
