@@ -18,6 +18,7 @@ import difflib
 import base64
 import os
 import re
+st.set_page_config(layout="wide", page_title="애순이", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
