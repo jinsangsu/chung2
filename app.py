@@ -928,26 +928,16 @@ st.markdown("""
 }
 
 @media (min-width: 1100px) {
-  .input-form-fixed { 
-    max-width: 900px; 
-    margin: 0 auto 24px auto; 
-  }
-  /* 폼과 텍스트박스도 래퍼 폭에 맞추기 */
-  .input-form-fixed form[data-testid="stForm"],
-  .input-form-fixed [data-testid="stTextInputRootElement"],
-  .input-form-fixed [data-testid="stTextAreaRootElement"] {
-    max-width: 900px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    width: 100% !important;
-  }
-  /* 음성 버튼 줄도 중앙 정렬 */
-  .input-form-fixed #voice-block {
-    max-width: 900px; 
-    margin: 6px auto 8px auto;
-  }
+    .input-form-fixed,
+    .input-form-fixed form,
+    .input-form-fixed [data-testid="stTextInputRootElement"],
+    .input-form-fixed [data-testid="stTextAreaRootElement"] {
+        max-width: 900px;
+        margin: 0 auto;
+        width: 100%;
+        border-radius: 8px;
+    }
 }
-
 </style>
 <script>
 
