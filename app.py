@@ -11,7 +11,6 @@ def get_auto_faq_list():
     except:
         return []
 import streamlit as st
-st.set_page_config(layout="wide", page_title="애순이 매니저봇", page_icon="💛")
 import gspread
 from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
