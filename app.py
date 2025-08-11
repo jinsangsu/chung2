@@ -723,7 +723,7 @@ if (window.parent.matchMedia) {
 """
     return f"""
     {chat_style}
-    <div id="chat-content-scroll-area" style="width:100%;">
+    <div id="chat-content-scroll-area" style="width:100%; max-width:100%;">
         {chat_html_content}
         <div id="chat-scroll-anchor"></div>
     </div>
