@@ -927,15 +927,20 @@ st.markdown("""
     .input-form-fixed { padding-bottom: 16px !important; }
 }
 
-@media (min-width: 768px) {
-    .input-form-fixed {
-        max-width: 800px;  /* 원하는 폭 (px 단위) */
-        margin: 0 auto;    /* 가운데 정렬 */
+@media (min-width: 1100px) {
+    .input-form-fixed,
+    .input-form-fixed form,
+    .input-form-fixed [data-testid="stTextInputRootElement"],
+    .input-form-fixed [data-testid="stTextAreaRootElement"] {
+        max-width: 900px;
+        margin: 0 auto;
+        width: 100%;
         border-radius: 8px;
     }
 }
 </style>
 <script>
+
 // 모바일에서 키보드 올라올 때 입력창 자동 스크롤
 window.addEventListener('focusin', function(e) {
     var el = document.querySelector('.input-form-fixed');
