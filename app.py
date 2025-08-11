@@ -46,6 +46,8 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
+
 st.markdown("""
 <style>
 /* HTML 컴포넌트(iframe) 래퍼와 iframe 자체를 전체폭으로 강제 */
@@ -923,6 +925,14 @@ st.markdown("""
 }
 @media (max-width: 600px) {
     .input-form-fixed { padding-bottom: 16px !important; }
+}
+
+@media (min-width: 768px) {
+    .input-form-fixed {
+        max-width: 800px;  /* 원하는 폭 (px 단위) */
+        margin: 0 auto;    /* 가운데 정렬 */
+        border-radius: 8px;
+    }
 }
 </style>
 <script>
