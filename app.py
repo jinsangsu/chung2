@@ -22,10 +22,16 @@ import re
 
 st.markdown("""
 <style>
-/* 메인 컨테이너 가로폭 강제 확장 */
-.block-container {max-width: 1280px !important; padding-left: 12px; padding-right: 12px;}
+/* Streamlit html component(iframe) 폭 강제 확장 */
+[data-testid="stIFrame"] { width: 100% !important; }
+[data-testid="stIFrame"] > iframe { width: 100% !important; min-width: 0 !important; }
+
+/* 혹시 부모 컨테이너가 폭을 제한할 때 대비 */
+div.stComponent { width: 100% !important; }
+.block-container { max-width: 1280px !important; }  /* 원하는 최대폭으로 조절 */
 </style>
 """, unsafe_allow_html=True)
+
 
 st.markdown("""
 <style>
