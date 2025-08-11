@@ -19,6 +19,19 @@ import base64
 import os
 import re
 
+st.set_page_config(layout="wide")
+
+st.markdown("""
+<style>
+/* HTML 컴포넌트(iframe) 래퍼와 iframe 자체를 전체폭으로 강제 */
+div[data-testid="stIFrame"] { width: 100% !important; }
+div[data-testid="stIFrame"] > iframe { width: 100% !important; }
+
+/* 혹시 브라우저/버전 따라 data-testid가 달리 잡히는 경우를 대비한 보강 */
+.element-container:has(> iframe) { width: 100% !important; max-width: 100% !important; }
+iframe { width: 100% !important; }
+</style>
+""", unsafe_allow_html=True)
 st.markdown("""
 <style>
 /* 1. 챗 말풍선 텍스트 자동 색상 지정 */
