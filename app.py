@@ -675,6 +675,14 @@ def display_chat_html_content():
     """
 # === 여기서부터 추가 ===
     chat_style = """
+<style id="layout-fix">
+  /* 인사말(인트로)만 전체폭 사용 */
+  #chat-content-scroll-area { width:100% !important; max-width:100% !important; }
+  .intro-message-row { width:100% !important; display:block !important; }
+  .intro-bubble { width:100% !important; max-width:100% !important; display:block !important; box-sizing:border-box; }
+</style>
+
+
 <style id="dynamic-color-style">
 .message-row, .message-bubble, .bot-bubble, .intro-bubble,
 .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
@@ -711,7 +719,7 @@ if (window.parent.matchMedia) {
 """
     return f"""
     {chat_style}
-    <div id="chat-content-scroll-area">
+    <div id="chat-content-scroll-area" style="width:100%;">
         {chat_html_content}
         <div id="chat-scroll-anchor"></div>
     </div>
