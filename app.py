@@ -674,14 +674,16 @@ def display_chat_html_content():
     </script>
     """
 # === 여기서부터 추가 ===
-    chat_style = """
+chat_style = """
 <style id="layout-fix">
   /* 인사말(인트로)만 전체폭 사용 */
   #chat-content-scroll-area { width:100% !important; max-width:100% !important; }
   .intro-message-row { width:100% !important; display:block !important; }
   .intro-bubble { width:100% !important; max-width:100% !important; display:block !important; box-sizing:border-box; }
+  /* 혹시 다른 곳에서 max-width를 제한하면 무시 */
+  .message-bubble.intro-bubble { max-width:100% !important; }
+  .intro-bubble * { overflow-wrap: anywhere; word-break: keep-all; }
 </style>
-
 
 <style id="dynamic-color-style">
 .message-row, .message-bubble, .bot-bubble, .intro-bubble,
@@ -700,15 +702,17 @@ function updateColorMode() {
     } catch(e) {}
     var styleTag = document.getElementById('dynamic-color-style');
     if (isDark) {
-        styleTag.innerHTML = 
-.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
+        styleTag.innerHTML = `
+.message-row, .message-bubble, .bot-bubble, .intro-bubble,
+.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
 .user-bubble, .user-bubble p { color: #111 !important; }
-;
+`;
     } else {
-        styleTag.innerHTML = 
-.message-row, .message-bubble, .bot-bubble, .intro-bubble, .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
+        styleTag.innerHTML = `
+.message-row, .message-bubble, .bot-bubble, .intro-bubble,
+.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
 .user-bubble, .user-bubble p { color: #111 !important; }
-;
+`;
     }
 }
 updateColorMode();
