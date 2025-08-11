@@ -1,3 +1,4 @@
+나의 말:
 def get_auto_faq_list():
     try:
         all_rows = sheet.get_all_records()
@@ -11,7 +12,6 @@ def get_auto_faq_list():
     except:
         return []
 import streamlit as st
-st.set_page_config(layout="wide", page_title="애순이", initial_sidebar_state="collapsed")
 import gspread
 from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
@@ -19,19 +19,6 @@ import difflib
 import base64
 import os
 import re
-
-st.markdown("""
-<style>
-/* Streamlit html component(iframe) 폭 강제 확장 */
-[data-testid="stIFrame"] { width: 100% !important; }
-[data-testid="stIFrame"] > iframe { width: 100% !important; min-width: 0 !important; }
-
-/* 혹시 부모 컨테이너가 폭을 제한할 때 대비 */
-div.stComponent { width: 100% !important; }
-.block-container { max-width: 1280px !important; }  /* 원하는 최대폭으로 조절 */
-</style>
-""", unsafe_allow_html=True)
-
 
 st.markdown("""
 <style>
@@ -315,8 +302,7 @@ def extract_keywords(text):
 
 def add_friendly_prefix(answer, bot_name=""):
     answer = answer.strip()
-    pattern = rf"^{re.escape(bot_name)}\s*[:：]?\s*"
-    answer = re.sub(pattern, "", answer)
+    answer = re.sub(r"^(.*?:)\s*", "", answer)
     if answer[:7].replace(" ", "").startswith("사장님"):
         return f"{bot_name}: {answer}"
     else:
@@ -900,4 +886,4 @@ window.addEventListener('focusin', function(e) {
     }
 });
 </script>
-""", unsafe_allow_html=True) 
+""", unsafe_allow_html=True)
