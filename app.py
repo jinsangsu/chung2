@@ -11,6 +11,7 @@ def get_auto_faq_list():
     except:
         return []
 import streamlit as st
+st.set_page_config(layout="wide", page_title="애순이", initial_sidebar_state="collapsed")
 import gspread
 from google.oauth2.service_account import Credentials
 import streamlit.components.v1 as components
@@ -18,7 +19,7 @@ import difflib
 import base64
 import os
 import re
-st.set_page_config(layout="wide", page_title="애순이", initial_sidebar_state="collapsed")
+
 
 st.markdown("""
 <style>
