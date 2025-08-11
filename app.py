@@ -228,9 +228,10 @@ def get_intro_html():
     
 
     return f"""
-    <div style="display: flex; align-items: flex-start; margin-bottom:18px;">
+    <div style="display:flex; align-items:flex-start; margin-bottom:18px; width:100%;">
         {img_tag}
-        <div>
+        <div style="flex:1; min-width:0;">
+       
             <h2 style='margin:0 0 8px 0;font-weight:700;'>사장님, 안녕하세요!!</h2>
             <p style="font-weight: 700;">{config['intro']}</p>
             <p>궁금하신 내용은 여기 <strong>애순이</strong>에게 먼저 물어봐 주세요!<br></p>
