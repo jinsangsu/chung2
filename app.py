@@ -674,7 +674,16 @@ def display_chat_html_content():
     </script>
     """
 # === 여기서부터 추가 ===
-    chat_style = """
+chat_style = """
+<style id="layout-fix">
+  /* iframe 내부 가로폭을 끝까지 쓰도록 강제 */
+  #chat-content-scroll-area { width:100% !important; }
+  .message-row { display:block; width:100% !important; }
+  .message-bubble { display:block; width:100% !important; box-sizing:border-box; }
+  .intro-bubble { width:100% !important; }
+</style>
+
+
 <style id="dynamic-color-style">
 .message-row, .message-bubble, .bot-bubble, .intro-bubble,
 .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
