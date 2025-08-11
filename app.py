@@ -20,6 +20,12 @@ import base64
 import os
 import re
 
+st.markdown("""
+<style>
+/* 메인 컨테이너 가로폭 강제 확장 */
+.block-container {max-width: 1280px !important; padding-left: 12px; padding-right: 12px;}
+</style>
+""", unsafe_allow_html=True)
 
 st.markdown("""
 <style>
