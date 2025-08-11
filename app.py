@@ -1,4 +1,3 @@
-나의 말:
 def get_auto_faq_list():
     try:
         all_rows = sheet.get_all_records()
