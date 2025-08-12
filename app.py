@@ -276,8 +276,8 @@ BRANCH_CONFIG = {
 
 
 # 2. [지점 파라미터 추출]
-branch = st.query_params.get('branch', ['default'])
-branch = str(branch).lower() if branch and str(branch).lower() != "none" else "default"
+branch = get_branch_param() or "default"   # 이미 위에 정의된 안전한 함수 활용
+branch = branch.lower()
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
 
 # 3. [캐릭터 이미지 불러오기]
@@ -385,7 +385,7 @@ def extract_keywords(text):
 def add_friendly_prefix(answer, bot_name=""):
     answer = answer.strip()
     answer = re.sub(r"^(.*?:)\s*", "", answer)
-    if answer[:7].replace(" ", "").startswith("사장님"):
+    if answer.replace(" ", "").startswith("사장님"):
         return f"{bot_name}: {answer}"
     else:
         return f"<strong>{bot_name}:</strong> 사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
@@ -768,38 +768,44 @@ def display_chat_html_content():
 </style>
 
 <style id="dynamic-color-style">
+/* 기본(라이트) */
 .message-row, .message-bubble, .bot-bubble, .intro-bubble,
 .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p {
-    color: #111 !important;
+  color: #111 !important;
 }
 .user-bubble, .user-bubble p {
-    color: #111 !important;
+  color: #111 !important;
 }
 </style>
 <script>
+function applyLight() {
+  var styleTag = document.getElementById('dynamic-color-style');
+  styleTag.innerHTML = `
+.message-row, .message-bubble, .bot-bubble, .intro-bubble,
+.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color:#111 !important; }
+.user-bubble, .user-bubble p { color:#111 !important; }
+`;
+}
+function applyDark() {
+  var styleTag = document.getElementById('dynamic-color-style');
+  styleTag.innerHTML = `
+.message-row, .message-bubble, .bot-bubble, .intro-bubble,
+.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color:#eeeeee !important; }
+/* 사용자 말풍선은 배경/글자색을 강제로 바꿔 가독성 확보 (inline 스타일 덮기 위해 !important) */
+.user-bubble { background:#2a2a2a !important; }
+.user-bubble, .user-bubble p { color:#eeeeee !important; }
+`;
+}
 function updateColorMode() {
-    var isDark = false;
-    try {
-        isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
-    } catch(e) {}
-    var styleTag = document.getElementById('dynamic-color-style');
-    if (isDark) {
-        styleTag.innerHTML = `
-.message-row, .message-bubble, .bot-bubble, .intro-bubble,
-.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #eeeeee !important; }
-.user-bubble, .user-bubble p { color: #111 !important; }
-`;
-    } else {
-        styleTag.innerHTML = `
-.message-row, .message-bubble, .bot-bubble, .intro-bubble,
-.message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color: #111 !important; }
-.user-bubble, .user-bubble p { color: #111 !important; }
-`;
-    }
+  let isDark = false;
+  try {
+    isDark = window.parent.matchMedia && window.parent.matchMedia('(prefers-color-scheme: dark)').matches;
+  } catch(e) {}
+  if (isDark) applyDark(); else applyLight();
 }
 updateColorMode();
 if (window.parent.matchMedia) {
-    window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
+  window.parent.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateColorMode);
 }
 </script>
 """
@@ -944,6 +950,8 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
 </script>
 """, height=45)
 
+st.markdown('<div class="input-form-fixed">', unsafe_allow_html=True)
+
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("Enter")
@@ -961,6 +969,7 @@ with st.form("input_form", clear_on_submit=True):
         handle_question(question_input)
         st.rerun()
 
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("""
 <style>
