@@ -10,6 +10,10 @@ def get_auto_faq_list():
         return faq_candidates[:5]
     except:
         return []
+
+import time
+from datetime import datetime
+import pytz
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
@@ -18,6 +22,39 @@ import difflib
 import base64
 import os
 import re
+
+def _get_gsheet_client():
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=scopes
+    )
+    return gspread.authorize(creds)
+
+def append_log_row_to_logs(row: list):
+    """
+    row 예시: [date, time, branch, question]
+    """
+    gc = _get_gsheet_client()
+    sh = gc.open_by_key(st.secrets["LOG_SHEET_KEY"])
+    try:
+        ws = sh.worksheet("logs")
+    except gspread.exceptions.WorksheetNotFound:
+        ws = sh.add_worksheet(title="logs", rows=1000, cols=10)
+        ws.append_row(["date", "time", "branch", "question"], value_input_option="USER_ENTERED")
+    ws.append_row(row, value_input_option="USER_ENTERED")
+
+def get_branch_param() -> str:
+    # Streamlit 버전별로 안전하게 branch 파라미터 읽기
+    try:
+        return (st.query_params.get("branch") or "").strip()
+    except:
+        try:
+            return st.experimental_get_query_params().get("branch", [""])[0].strip()
+        except:
+            return ""
 
 st.set_page_config(layout="wide")
 
@@ -906,6 +943,16 @@ with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("Enter")
     if submitted and question_input:
+        # ✅ [질문 로그: 제출 즉시 1회 기록]
+        kst = pytz.timezone("Asia/Seoul")
+        now = datetime.now(kst)
+        append_log_row_to_logs([
+            now.strftime("%Y-%m-%d"),
+            now.strftime("%H:%M:%S"),
+            get_branch_param(),
+            question_input.strip()
+        ])
+        # 이후 기존 로직 실행
         handle_question(question_input)
         st.rerun()
 
@@ -939,6 +986,7 @@ st.markdown("""
     }
 }
 </style>
+
 <script>
 
 // 모바일에서 키보드 올라올 때 입력창 자동 스크롤
