@@ -64,30 +64,31 @@ st.set_page_config(layout="wide")
 
 st.markdown("""
 <style>
-/* PC(넓은 화면)일 때만 입력영역을 최대폭 900px로 중앙 정렬 */
-@media (min-width: 1100px) {
-  .input-shell { 
-    max-width: 900px; 
-    margin: 0 auto 24px auto; 
+/* 데스크탑에서 전체 본문 컨테이너 폭을 통일 */
+@media (min-width:1100px){
+  /* 1) Streamlit 메인 컨테이너를 900px로 고정 + 중앙정렬 */
+  .block-container{
+    max-width:900px !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
   }
-  /* 폼과 텍스트박스도 래퍼 폭에 맞추기 */
-  .input-shell form[data-testid="stForm"],
-  .input-shell [data-testid="stTextInputRootElement"],
-  .input-shell [data-testid="stTextAreaRootElement"] {
-    max-width: 900px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    width: 100% !important;
+  /* 2) 입력 폼/텍스트박스도 부모 폭에 맞춰 100% */
+  form[data-testid="stForm"],
+  [data-testid="stTextInputRootElement"],
+  [data-testid="stTextAreaRootElement"]{
+    width:100% !important;
+    max-width:900px !important;
+    margin-left:auto !important;
+    margin-right:auto !important;
   }
-  /* 음성 버튼 줄도 중앙 정렬 */
-  .input-shell #voice-block {
-    max-width: 900px; 
-    margin: 6px auto 8px auto;
+  /* 3) iframe(인트로/음성)도 부모 폭(=900px)을 꽉 채우기 */
+  div[data-testid="stIFrame"], 
+  div[data-testid="stIFrame"] > iframe{
+    width:100% !important;
   }
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 st.markdown("""
 <style>
