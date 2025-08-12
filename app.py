@@ -22,15 +22,19 @@ import difflib
 import base64
 import os
 import re
+import json
 
 def _get_gsheet_client():
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
     ]
-    creds = Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"], scopes=scopes
-    )
+    info = st.secrets["gcp_service_account"]
+    # 💡 secrets에 """{ ... }""" 형태로 넣으셨다면 문자열입니다.
+    if isinstance(info, str):
+        info = json.loads(info)
+
+    creds = Credentials.from_service_account_info(info, scopes=scopes)
     return gspread.authorize(creds)
 
 def append_log_row_to_logs(row: list):
