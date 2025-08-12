@@ -64,25 +64,15 @@ st.set_page_config(layout="wide")
 
 st.markdown("""
 <style>
-/* PC(넓은 화면)일 때만 입력영역을 최대폭 900px로 중앙 정렬 */
 @media (min-width: 1100px) {
-  .input-shell { 
-    max-width: 900px; 
-    margin: 0 auto 24px auto; 
-  }
-  /* 폼과 텍스트박스도 래퍼 폭에 맞추기 */
-  .input-shell form[data-testid="stForm"],
-  .input-shell [data-testid="stTextInputRootElement"],
-  .input-shell [data-testid="stTextAreaRootElement"] {
+  /* 폼과 텍스트박스에 직접 적용 */
+  form[data-testid="stForm"],
+  [data-testid="stTextInputRootElement"],
+  [data-testid="stTextAreaRootElement"] {
     max-width: 900px !important;
     margin-left: auto !important;
     margin-right: auto !important;
     width: 100% !important;
-  }
-  /* 음성 버튼 줄도 중앙 정렬 */
-  .input-shell #voice-block {
-    max-width: 900px; 
-    margin: 6px auto 8px auto;
   }
 }
 </style>
