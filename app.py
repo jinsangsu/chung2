@@ -936,7 +936,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
     	    setTimeout(function(){
                 const btn = window.parent.document.querySelector('button[kind="secondaryFormSubmit"]');
                 if (btn) { btn.click(); }
-            }, 800);
+            }, 300);
         };
 
         recognition.start();
