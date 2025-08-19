@@ -932,6 +932,11 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
             document.getElementById("toggleRecord").innerText = "🎤 음성";
             status.style.display = "inline";
             status.innerText = "🛑 음성 인식 종료되었습니다.";
+            // ✅ 음성 입력이 끝나면 약간의 지연 후 자동 제출
+    	    setTimeout(function(){
+                const btn = window.parent.document.querySelector('button[kind="secondaryFormSubmit"]');
+                if (btn) { btn.click(); }
+            }, 800);
         };
 
         recognition.start();
