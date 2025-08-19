@@ -462,7 +462,7 @@ def handle_question(question_input):
                 "content": question_input,
                 "display_type": "question"
             })
-            reply = f"안녕하세요, 사장님! 저는 항상 곁에 있는 {bot_name}입니다 😊 궁금한 건 뭐든 말씀해 주세요!"
+            reply = f"안녕하세요, 사장님! 저는 항상 곁에 있는 {name_candidate}입니다 😊 궁금한 건 뭐든 말씀해 주세요!"
             st.session_state.chat_log.append({
                 "role": "bot",
                 "content": reply,
