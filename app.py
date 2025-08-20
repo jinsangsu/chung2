@@ -824,6 +824,50 @@ components.html(
     scrolling=True
 )
 
+# === 전체 새로고침 버튼: URL 하드 리로드 + 세션 초기화 ===
+st.markdown("""
+<style>
+#hard-refresh-wrap { margin: 6px 0 8px 0; }
+#hard-refresh-wrap .stButton > button {
+  height: 36px; padding: 6px 14px;
+  border-radius: 8px; border: 1px solid #e5e7eb;
+  background: #f6f8fa; font-weight: 700;
+}
+#hard-refresh-wrap .stButton > button:hover { background: #eef2f6; }
+</style>
+""", unsafe_allow_html=True)
+
+spacer, btn_col = st.columns([0.78, 0.22])
+with btn_col:
+    st.markdown('<div id="hard-refresh-wrap">', unsafe_allow_html=True)
+    if st.button("🔁 새로고침", use_container_width=True, key="hard_refresh_btn"):
+        # (옵션) 캐시 함수가 있다면 비우기
+        try:
+            load_qa_records.clear()  # @st.cache_data 함수 쓰는 경우만 동작, 없으면 무시됨
+        except Exception:
+            pass
+
+        # 세션 상태 초기화(채팅 로그/펜딩키워드 등 제거 → 첫 화면처럼)
+        try:
+            st.session_state.clear()
+        except Exception:
+            pass
+
+        # 브라우저를 실제로 다시 로드(쿼리스트링 유지 + 캐시우회 파라미터 추가)
+        components.html("""
+            <script>
+            (function(){
+              var loc = window.parent.location;
+              var url = loc.pathname + loc.search;          // branch 파라미터 등 유지
+              var sep = url.indexOf('?') >= 0 ? '&' : '?';
+              loc.replace(url + sep + 'refresh=' + Date.now()); // 캐시 무력화
+            })();
+            </script>
+        """, height=0)
+        st.stop()  # 아래 렌더 중단해서 깜빡임 방지
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
 st.markdown("""
 <style>
 button[kind="secondaryFormSubmit"] {
