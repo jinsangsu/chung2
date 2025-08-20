@@ -824,7 +824,50 @@ components.html(
     scrolling=True
 )
 
+# === 전체 새로고침 버튼: 세션 초기화 + URL 파라미터 갱신 + rerun ===
+import time
 
+st.markdown("""
+<style>
+#hard-refresh-wrap { margin: 6px 0 8px 0; }
+#hard-refresh-wrap .stButton > button {
+  height: 36px; padding: 6px 14px;
+  border-radius: 8px; border: 1px solid #e5e7eb;
+  background: #f6f8fa; font-weight: 700;
+}
+#hard-refresh-wrap .stButton > button:hover { background: #eef2f6; }
+</style>
+""", unsafe_allow_html=True)
+
+spacer, btn_col = st.columns([0.78, 0.22])
+with btn_col:
+    st.markdown('<div id="hard-refresh-wrap">', unsafe_allow_html=True)
+    if st.button("🔁 전체 새로고침", use_container_width=True, key="hard_refresh_btn"):
+        # 1) branch 등 현재 쿼리파라미터 보존
+        try:
+            # 신버전(1.30+) 호환
+            current = dict(st.query_params)
+        except Exception:
+            # 구버전 호환
+            current = {k: v[0] if isinstance(v, list) and len(v)==1 else v
+                       for k, v in st.experimental_get_query_params().items()}
+        current["refresh"] = str(int(time.time()))  # 캐시무력화용 파라미터
+
+        # 2) 세션 상태 초기화 → 첫 화면(인트로)로
+        st.session_state.clear()
+
+        # 3) URL 파라미터 갱신
+        try:
+            # 신버전
+            st.query_params.clear()
+            st.query_params.update(current)
+        except Exception:
+            # 구버전
+            st.experimental_set_query_params(**current)
+
+        # 4) 앱 재실행 (JS 없이 깔끔)
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("""
 <style>
