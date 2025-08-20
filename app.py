@@ -823,17 +823,6 @@ components.html(
     height=400,
     scrolling=True
 )
-# === 시트 캐시 새로고침 버튼 ===
-refresh_col1, refresh_col2 = st.columns([1, 9])
-with refresh_col1:
-    if st.button("🔄 데이터 새로고침", use_container_width=True):
-        try:
-            # 캐시를 비우고 즉시 리로드
-            load_qa_records.clear()
-        except Exception:
-            pass
-        st.toast("시트 데이터 새로고침 완료!", icon="✅")
-        st.rerun()
 
 st.markdown("""
 <style>
