@@ -874,6 +874,7 @@ button[kind="secondaryFormSubmit"]:hover {
 """, unsafe_allow_html=True)
 
  # 2. 음성 + 새로고침(같은 줄)
+st.markdown('<div id="toolbar-anchor"></div>', unsafe_allow_html=True)
 left_col, right_col = st.columns([1, 0.28])  # 비율은 필요시 조정
 
 with left_col:
@@ -989,7 +990,33 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
 with right_col:
     if st.button("🔁 새로고침", use_container_width=True):
         _hard_reset()
-st.markdown('<div class="input-form-fixed">', unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+/* toolbar-anchor 다음에 나오는 첫 가로 컬럼 묶음을 한 줄로 고정 */
+#toolbar-anchor + div[data-testid="stHorizontalBlock"]{
+  display:flex !important;
+  flex-wrap:nowrap !important;      /* 줄바꿈 금지 */
+  align-items:center !important;
+  gap:8px !important;
+}
+/* 왼쪽(음성)은 가변, 오른쪽(새로고침)은 내용만큼 */
+#toolbar-anchor + div[data-testid="stHorizontalBlock"] > div:first-child{
+  flex:1 1 auto !important; 
+  min-width:0 !important;
+}
+#toolbar-anchor + div[data-testid="stHorizontalBlock"] > div:last-child{
+  flex:0 0 auto !important;
+}
+/* 아주 작은 화면에서 버튼 여유 폭 확보 */
+@media (max-width: 420px){
+  #toolbar-anchor + div[data-testid="stHorizontalBlock"] button{
+    padding:6px 10px !important;
+    font-size:14px !important;
+  }
+}
+</style>
+""", unsafe_allow_html=True)
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
