@@ -62,6 +62,11 @@ def get_branch_param() -> str:
 
 st.set_page_config(layout="wide")
 # === URL 하드리셋(hardreset=1) 감지: 세션 초기화 후 첫 화면으로 ===
+# === 세션 하드 리셋 ===
+def _hard_reset():
+    st.session_state.clear()  # chat_log, pending_keyword 등 초기화
+    st.rerun()                # 첫 화면으로 다시 렌더
+
 def _qp_to_dict():
     try:
         d = dict(st.query_params)
@@ -868,11 +873,13 @@ button[kind="secondaryFormSubmit"]:hover {
 </style>
 """, unsafe_allow_html=True)
 
- # 2. 음성인식 버튼
-components.html("""
+ # 2. 음성 + 새로고침(같은 줄)
+left_col, right_col = st.columns([1, 0.28])  # 비율은 필요시 조정
+
+with left_col:
+    components.html("""
 <style>
-#toolbar-row{ margin:4px 0 6px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
-#voice-block{ display:flex; align-items:center; gap:10px; }
+#voice-block{ margin:4px 0 6px; display:flex; align-items:center; gap:10px; }
 #toggleRecord{
   background:#238636; color:#fff; font-weight:bold; border:none; border-radius:8px;
   font-size:15px; padding:6px 16px; height:36px; min-width:80px; box-shadow:0 2px 8px rgba(0,64,0,0.10);
@@ -880,37 +887,16 @@ components.html("""
 }
 #toggleRecord:hover{ background:#008000; color:#ffeb3b; }
 #speech_status{ font-size:.85em; color:#1b5e20; margin-left:4px; display:none; }
-#hardRefreshBtn{
-  height:36px; padding:6px 14px; min-width:96px; border-radius:8px; border:1px solid #e5e7eb;
-  background:#f6f8fa; font-weight:700; cursor:pointer;
-}
-#hardRefreshBtn:hover{ background:#eef2f6; }
-@media (prefers-color-scheme: dark){
-  #hardRefreshBtn{ border-color:#374151; background:#2a2f36; color:#e5e7eb; }
-  #hardRefreshBtn:hover{ background:#3a4049; }
-}
 </style>
 
-<div id="toolbar-row">
-  <div id="voice-block">
-    <button id="toggleRecord">🎤 음성</button>
-    <div id="speech_status"></div>
-  </div>
-  <button id="hardRefreshBtn" title="처음 화면으로">🔁 새로고침</button>
+<div id="voice-block">
+  <button id="toggleRecord">🎤 음성</button>
+  <div id="speech_status"></div>
 </div>
 
 <script>
 let isRecording = false;
 let recognition;
-
-function doHardRefresh(){
-  const doc = window.parent.document;
-  const url = new URL(doc.location.href);
-  url.searchParams.set('hardreset','1');            // 세션 초기화 플래그
-  url.searchParams.set('ts', Date.now().toString()); // 캐시 무력화
-  doc.location.replace(url.toString());
-}
-document.getElementById("hardRefreshBtn").addEventListener("click", doHardRefresh);
 
 document.getElementById("toggleRecord").addEventListener("click", function () {
   const input  = window.parent.document.querySelector('textarea, input[type=text]');
@@ -921,7 +907,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
     recognition = new webkitSpeechRecognition();
     recognition.lang = "ko-KR";
     recognition.interimResults = false;
-    recognition.continuous = false; // 자동제출 위해 off
+    recognition.continuous = false; // 자동 제출 위해 false
 
     recognition.onresult = function (event) {
       let fullTranscript = "";
@@ -952,10 +938,12 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
       const status = document.getElementById("speech_status");
       if (status) { status.style.display = "inline"; status.innerText = "🛑 음성 인식 종료되었습니다."; }
 
+      // 입력 반영 후 폼 제출
       setTimeout(function () {
         const doc   = window.parent.document;
         const input = doc.querySelector('textarea, input[type="text"]');
 
+        // 1) form 직접 제출
         if (input) {
           const form = input.closest('form');
           if (form && typeof form.requestSubmit === 'function') { form.requestSubmit(); return; }
@@ -964,6 +952,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
             form.appendChild(tmp); tmp.click(); form.removeChild(tmp); return;
           }
         }
+        // 2) 버튼 클릭(보조)
         let btn = doc.querySelector('button[kind="secondaryFormSubmit"]')
                  || doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]');
         if (!btn) {
@@ -972,9 +961,10 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
         }
         if (btn) { btn.click(); return; }
 
+        // 3) 최후수단: Enter키 이벤트
         if (input) {
           input.dispatchEvent(new KeyboardEvent('keydown', {
-            key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true
+            key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true
           }));
         }
       }, 800);
@@ -994,7 +984,11 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
   }
 });
 </script>
-""", height=56)
+    """, height=56)
+
+with right_col:
+    if st.button("🔁 새로고침", use_container_width=True):
+        _hard_reset()
 st.markdown('<div class="input-form-fixed">', unsafe_allow_html=True)
 
 with st.form("input_form", clear_on_submit=True):
