@@ -455,14 +455,14 @@ def handle_question(question_input):
 
     # [3] 각 지점 캐릭터 이름(bot_name)도 반응하게 처리
     bot_names = [v["bot_name"] for k, v in BRANCH_CONFIG.items()]
-    for bot_name in bot_names:
-        if bot_name in user_txt:
+    for name_candidate in bot_names:
+        if name_candidate in user_txt:
             st.session_state.chat_log.append({
                 "role": "user",
                 "content": question_input,
                 "display_type": "question"
             })
-            reply = f"안녕하세요, 사장님! 저는 항상 곁에 있는 {bot_name}입니다 😊 궁금한 건 뭐든 말씀해 주세요!"
+            reply = f"안녕하세요, 사장님! 저는 항상 곁에 있는 {name_candidate}입니다 😊 궁금한 건 뭐든 말씀해 주세요!"
             st.session_state.chat_log.append({
                 "role": "bot",
                 "content": reply,
