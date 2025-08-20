@@ -987,7 +987,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
                         bubbles: true
                     }));
                 }
-            }, 400);
+            }, 800);
         };
 
         recognition.start();
