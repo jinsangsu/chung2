@@ -930,13 +930,45 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
         recognition.onend = function () {
             isRecording = false;
             document.getElementById("toggleRecord").innerText = "🎤 음성";
-            status.style.display = "inline";
-            status.innerText = "🛑 음성 인식 종료되었습니다.";
-            // ✅ 음성 입력이 끝나면 약간의 지연 후 자동 제출
-    	    setTimeout(function(){
-                const btn = window.parent.document.querySelector('button[kind="secondaryFormSubmit"]');
-                if (btn) { btn.click(); }
-            }, 300);
+            const status = document.getElementById("speech_status");
+            if (status) {
+                status.style.display = "inline";
+                status.innerText = "🛑 음성 인식 종료되었습니다.";
+            }
+
+    // ✅ Streamlit 제출 버튼 자동 클릭 (다양한 버전 대응)
+            function clickSubmit() {
+                const doc = window.parent.document;
+        // 1) kind 속성(구버전)
+                let btn = doc.querySelector('button[kind="secondaryFormSubmit"]');
+        // 2) data-testid(신버전)
+                if (!btn) btn = doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]');
+        // 3) 버튼 텍스트로 탐색(폴백)
+                if (!btn) {
+                    const candidates = Array.from(doc.querySelectorAll('button'));
+                    btn = candidates.find(b => b.innerText && b.innerText.trim() === "Enter");
+                }
+                if (btn) {
+                    btn.click();
+                    return true;
+                }
+                return false;
+            }
+
+    // 약간 지연 후 시도(입력 반영 대기)
+            setTimeout(function(){
+                const ok = clickSubmit();
+                if (!ok) {
+            // 최후수단: Enter 키 이벤트로 폼 제출 시도
+                    const input = window.parent.document.querySelector('textarea, input[type="text"]');
+                    if (input) {
+                        const evt = new KeyboardEvent('keydown', {
+                            key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true
+                        });
+                        input.dispatchEvent(evt);
+                    }
+                }
+            }, 600);  // 필요시 300~800 사이로 조절
         };
 
         recognition.start();
