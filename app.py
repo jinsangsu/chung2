@@ -61,6 +61,26 @@ def get_branch_param() -> str:
             return ""
 
 st.set_page_config(layout="wide")
+# === URL 하드리셋(hardreset=1) 감지: 세션 초기화 후 첫 화면으로 ===
+def _qp_to_dict():
+    try:
+        d = dict(st.query_params)
+    except Exception:
+        d = st.experimental_get_query_params()
+    # list -> scalar 평탄화
+    return {k: (v[0] if isinstance(v, list) and len(v) == 1 else v) for k, v in d.items()}
+
+_qp = _qp_to_dict()
+if _qp.get("hardreset") == "1":
+    st.session_state.clear()  # 인사말만 보이는 상태로 초기화
+    _qp.pop("hardreset", None)
+    _qp["ts"] = str(int(time.time()))  # 캐시 무력화용
+    try:
+        st.query_params.clear()
+        st.query_params.update(_qp)
+    except Exception:
+        st.experimental_set_query_params(**_qp)
+    st.rerun()
 
 st.markdown("""
 <style>
@@ -824,50 +844,6 @@ components.html(
     scrolling=True
 )
 
-# === 전체 새로고침 버튼: 세션 초기화 + URL 파라미터 갱신 + rerun ===
-import time
-
-st.markdown("""
-<style>
-#hard-refresh-wrap { margin: 6px 0 8px 0; }
-#hard-refresh-wrap .stButton > button {
-  height: 36px; padding: 6px 14px;
-  border-radius: 8px; border: 1px solid #e5e7eb;
-  background: #f6f8fa; font-weight: 700;
-}
-#hard-refresh-wrap .stButton > button:hover { background: #eef2f6; }
-</style>
-""", unsafe_allow_html=True)
-
-spacer, btn_col = st.columns([0.78, 0.22])
-with btn_col:
-    st.markdown('<div id="hard-refresh-wrap">', unsafe_allow_html=True)
-    if st.button("🔁 전체 새로고침", use_container_width=True, key="hard_refresh_btn"):
-        # 1) branch 등 현재 쿼리파라미터 보존
-        try:
-            # 신버전(1.30+) 호환
-            current = dict(st.query_params)
-        except Exception:
-            # 구버전 호환
-            current = {k: v[0] if isinstance(v, list) and len(v)==1 else v
-                       for k, v in st.experimental_get_query_params().items()}
-        current["refresh"] = str(int(time.time()))  # 캐시무력화용 파라미터
-
-        # 2) 세션 상태 초기화 → 첫 화면(인트로)로
-        st.session_state.clear()
-
-        # 3) URL 파라미터 갱신
-        try:
-            # 신버전
-            st.query_params.clear()
-            st.query_params.update(current)
-        except Exception:
-            # 구버전
-            st.experimental_set_query_params(**current)
-
-        # 4) 앱 재실행 (JS 없이 깔끔)
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("""
 <style>
@@ -895,162 +871,130 @@ button[kind="secondaryFormSubmit"]:hover {
  # 2. 음성인식 버튼
 components.html("""
 <style>
-#voice-block {
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+#toolbar-row{ margin:4px 0 6px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+#voice-block{ display:flex; align-items:center; gap:10px; }
+#toggleRecord{
+  background:#238636; color:#fff; font-weight:bold; border:none; border-radius:8px;
+  font-size:15px; padding:6px 16px; height:36px; min-width:80px; box-shadow:0 2px 8px rgba(0,64,0,0.10);
+  cursor:pointer; transition:all .3s ease;
 }
-
-#toggleRecord {
-    background: #238636;
-    color: #fff;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    padding: 6px 16px;
-    box-shadow: 0 2px 8px rgba(0,64,0,0.10);
-    font-family: 'Nanum Gothic', 'Arial', sans-serif;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    height: 36px;
-    min-width: 80px;
-    margin-bottom: 2px;
+#toggleRecord:hover{ background:#008000; color:#ffeb3b; }
+#speech_status{ font-size:.85em; color:#1b5e20; margin-left:4px; display:none; }
+#hardRefreshBtn{
+  height:36px; padding:6px 14px; min-width:96px; border-radius:8px; border:1px solid #e5e7eb;
+  background:#f6f8fa; font-weight:700; cursor:pointer;
 }
-
-#toggleRecord:hover {
-    background: #008000;
-    color: #ffeb3b;
-}
-
-#speech_status {
-    font-size: 0.85em;
-    color: #1b5e20;
-    margin-left: 4px;
-    display: none;  /* 처음엔 숨김 */
+#hardRefreshBtn:hover{ background:#eef2f6; }
+@media (prefers-color-scheme: dark){
+  #hardRefreshBtn{ border-color:#374151; background:#2a2f36; color:#e5e7eb; }
+  #hardRefreshBtn:hover{ background:#3a4049; }
 }
 </style>
 
-<div id="voice-block">
+<div id="toolbar-row">
+  <div id="voice-block">
     <button id="toggleRecord">🎤 음성</button>
     <div id="speech_status"></div>
+  </div>
+  <button id="hardRefreshBtn" title="처음 화면으로">🔁 새로고침</button>
 </div>
 
 <script>
 let isRecording = false;
 let recognition;
 
+function doHardRefresh(){
+  const doc = window.parent.document;
+  const url = new URL(doc.location.href);
+  url.searchParams.set('hardreset','1');            // 세션 초기화 플래그
+  url.searchParams.set('ts', Date.now().toString()); // 캐시 무력화
+  doc.location.replace(url.toString());
+}
+document.getElementById("hardRefreshBtn").addEventListener("click", doHardRefresh);
+
 document.getElementById("toggleRecord").addEventListener("click", function () {
-    const input = window.parent.document.querySelector('textarea, input[type=text]');
-    const status = document.getElementById("speech_status");
+  const input  = window.parent.document.querySelector('textarea, input[type=text]');
+  const status = document.getElementById("speech_status");
+  if (input) input.focus();
 
-    if (input) input.focus();
-    if (!isRecording) {
-        recognition = new webkitSpeechRecognition();
-        recognition.lang = "ko-KR";
-        recognition.interimResults = false;
-        recognition.continuous = false;
+  if (!isRecording) {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = "ko-KR";
+    recognition.interimResults = false;
+    recognition.continuous = false; // 자동제출 위해 off
 
-        recognition.onresult = function (event) {
-            let fullTranscript = "";
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                fullTranscript += event.results[i][0].transcript;
-            }
+    recognition.onresult = function (event) {
+      let fullTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        fullTranscript += event.results[i][0].transcript;
+      }
+      const proto  = (input && input.tagName === 'TEXTAREA')
+                   ? window.HTMLTextAreaElement.prototype
+                   : window.HTMLInputElement.prototype;
+      const setter = Object.getOwnPropertyDescriptor(proto, "value").set;
+      setter.call(input, fullTranscript);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+      status.style.display = "inline";
+      status.innerText = "🎤 음성 입력 중!";
+    };
 
-            // textarea / input 모두 값 주입 (Form state 연동)
-            const proto = (input && input.tagName === 'TEXTAREA')
-                ? window.HTMLTextAreaElement.prototype
-                : window.HTMLInputElement.prototype;
-            const setter = Object.getOwnPropertyDescriptor(proto, "value").set;
-            setter.call(input, fullTranscript);
-            input.dispatchEvent(new Event('input', { bubbles: true }));
+    recognition.onerror = function (e) {
+      status.style.display = "inline";
+      status.innerText = "⚠️ 오류 발생: " + e.error;
+      isRecording = false;
+      document.getElementById("toggleRecord").innerText = "🎤 음성";
+    };
 
-            input.focus();
-            status.style.display = "inline";
-            status.innerText = "🎤 음성 입력 중!";
-        };
+    recognition.onend = function () {
+      isRecording = false;
+      document.getElementById("toggleRecord").innerText = "🎤 음성";
+      const status = document.getElementById("speech_status");
+      if (status) { status.style.display = "inline"; status.innerText = "🛑 음성 인식 종료되었습니다."; }
 
-        recognition.onerror = function (e) {
-            status.style.display = "inline";
-            status.innerText = "⚠️ 오류 발생: " + e.error;
-            isRecording = false;
-            document.getElementById("toggleRecord").innerText = "🎤 음성";
-        };
+      setTimeout(function () {
+        const doc   = window.parent.document;
+        const input = doc.querySelector('textarea, input[type="text"]');
 
-        recognition.onend = function () {
-            isRecording = false;
-            document.getElementById("toggleRecord").innerText = "🎤 음성";
-            const status = document.getElementById("speech_status");
-            if (status) {
-                status.style.display = "inline";
-                status.innerText = "🛑 음성 인식 종료되었습니다.";
-            }
+        if (input) {
+          const form = input.closest('form');
+          if (form && typeof form.requestSubmit === 'function') { form.requestSubmit(); return; }
+          else if (form) {
+            const tmp = doc.createElement('button'); tmp.type='submit'; tmp.style.display='none';
+            form.appendChild(tmp); tmp.click(); form.removeChild(tmp); return;
+          }
+        }
+        let btn = doc.querySelector('button[kind="secondaryFormSubmit"]')
+                 || doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]');
+        if (!btn) {
+          const buttons = Array.from(doc.querySelectorAll('button'));
+          btn = buttons.find(b => b.innerText && b.innerText.trim() === "Enter");
+        }
+        if (btn) { btn.click(); return; }
 
-            // 음성 텍스트 반영 대기 후 폼 제출
-            setTimeout(function () {
-                const doc   = window.parent.document;
-                const input = doc.querySelector('textarea, input[type="text"]');
+        if (input) {
+          input.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true
+          }));
+        }
+      }, 800);
+    };
 
-                // 1) 입력창이 속한 form을 직접 제출 (가장 안정적)
-                if (input) {
-                    const form = input.closest('form');
-                    if (form && typeof form.requestSubmit === 'function') {
-                        form.requestSubmit();
-                        return;
-                    } else if (form) {
-                        // 구형 폴백: 숨은 submit 버튼을 만들어 클릭
-                        const tmp = doc.createElement('button');
-                        tmp.type = 'submit';
-                        tmp.style.display = 'none';
-                        form.appendChild(tmp);
-                        tmp.click();
-                        form.removeChild(tmp);
-                        return;
-                    }
-                }
-
-                // 2) 폼을 못 찾으면 버튼 클릭(보조)
-                let btn = doc.querySelector('button[kind="secondaryFormSubmit"]')
-                         || doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]');
-                if (!btn) {
-                    const buttons = Array.from(doc.querySelectorAll('button'));
-                    btn = buttons.find(b => b.innerText && b.innerText.trim() === "Enter");
-                }
-                if (btn) {
-                    btn.click();
-                    return;
-                }
-
-                // 3) 최후수단: 입력창에 Enter 키 이벤트 전송
-                if (input) {
-                    input.dispatchEvent(new KeyboardEvent('keydown', {
-                        key: 'Enter',
-                        code: 'Enter',
-                        keyCode: 13,
-                        which: 13,
-                        bubbles: true
-                    }));
-                }
-            }, 800);
-        };
-
-        recognition.start();
-        isRecording = true;
-        document.getElementById("toggleRecord").innerText = "🛑 멈추기";
-        status.style.display = "inline";
-        status.innerText = "🎤 음성 입력을 시작합니다.";
-    } else {
-        recognition.stop();
-        isRecording = false;
-        document.getElementById("toggleRecord").innerText = "🎤 음성";
-        status.style.display = "inline";
-        status.innerText = "🛑 음성 인식 종료되었습니다.";
-    }
+    recognition.start();
+    isRecording = true;
+    document.getElementById("toggleRecord").innerText = "🛑 멈추기";
+    status.style.display = "inline";
+    status.innerText = "🎤 음성 입력을 시작합니다.";
+  } else {
+    recognition.stop();
+    isRecording = false;
+    document.getElementById("toggleRecord").innerText = "🎤 음성";
+    status.style.display = "inline";
+    status.innerText = "🛑 음성 인식 종료되었습니다.";
+  }
 });
 </script>
-""", height=45)
-
+""", height=56)
 st.markdown('<div class="input-form-fixed">', unsafe_allow_html=True)
 
 with st.form("input_form", clear_on_submit=True):
