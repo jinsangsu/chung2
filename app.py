@@ -388,7 +388,7 @@ def add_friendly_prefix(answer):
     if answer.replace(" ", "").startswith("사장님"):
         return answer
     else:
-       return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
+        return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.7
@@ -905,16 +905,22 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
         recognition = new webkitSpeechRecognition();
         recognition.lang = "ko-KR";
         recognition.interimResults = false;
-        recognition.continuous = true;
+        recognition.continuous = false;
 
         recognition.onresult = function (event) {
             let fullTranscript = "";
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 fullTranscript += event.results[i][0].transcript;
             }
-            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+
+            // textarea / input 모두 값 주입 (Form state 연동)
+            const proto = (input && input.tagName === 'TEXTAREA')
+                ? window.HTMLTextAreaElement.prototype
+                : window.HTMLInputElement.prototype;
+            const setter = Object.getOwnPropertyDescriptor(proto, "value").set;
             setter.call(input, fullTranscript);
             input.dispatchEvent(new Event('input', { bubbles: true }));
+
             input.focus();
             status.style.display = "inline";
             status.innerText = "🎤 음성 입력 중!";
@@ -936,39 +942,52 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
                 status.innerText = "🛑 음성 인식 종료되었습니다.";
             }
 
-    // ✅ Streamlit 제출 버튼 자동 클릭 (다양한 버전 대응)
-            function clickSubmit() {
-                const doc = window.parent.document;
-        // 1) kind 속성(구버전)
-                let btn = doc.querySelector('button[kind="secondaryFormSubmit"]');
-        // 2) data-testid(신버전)
-                if (!btn) btn = doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]');
-        // 3) 버튼 텍스트로 탐색(폴백)
+            // 음성 텍스트 반영 대기 후 폼 제출
+            setTimeout(function () {
+                const doc   = window.parent.document;
+                const input = doc.querySelector('textarea, input[type="text"]');
+
+                // 1) 입력창이 속한 form을 직접 제출 (가장 안정적)
+                if (input) {
+                    const form = input.closest('form');
+                    if (form && typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                        return;
+                    } else if (form) {
+                        // 구형 폴백: 숨은 submit 버튼을 만들어 클릭
+                        const tmp = doc.createElement('button');
+                        tmp.type = 'submit';
+                        tmp.style.display = 'none';
+                        form.appendChild(tmp);
+                        tmp.click();
+                        form.removeChild(tmp);
+                        return;
+                    }
+                }
+
+                // 2) 폼을 못 찾으면 버튼 클릭(보조)
+                let btn = doc.querySelector('button[kind="secondaryFormSubmit"]')
+                         || doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]');
                 if (!btn) {
-                    const candidates = Array.from(doc.querySelectorAll('button'));
-                    btn = candidates.find(b => b.innerText && b.innerText.trim() === "Enter");
+                    const buttons = Array.from(doc.querySelectorAll('button'));
+                    btn = buttons.find(b => b.innerText && b.innerText.trim() === "Enter");
                 }
                 if (btn) {
                     btn.click();
-                    return true;
+                    return;
                 }
-                return false;
-            }
 
-    // 약간 지연 후 시도(입력 반영 대기)
-            setTimeout(function(){
-                const ok = clickSubmit();
-                if (!ok) {
-            // 최후수단: Enter 키 이벤트로 폼 제출 시도
-                    const input = window.parent.document.querySelector('textarea, input[type="text"]');
-                    if (input) {
-                        const evt = new KeyboardEvent('keydown', {
-                            key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true
-                        });
-                        input.dispatchEvent(evt);
-                    }
+                // 3) 최후수단: 입력창에 Enter 키 이벤트 전송
+                if (input) {
+                    input.dispatchEvent(new KeyboardEvent('keydown', {
+                        key: 'Enter',
+                        code: 'Enter',
+                        keyCode: 13,
+                        which: 13,
+                        bubbles: true
+                    }));
                 }
-            }, 600);  // 필요시 300~800 사이로 조절
+            }, 400);
         };
 
         recognition.start();
