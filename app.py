@@ -332,6 +332,7 @@ branch = branch.lower()
 config = BRANCH_CONFIG.get(branch, BRANCH_CONFIG["default"])
 
 # 3. [캐릭터 이미지 불러오기]
+@st.cache_data(show_spinner=False)
 def get_character_img_base64(img_path):
     if os.path.exists(img_path):
         with open(img_path, "rb") as img_file:
