@@ -784,7 +784,12 @@ def display_chat_html_content():
     chat_style = """
 <style id="layout-fix">
   /* 인사말(인트로)만 전체폭 사용 */
-  #chat-content-scroll-area { width:100% !important; max-width:100% !important; }
+  #chat-content-scroll-area { 
+     width:100% !important; 
+     max-width:100% !important;
+     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  }
+
   .intro-message-row { width:100% !important; display:block !important; }
   .intro-bubble { width:100% !important; max-width:100% !important; display:block !important; box-sizing:border-box; }
   /* 혹시 다른 곳에서 max-width를 제한하면 무시 */
@@ -1004,6 +1009,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
 </script>
 """, height=60)
 
+st.markdown('<div class="input-form-fixed">', unsafe_allow_html=True)
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
