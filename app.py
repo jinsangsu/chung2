@@ -643,8 +643,9 @@ def handle_question(question_input):
             total_score = match_weight + sim_score
 
             if len(q_input_keywords) == 1:
+                kw0 = q_input_keywords[0]
         # 단일 키워드는 부분일치도 허용
-                if any(q_input_keywords[0] in sk for sk in sheet_keywords):
+                if any(kw0 in sk or sk in kw0 for sk in sheet_keywords):
                     matched.append((total_score, r))
             else:
         # 복합키워드: 가중치(≥1.8) 또는 유사도(≥0.58) 중 하나만 충족해도 채택
@@ -668,16 +669,28 @@ def handle_question(question_input):
 
         if q_input_keywords:
             keyword_norm = normalize_text(q_input_keywords[0])
-            top_matches = [
-                r for score, r in filtered_matches
-                if keyword_norm in normalize_text(r["질문"])
-                and q_input_norm in normalize_text(r["질문"])
-    
-            ]
-            if not top_matches:
-                top_matches = [r for score, r in filtered_matches[:4]]
+            qnorm = lambda s: normalize_text(s)
+
+            if len(q_input_keywords) == 1:
+        # 단일 키워드: 키워드 OR 전체질문 중 하나만 맞아도 채택
+                top_matches = [
+                    r for score, r in filtered_matches
+                    if (keyword_norm in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))
+                ]
+                if not top_matches:
+            # 너무 적으면 상위 10개라도 먼저 제시
+                    top_matches = [r for score, r in filtered_matches[:10]]
             else:
-                top_matches = top_matches[:10]
+        # 복합 키워드: 기존처럼 더 엄격하게 AND
+                top_matches = [
+                    r for score, r in filtered_matches
+                    if (keyword_norm in qnorm(r["질문"])) and (q_input_norm in qnorm(r["질문"]))
+                ]
+                if not top_matches:
+                    top_matches = [r for score, r in filtered_matches[:6]]
+
+    # 공통 상한
+            top_matches = top_matches[:10]
         else:
             top_matches = [r for score, r in filtered_matches[:4]]
         
