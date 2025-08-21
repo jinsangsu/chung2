@@ -988,29 +988,39 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
     """, height=56)
 
 with right_col:
-    if st.button("🔁 새로고침", use_container_width=True):
+    if st.button("🔁 새로고침", use_container_width=False):
         _hard_reset()
 
 st.markdown("""
 <style>
-/* toolbar-anchor 다음에 나오는 첫 가로 컬럼 묶음을 한 줄로 고정 */
+/* toolbar-anchor 다음에 나오는 '첫 번째 컬럼 행'을 한 줄로 강제 */
 #toolbar-anchor + div[data-testid="stHorizontalBlock"]{
   display:flex !important;
-  flex-wrap:nowrap !important;      /* 줄바꿈 금지 */
+  flex-wrap:nowrap !important;           /* 줄바꿈 금지 */
   align-items:center !important;
   gap:8px !important;
 }
-/* 왼쪽(음성)은 가변, 오른쪽(새로고침)은 내용만큼 */
+
+/* 왼쪽(음성)은 가변, 오른쪽(새로고침)은 내용만큼만 */
 #toolbar-anchor + div[data-testid="stHorizontalBlock"] > div:first-child{
-  flex:1 1 auto !important; 
-  min-width:0 !important;
+  flex:1 1 auto !important;
+  min-width:0 !important;                /* 좁은 화면에서 줄바꿈 방지 */
 }
 #toolbar-anchor + div[data-testid="stHorizontalBlock"] > div:last-child{
   flex:0 0 auto !important;
 }
-/* 아주 작은 화면에서 버튼 여유 폭 확보 */
+
+/* 새로고침 실제 버튼 폭 자동 + 줄바꿈 금지 */
+#toolbar-anchor + div[data-testid="stHorizontalBlock"] .stButton button{
+  width:auto !important;
+  display:inline-flex !important;
+  white-space:nowrap !important;
+  padding:6px 12px !important;           /* 아주 작은 화면 대비 */
+}
+
+/* 아주 작은 화면에서도 유지되도록 살짝 더 타이트하게 */
 @media (max-width: 420px){
-  #toolbar-anchor + div[data-testid="stHorizontalBlock"] button{
+  #toolbar-anchor + div[data-testid="stHorizontalBlock"] .stButton button{
     padding:6px 10px !important;
     font-size:14px !important;
   }
