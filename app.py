@@ -582,40 +582,40 @@ def handle_question(question_input):
            return
         matched = []
 # ✅ [2단계 추가] 이전에 남은 keyword가 있고, 이번에 매칭이 충분하지 않으면 초기화
-if st.session_state.pending_keyword:
-    st.session_state.pending_keyword = None
+        if st.session_state.pending_keyword:
+            st.session_state.pending_keyword = None
 
 # 1) 키워드로 후보 줄이기 (inverted index)
-candidate_idxs = set()
-for kw in q_input_keywords:
-    if kw in inverted:
-        candidate_idxs.update(inverted[kw])
+        candidate_idxs = set()
+        for kw in q_input_keywords:
+            if kw in inverted:
+            candidate_idxs.update(inverted[kw])
 
 # 키워드로 후보가 하나도 없으면 전체 탐색 fallback
-if not candidate_idxs:
-    candidate_idxs = set(range(len(indexed)))
+        if not candidate_idxs:
+            candidate_idxs = set(range(len(indexed)))
 
 # 2) 후보만 스코어링 (속도 향상)
-for i in candidate_idxs:
-    item = indexed[i]
-    r = item["row"]
-    sheet_q_norm = item["q_norm"]
-    sheet_keywords = item["kwords"]
+        for i in candidate_idxs:
+            item = indexed[i]
+            r = item["row"]
+            sheet_q_norm = item["q_norm"]
+            sheet_keywords = item["kwords"]
 
-    match_score = sum(1 for kw in q_input_keywords if kw in sheet_keywords)
+            match_score = sum(1 for kw in q_input_keywords if kw in sheet_keywords)
 
-    sim_score = 0.0
-    if match_score == 0:
-        sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
+            sim_score = 0.0
+            if match_score == 0:
+                sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
 
-    total_score = (match_score * 1.5) + (sim_score * 1.0)
+            total_score = (match_score * 1.5) + (sim_score * 1.0)
 
-    if len(q_input_keywords) == 1:
-        if any(q_input_keywords[0] in kw for kw in sheet_keywords):
-            matched.append((total_score, r))
-    else:
-        if match_score >= 1 or sim_score >= 0.55:
-            matched.append((total_score, r))
+            if len(q_input_keywords) == 1:
+                if any(q_input_keywords[0] in kw for kw in sheet_keywords):
+                    matched.append((total_score, r))
+            else:
+                if match_score >= 1 or sim_score >= 0.55:
+                    matched.append((total_score, r))
 
         matched.sort(key=lambda x: x[0], reverse=True)
         seen_questions = set()
