@@ -409,6 +409,8 @@ def get_sheet_records():
 def build_qa_index(rows: list):
     indexed = []
     inverted = {}
+    df_count = {}  # 문서 빈도
+
     for i, r in enumerate(rows):
         q_raw = str(r.get("질문", "")).strip()
         q_norm = normalize_text(q_raw)
@@ -418,7 +420,14 @@ def build_qa_index(rows: list):
             if not tok:
                 continue
             inverted.setdefault(tok, []).append(i)
-    return indexed, inverted
+            df_count[tok] = df_count.get(tok, 0) + 1
+
+    # IDF 계산 (log 스무딩)
+    import math
+    N = max(1, len(indexed))
+    idf = {tok: math.log((N + 1) / (df + 1)) + 1.0 for tok, df in df_count.items()}  # ≥ 1.0
+
+    return indexed, inverted, idf
 
 def get_qa_index():
     rows = get_sheet_records()
@@ -463,6 +472,25 @@ def extract_keywords(text):
                 decomposed.add(word[i:])
     return list(decomposed)
     # return words
+
+SYNONYM_MAP = {
+    "자동차": ["차", "오토", "자차"],
+    "자동이체": ["자동 결제", "계좌이체", "이체", "분납자동이체"],
+    "카드": ["신용카드", "체크카드", "카드등록"],
+    "배서": ["특약변경", "담보추가", "해지", "권리양도"],
+    "인수제한": ["심사", "인수", "심사요청"],
+    "구비서류": ["서류", "제출서류"],
+}
+
+def expand_synonyms(kwords: list[str]) -> list[str]:
+    out = set(kwords)
+    for kw in list(kwords):
+        for syn in SYNONYM_MAP.get(kw, []):
+            # 동의어 문구도 키워드 추출 규칙으로 토큰화해서 추가
+            for tok in extract_keywords(syn):
+                out.add(tok)
+    return list(out)
+
 
 def add_friendly_prefix(answer):
     answer = answer.strip()
@@ -562,11 +590,12 @@ def handle_question(question_input):
 
     try:
         records = get_sheet_records()  # ✅ 캐시 사용(60초)
-        indexed, inverted = get_qa_index()  # ✅ 추가: 전처리 인덱스 사용
+        indexed, inverted, idf = get_qa_index()  # ✅ 추가: 전처리 인덱스 사용
 
         q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
-        
+        q_input_keywords = expand_synonyms(q_input_keywords)
+
         if not q_input_keywords or all(len(k) < 2 for k in q_input_keywords):
            st.session_state.chat_log.append({
                "role": "user",
@@ -580,6 +609,8 @@ def handle_question(question_input):
            })
            st.session_state.scroll_to_bottom_flag = True
            return
+
+
         matched = []
 # ✅ [2단계 추가] 이전에 남은 keyword가 있고, 이번에 매칭이 충분하지 않으면 초기화
         if st.session_state.pending_keyword:
@@ -602,19 +633,21 @@ def handle_question(question_input):
             sheet_q_norm = item["q_norm"]
             sheet_keywords = item["kwords"]
 
-            match_score = sum(1 for kw in q_input_keywords if kw in sheet_keywords)
+            match_weight = sum(idf.get(kw, 1.0) for kw in q_input_keywords if kw in sheet_keywords)
 
             sim_score = 0.0
-            if match_score == 0:
+            if match_weight == 0.0:
                 sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
 
-            total_score = (match_score * 1.5) + (sim_score * 1.0)
+            total_score = match_weight + sim_score
 
             if len(q_input_keywords) == 1:
-                if any(q_input_keywords[0] in kw for kw in sheet_keywords):
+        # 단일 키워드는 부분일치도 허용
+                if any(q_input_keywords[0] in sk for sk in sheet_keywords):
                     matched.append((total_score, r))
             else:
-                if match_score >= 1 or sim_score >= 0.55:
+        # 복합키워드: 가중치(≥1.8) 또는 유사도(≥0.58) 중 하나만 충족해도 채택
+                if match_weight >= 1.8 or sim_score >= 0.58:
                     matched.append((total_score, r))
 
         matched.sort(key=lambda x: x[0], reverse=True)
@@ -626,11 +659,11 @@ def handle_question(question_input):
                 seen_questions.add(r["질문"])
         matched = unique_matched
         if len(q_input_keywords) == 1:
-    # 단일 키워드는 점수 기준 없이 모두 허용
+    
             filtered_matches = matched
         else:
-    # 복합 키워드는 기존 점수 필터 유지
-            filtered_matches = [(score, r) for score, r in matched if score >= 2.0]
+    
+            filtered_matches = [(score, r) for score, r in matched if score >= 1.6]
 
         if q_input_keywords:
             keyword_norm = normalize_text(q_input_keywords[0])
