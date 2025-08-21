@@ -588,8 +588,8 @@ def handle_question(question_input):
 # 1) 키워드로 후보 줄이기 (inverted index)
         candidate_idxs = set()
         for kw in q_input_keywords:
-        if kw in inverted:
-            candidate_idxs.update(inverted[kw])
+            if kw in inverted:
+                candidate_idxs.update(inverted[kw])
 
 # 키워드로 후보가 하나도 없으면 전체 탐색 fallback
         if not candidate_idxs:
