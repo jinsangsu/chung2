@@ -596,6 +596,8 @@ def handle_question(question_input):
         q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
         q_input_keywords = expand_synonyms(q_input_keywords)
+        core_kw = normalize_text(question_input)
+        single_kw_mode = len(core_kw) <= 6 and len(core_kw) >= 2 
 
         if not q_input_keywords or all(len(k) < 2 for k in q_input_keywords):
            st.session_state.chat_log.append({
@@ -620,6 +622,10 @@ def handle_question(question_input):
 # 1) 키워드로 후보 줄이기 (inverted index)
         candidate_idxs = set()
         for kw in q_input_keywords:
+            if single_kw_mode:
+                for idx, item in enumerate(indexed):
+                    if core_kw and (core_kw in item["q_norm"]):
+                        candidate_idxs.add(idx)
             if kw in inverted:
                 candidate_idxs.update(inverted[kw])
 
