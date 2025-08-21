@@ -1054,13 +1054,19 @@ with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("Enter")
     if submitted and question_input:
-        # ✅ [질문 로그: 제출 즉시 1회 기록]
+    # ✅ 같은 질문의 더블클릭/빠른 재제출 방지
+        _branch = get_branch_param()
+        if is_duplicate_submit(question_input, _branch):
+        # 이미 직전에 처리했던 동일 입력 → 아무 것도 하지 않고 종료
+            st.stop()
+
+    # ✅ [질문 로그: 제출 즉시 1회 기록]
         kst = pytz.timezone("Asia/Seoul")
         now = datetime.now(kst)
         append_log_row_to_logs([
             now.strftime("%Y-%m-%d"),
             now.strftime("%H:%M:%S"),
-            get_branch_param(),
+            _branch,
             question_input.strip()
         ])
         # 이후 기존 로직 실행
