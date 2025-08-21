@@ -405,6 +405,25 @@ def get_sheet_records():
     """캐시 우선, 비정상 시 빈 리스트."""
     return get_sheet_records_cached()
 
+@st.cache_data(ttl=60, show_spinner=False)
+def build_qa_index(rows: list):
+    indexed = []
+    inverted = {}
+    for i, r in enumerate(rows):
+        q_raw = str(r.get("질문", "")).strip()
+        q_norm = normalize_text(q_raw)
+        kset   = set(extract_keywords(q_raw))
+        indexed.append({"row": r, "q_norm": q_norm, "kwords": kset})
+        for tok in kset:
+            if not tok:
+                continue
+            inverted.setdefault(tok, []).append(i)
+    return indexed, inverted
+
+def get_qa_index():
+    rows = get_sheet_records()
+    return build_qa_index(rows)
+
 
 # 5. [채팅 세션/로직/FAQ 등 기존 app.py와 동일하게 복붙]
 if "chat_log" not in st.session_state:
@@ -543,6 +562,7 @@ def handle_question(question_input):
 
     try:
         records = get_sheet_records()  # ✅ 캐시 사용(60초)
+        indexed, inverted = get_qa_index()  # ✅ 추가: 전처리 인덱스 사용
 
         q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
@@ -561,29 +581,41 @@ def handle_question(question_input):
            st.session_state.scroll_to_bottom_flag = True
            return
         matched = []
-        # ✅ [2단계 추가] 이전에 남은 keyword가 있고, 이번에 매칭이 충분하지 않으면 초기화
-        if st.session_state.pending_keyword:
+# ✅ [2단계 추가] 이전에 남은 keyword가 있고, 이번에 매칭이 충분하지 않으면 초기화
+	if st.session_state.pending_keyword:
             st.session_state.pending_keyword = None
-        
-        for r in records:
-            sheet_q_norm = normalize_text(r["질문"])
-            sheet_keywords = extract_keywords(r["질문"])
 
-            # 1) 핵심 키워드가 최소 1개 이상 겹치면 매칭
+# 1) 키워드로 후보 줄이기 (inverted index)
+	candidate_idxs = set()
+	for kw in q_input_keywords:
+    	    if kw in inverted:
+                candidate_idxs.update(inverted[kw])
+
+# 키워드로 후보가 하나도 없으면 전체 탐색 fallback
+	if not candidate_idxs:
+    	    candidate_idxs = set(range(len(indexed)))
+
+# 2) 후보만 스코어링 (속도 향상)
+	for i in candidate_idxs:
+            item = indexed[i]
+            r = item["row"]
+            sheet_q_norm = item["q_norm"]
+            sheet_keywords = item["kwords"]
+
             match_score = sum(1 for kw in q_input_keywords if kw in sheet_keywords)
-            sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
+
+            sim_score = 0.0
+            if match_score == 0:
+                sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
+
             total_score = (match_score * 1.5) + (sim_score * 1.0)
-            
-            # 단, 핵심 키워드가 없을 땐 유사도/포함 매칭 제외 (오매칭 방지)
+
             if len(q_input_keywords) == 1:
                 if any(q_input_keywords[0] in kw for kw in sheet_keywords):
                     matched.append((total_score, r))
-
-
-# 두 개 이상 키워드면 → 기존 match_score + sim_score 기준 사용
             else:
-                 if match_score >= 1 or sim_score >= 0.55:
-                     matched.append((total_score, r))
+                if match_score >= 1 or sim_score >= 0.55:
+                    matched.append((total_score, r)
 
         matched.sort(key=lambda x: x[0], reverse=True)
         seen_questions = set()
