@@ -24,18 +24,23 @@ import os
 import re
 import json
 
-def _get_gsheet_client():
-    scopes = [
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive",
-    ]
-    info = st.secrets["gcp_service_account"]
-    # 💡 secrets에 """{ ... }""" 형태로 넣으셨다면 문자열입니다.
-    if isinstance(info, str):
-        info = json.loads(info)
+GOOGLE_SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
 
-    creds = Credentials.from_service_account_info(info, scopes=scopes)
+def _load_sa_info():
+    raw = st.secrets.get("gcp_service_account")
+    if raw is None:
+        raise RuntimeError("st.secrets['gcp_service_account'] 가 없습니다.")
+    return json.loads(raw) if isinstance(raw, str) else raw
+
+@st.cache_resource(show_spinner=False)
+def _get_gsheet_client():
+    sa_info = _load_sa_info()
+    creds = Credentials.from_service_account_info(sa_info, scopes=GOOGLE_SCOPES)
     return gspread.authorize(creds)
+
 
 def append_log_row_to_logs(row: list):
     """
@@ -357,12 +362,7 @@ def get_intro_html():
 # 4. [구글시트(공용) 연결]
 sheet = None
 try:
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    import json
-
-    json_key_dict = json.loads(st.secrets["gcp_service_account"])
-    credentials = Credentials.from_service_account_info(json_key_dict, scopes=scope)
-    gc = gspread.authorize(credentials)
+    gc = _get_gsheet_client()
     # ★ 공용 질의응답시트 키만 아래에 넣으세요!
     sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
 except Exception as e:
