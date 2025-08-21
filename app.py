@@ -625,6 +625,17 @@ def handle_question(question_input):
         if len(top_matches) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
+            COOLDOWN_SECONDS = 6
+            now_ts = time.time()
+            curr_pending_norm = normalize_text(main_word)
+            last_pending_norm = st.session_state.get("last_pending_norm")
+            last_pending_at   = st.session_state.get("last_pending_at", 0.0)
+            if last_pending_norm == curr_pending_norm and (now_ts - last_pending_at) < COOLDOWN_SECONDS:
+                return  # 이번엔 유도질문 카드 생성하지 않음
+            # 다음 비교를 위해 최신값 저장
+            st.session_state["last_pending_norm"] = curr_pending_norm
+            st.session_state["last_pending_at"]   = now_ts
+
             
             example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in top_matches[:5]]
             examples_html = "".join([
@@ -1054,13 +1065,24 @@ with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("Enter")
     if submitted and question_input:
-    # ✅ 같은 질문의 더블클릭/빠른 재제출 방지
+        # 1) 6초 내 동일 내용 재제출(오타 없는 순수 중복) 차단
+        now_ts = time.time()
+        curr_norm = normalize_text(question_input)
+        last_norm = st.session_state.get("last_input_norm")
+        last_at   = st.session_state.get("last_input_at", 0.0)
+
+        if last_norm == curr_norm and (now_ts - last_at) < DEDUPE_WINDOW_SEC:
+            st.stop()  # 이후 코드(로그/처리) 중단
+
+        st.session_state["last_input_norm"] = curr_norm
+        st.session_state["last_input_at"] = now_ts
+
+        # 2) 시그니처 기반(지점+질문) 중복 차단
         _branch = get_branch_param()
         if is_duplicate_submit(question_input, _branch):
-        # 이미 직전에 처리했던 동일 입력 → 아무 것도 하지 않고 종료
             st.stop()
 
-    # ✅ [질문 로그: 제출 즉시 1회 기록]
+        # 3) 로그 기록 후 처리
         kst = pytz.timezone("Asia/Seoul")
         now = datetime.now(kst)
         append_log_row_to_logs([
@@ -1069,7 +1091,6 @@ with st.form("input_form", clear_on_submit=True):
             _branch,
             question_input.strip()
         ])
-        # 이후 기존 로직 실행
         handle_question(question_input)
         st.rerun()
 
