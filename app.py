@@ -1,14 +1,13 @@
 def get_auto_faq_list():
     try:
-        all_rows = sheet.get_all_records()
+        rows = get_sheet_records()  # ✅ 캐시 사용
         faq_candidates = []
-
-        for row in all_rows:
+        for row in rows:
             q = row.get("질문", "")
             if len(q) <= 25 and any(k in q for k in ["카드", "구비서류", "자동차", "자동이체", "계약자 변경"]):
                 faq_candidates.append(q)
         return faq_candidates[:5]
-    except:
+    except Exception:
         return []
 
 import time
@@ -367,6 +366,23 @@ try:
     sheet = gc.open_by_key("1aPo40QnxQrcY7yEUM6iHa-9XJU-MIIqsjapGP7UnKIo").worksheet("질의응답시트")
 except Exception as e:
     st.error(f"❌ 구글 시트 연동에 실패했습니다: {e}")
+# === 캐시: 시트 레코드 읽기 ===
+
+@st.cache_data(ttl=60, show_spinner=False)
+def get_sheet_records_cached():
+    """시트 전체 레코드 캐시(60초). sheet가 없으면 빈 리스트."""
+    try:
+        if sheet is None:
+            return []
+        return sheet.get_all_records()
+    except Exception:
+        # API 일시 오류 등은 조용히 빈 리스트 반환
+        return []
+
+def get_sheet_records():
+    """캐시 우선, 비정상 시 빈 리스트."""
+    return get_sheet_records_cached()
+
 
 # 5. [채팅 세션/로직/FAQ 등 기존 app.py와 동일하게 복붙]
 if "chat_log" not in st.session_state:
@@ -381,7 +397,7 @@ def get_similarity_score(a, b):
 
 def normalize_text(text):
     text = text.lower()
-    # ✅ 조사 제거: '김호진은', '매출의', '7월에' → '김호진', '매출', '7월'
+    
     text = re.sub(r"\b([가-힣]{2,10})(은|는|이|가|을|를|에|의|로|으로|도|만|께|에서|까지|보다|부터|한테|에게|하고|와|과)\b", r"\1", text)
     text = re.sub(r"(시|요|가요|인가요|하나요|할까요|할게요|하죠|할래요|습니까|나요|지요|죠|죠요|되나요|되었나요|되니)$", "", text)
     return re.sub(r"[^가-힣a-zA-Z0-9]", "", text)
@@ -504,7 +520,8 @@ def handle_question(question_input):
         user_input = question_input
 
     try:
-        records = sheet.get_all_records()
+        records = get_sheet_records()  # ✅ 캐시 사용(60초)
+
         q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
         
