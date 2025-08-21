@@ -875,29 +875,54 @@ button[kind="secondaryFormSubmit"]:hover {
 
  # 2. 음성 + 새로고침(같은 줄)
 st.markdown('<div id="toolbar-anchor"></div>', unsafe_allow_html=True)
-left_col, right_col = st.columns([1, 0.28])  # 비율은 필요시 조정
-
-with left_col:
-    components.html("""
+components.html("""
 <style>
-#voice-block{ margin:4px 0 6px; display:flex; align-items:center; gap:10px; }
+#toolbar-row{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px; width:100%; margin:4px 0 6px; flex-wrap:nowrap; min-width:0;
+}
+#voice-block{ display:flex; align-items:center; gap:10px; min-width:0; flex:1 1 auto; }
 #toggleRecord{
   background:#238636; color:#fff; font-weight:bold; border:none; border-radius:8px;
   font-size:15px; padding:6px 16px; height:36px; min-width:80px; box-shadow:0 2px 8px rgba(0,64,0,0.10);
   cursor:pointer; transition:all .3s ease;
 }
 #toggleRecord:hover{ background:#008000; color:#ffeb3b; }
-#speech_status{ font-size:.85em; color:#1b5e20; margin-left:4px; display:none; }
+#speech_status{ font-size:.85em; color:#1b5e20; margin-left:4px; display:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#hardRefreshBtn{
+  flex:0 0 auto; height:36px; padding:6px 12px; border-radius:8px; border:1px solid #e5e7eb;
+  background:#f6f8fa; font-weight:700; cursor:pointer; white-space:nowrap;
+}
+#hardRefreshBtn:hover{ background:#eef2f6; }
+@media (max-width:420px){
+  #toggleRecord, #hardRefreshBtn{ font-size:14px; padding:6px 10px; }
+}
+@media (prefers-color-scheme: dark){
+  #hardRefreshBtn{ border-color:#374151; background:#2a2f36; color:#e5e7eb; }
+  #hardRefreshBtn:hover{ background:#3a4049; }
+}
 </style>
 
-<div id="voice-block">
-  <button id="toggleRecord">🎤 음성</button>
-  <div id="speech_status"></div>
+<div id="toolbar-row">
+  <div id="voice-block">
+    <button id="toggleRecord">🎤 음성</button>
+    <div id="speech_status"></div>
+  </div>
+  <button id="hardRefreshBtn" title="처음 화면으로">🔁 새로고침</button>
 </div>
 
 <script>
 let isRecording = false;
 let recognition;
+
+function doHardRefresh(){
+  const doc = window.parent.document;
+  const url = new URL(doc.location.href);
+  url.searchParams.set('hardreset','1');
+  url.searchParams.set('ts', Date.now().toString());
+  doc.location.replace(url.toString());
+}
+document.getElementById("hardRefreshBtn").addEventListener("click", doHardRefresh);
 
 document.getElementById("toggleRecord").addEventListener("click", function () {
   const input  = window.parent.document.querySelector('textarea, input[type=text]');
@@ -908,7 +933,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
     recognition = new webkitSpeechRecognition();
     recognition.lang = "ko-KR";
     recognition.interimResults = false;
-    recognition.continuous = false; // 자동 제출 위해 false
+    recognition.continuous = false;
 
     recognition.onresult = function (event) {
       let fullTranscript = "";
@@ -928,7 +953,7 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
 
     recognition.onerror = function (e) {
       status.style.display = "inline";
-      status.innerText = "⚠️ 오류 발생: " + e.error;
+      status.innerText = "⚠️ 오류: " + e.error;
       isRecording = false;
       document.getElementById("toggleRecord").innerText = "🎤 음성";
     };
@@ -936,15 +961,12 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
     recognition.onend = function () {
       isRecording = false;
       document.getElementById("toggleRecord").innerText = "🎤 음성";
-      const status = document.getElementById("speech_status");
-      if (status) { status.style.display = "inline"; status.innerText = "🛑 음성 인식 종료되었습니다."; }
+      status.style.display = "inline";
+      status.innerText = "🛑 음성 인식 종료되었습니다.";
 
-      // 입력 반영 후 폼 제출
       setTimeout(function () {
         const doc   = window.parent.document;
         const input = doc.querySelector('textarea, input[type="text"]');
-
-        // 1) form 직접 제출
         if (input) {
           const form = input.closest('form');
           if (form && typeof form.requestSubmit === 'function') { form.requestSubmit(); return; }
@@ -953,7 +975,6 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
             form.appendChild(tmp); tmp.click(); form.removeChild(tmp); return;
           }
         }
-        // 2) 버튼 클릭(보조)
         let btn = doc.querySelector('button[kind="secondaryFormSubmit"]')
                  || doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]');
         if (!btn) {
@@ -961,12 +982,8 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
           btn = buttons.find(b => b.innerText && b.innerText.trim() === "Enter");
         }
         if (btn) { btn.click(); return; }
-
-        // 3) 최후수단: Enter키 이벤트
         if (input) {
-          input.dispatchEvent(new KeyboardEvent('keydown', {
-            key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true
-          }));
+          input.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true}));
         }
       }, 800);
     };
@@ -985,48 +1002,8 @@ document.getElementById("toggleRecord").addEventListener("click", function () {
   }
 });
 </script>
-    """, height=56)
+""", height=60)
 
-with right_col:
-    if st.button("🔁 새로고침", use_container_width=False):
-        _hard_reset()
-
-st.markdown("""
-<style>
-/* toolbar-anchor 다음에 나오는 '첫 번째 컬럼 행'을 한 줄로 강제 */
-#toolbar-anchor + div[data-testid="stHorizontalBlock"]{
-  display:flex !important;
-  flex-wrap:nowrap !important;           /* 줄바꿈 금지 */
-  align-items:center !important;
-  gap:8px !important;
-}
-
-/* 왼쪽(음성)은 가변, 오른쪽(새로고침)은 내용만큼만 */
-#toolbar-anchor + div[data-testid="stHorizontalBlock"] > div:first-child{
-  flex:1 1 auto !important;
-  min-width:0 !important;                /* 좁은 화면에서 줄바꿈 방지 */
-}
-#toolbar-anchor + div[data-testid="stHorizontalBlock"] > div:last-child{
-  flex:0 0 auto !important;
-}
-
-/* 새로고침 실제 버튼 폭 자동 + 줄바꿈 금지 */
-#toolbar-anchor + div[data-testid="stHorizontalBlock"] .stButton button{
-  width:auto !important;
-  display:inline-flex !important;
-  white-space:nowrap !important;
-  padding:6px 12px !important;           /* 아주 작은 화면 대비 */
-}
-
-/* 아주 작은 화면에서도 유지되도록 살짝 더 타이트하게 */
-@media (max-width: 420px){
-  #toolbar-anchor + div[data-testid="stHorizontalBlock"] .stButton button{
-    padding:6px 10px !important;
-    font-size:14px !important;
-  }
-}
-</style>
-""", unsafe_allow_html=True)
 
 with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
