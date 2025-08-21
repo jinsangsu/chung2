@@ -22,6 +22,7 @@ import base64
 import os
 import re
 import json
+import hashlib  # ✅ 중복 방지용 시그니처 생성
 
 GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -40,6 +41,27 @@ def _get_gsheet_client():
     creds = Credentials.from_service_account_info(sa_info, scopes=GOOGLE_SCOPES)
     return gspread.authorize(creds)
 
+DEDUPE_WINDOW_SEC = 6  # 같은 입력이 N초 안에 또 오면 중복으로 간주
+
+def _make_submit_sig(text: str, branch: str) -> str:
+    """질문 + 지점으로 고유 시그니처 생성"""
+    base = f"{(branch or '').strip()}|{(text or '').strip()}"
+    return hashlib.sha1(base.encode("utf-8")).hexdigest()
+
+def is_duplicate_submit(text: str, branch: str) -> bool:
+    """최근 제출과 동일하면 True, 아니면 False(그리고 최신 제출로 기록)"""
+    sig = _make_submit_sig(text, branch)
+    now = time.time()
+    last_sig = st.session_state.get("last_submit_sig")
+    last_ts  = st.session_state.get("last_submit_ts", 0.0)
+
+    if last_sig == sig and (now - last_ts) < DEDUPE_WINDOW_SEC:
+        return True  # 🚫 중복
+
+    # 최신 제출로 갱신
+    st.session_state["last_submit_sig"] = sig
+    st.session_state["last_submit_ts"]  = now
+    return False
 
 def append_log_row_to_logs(row: list):
     """
@@ -1032,15 +1054,21 @@ with st.form("input_form", clear_on_submit=True):
     question_input = st.text_input("궁금한 내용을 입력해 주세요", key="input_box")
     submitted = st.form_submit_button("Enter")
     if submitted and question_input:
-        # ✅ [질문 로그: 제출 즉시 1회 기록]
-        kst = pytz.timezone("Asia/Seoul")
-        now = datetime.now(kst)
-        append_log_row_to_logs([
-            now.strftime("%Y-%m-%d"),
-            now.strftime("%H:%M:%S"),
-            get_branch_param(),
-            question_input.strip()
-        ])
+    # ✅ 같은 질문의 더블클릭/빠른 재제출 방지
+    _branch = get_branch_param()
+    if is_duplicate_submit(question_input, _branch):
+        # 이미 직전에 처리했던 동일 입력 → 아무 것도 하지 않고 종료
+        st.stop()
+
+    # ✅ [질문 로그: 제출 즉시 1회 기록]
+    kst = pytz.timezone("Asia/Seoul")
+    now = datetime.now(kst)
+    append_log_row_to_logs([
+        now.strftime("%Y-%m-%d"),
+        now.strftime("%H:%M:%S"),
+        _branch,
+        question_input.strip()
+    ])
         # 이후 기존 로직 실행
         handle_question(question_input)
         st.rerun()
