@@ -942,7 +942,7 @@ def display_chat_html_content():
             elif entry.get("display_type") == "pending":
                 chat_html_content += (
                     '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
-                    f"<style='color:#ff914d;font-weight:600;'>{entry['content']}"
+                    f"{entry['content']}"
                     '</div></div>'
                 )
             elif entry.get("display_type") == "llm_answer":
