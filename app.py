@@ -1,14 +1,29 @@
 def get_auto_faq_list():
     try:
         rows = get_sheet_records()  # ✅ 캐시 사용
-        faq_candidates = []
-        for row in rows:
-            q = row.get("질문", "")
-            if len(q) <= 25 and any(k in q for k in ["카드", "구비서류", "자동차", "자동이체", "계약자 변경"]):
-                faq_candidates.append(q)
-        return faq_candidates[:5]
+        qs = [str(r.get("질문","")).strip() for r in rows if r.get("질문")]
+        if not qs:
+            return []
+
+        KEYWORDS = ("카드", "구비서류", "자동차", "자동이체", "계약자 변경")
+        cand = [q for q in qs if len(q) <= 25 and any(k in q for k in KEYWORDS)]
+
+        from collections import Counter
+        freq = Counter(cand)
+
+        # 중복 제거(첫 등장 순서 유지)
+        seen, uniq = set(), []
+        for q in cand:
+            if q not in seen:
+                seen.add(q)
+                uniq.append(q)
+
+        # 빈도(내림차순) → 길이(오름차순)로 정렬하여 상위 5개
+        uniq.sort(key=lambda q: (-freq[q], len(q)))
+        return uniq[:5]
     except Exception:
         return []
+
 
 import time
 from datetime import datetime
@@ -583,7 +598,11 @@ def handle_question(question_input):
             return
 
     # ↓↓↓ Q&A 챗봇 처리 ↓↓↓
-    if st.session_state.pending_keyword:
+    core_kw = normalize_text(question_input)   # 예: "자동 이체" -> "자동이체"
+    single_kw_mode = 2 <= len(core_kw) <= 6    # 2~6자면 단일 핵심어 취급
+
+# 2) 단일핵심어일 땐 pending_keyword를 결합하지 않음(세션 영향 차단)
+    if st.session_state.pending_keyword and not single_kw_mode:
         user_input = st.session_state.pending_keyword + " " + question_input
         st.session_state.pending_keyword = None
     else:
@@ -666,31 +685,30 @@ def handle_question(question_input):
                 unique_matched.append((score, r))
                 seen_questions.add(r["질문"])
         matched = unique_matched
-        if len(q_input_keywords) == 1:
-    
+
+
+        if single_kw_mode:
             filtered_matches = matched
         else:
-    
             filtered_matches = [(score, r) for score, r in matched if score >= 1.6]
 
         if q_input_keywords:
-            keyword_norm = normalize_text(q_input_keywords[0])
             qnorm = lambda s: normalize_text(s)
-
-            if len(q_input_keywords) == 1:
+ 
+            if single_kw_mode:
         # 단일 키워드: 키워드 OR 전체질문 중 하나만 맞아도 채택
                 top_matches = [
                     r for score, r in filtered_matches
-                    if (keyword_norm in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))
+                    if (core_kw in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))
                 ]
-                if not top_matches:
+                if len(top_matches) < 3:
             # 너무 적으면 상위 10개라도 먼저 제시
                     top_matches = [r for score, r in filtered_matches[:10]]
             else:
         # 복합 키워드: 기존처럼 더 엄격하게 AND
                 top_matches = [
                     r for score, r in filtered_matches
-                    if (keyword_norm in qnorm(r["질문"])) and (q_input_norm in qnorm(r["질문"]))
+                    if (q_input_norm in qnorm(r["질문"])) and any(k in qnorm(r["질문"]) for k in q_input_keywords)
                 ]
                 if not top_matches:
                     top_matches = [r for score, r in filtered_matches[:6]]
