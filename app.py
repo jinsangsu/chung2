@@ -103,6 +103,39 @@ def get_branch_param() -> str:
 
 st.set_page_config(layout="wide")
 # === URL 하드리셋(hardreset=1) 감지: 세션 초기화 후 첫 화면으로 ===
+
+st.markdown("""
+<script>
+(function(){
+  if (window.__AESOON_HARDRESET_LISTENER__) return;
+  window.__AESOON_HARDRESET_LISTENER__ = true;
+
+  function upsertParam(url, key, val){
+    try {
+      const u = new URL(url);
+      u.searchParams.set(key, val);
+      return u.toString();
+    } catch(e) {
+      return url;
+    }
+  }
+
+  window.addEventListener('message', function(e){
+    try {
+      var data = e.data || {};
+      if (data && data.type === 'REQ_HARDRESET') {
+        var u = upsertParam(window.location.href, 'hardreset', '1');
+        u = upsertParam(u, 'ts', String(Date.now()));
+        window.location.replace(u);
+      }
+    } catch(err) {}
+  }, false);
+})();
+</script>
+""", unsafe_allow_html=True)
+
+
+
 # === 세션 하드 리셋 ===
 def _hard_reset():
     st.session_state.clear()  # chat_log, pending_keyword 등 초기화
@@ -1107,11 +1140,9 @@ let isRecording = false;
 let recognition;
 
 function doHardRefresh(){
-  const doc = window.parent.document;
-  const url = new URL(doc.location.href);
-  url.searchParams.set('hardreset','1');
-  url.searchParams.set('ts', Date.now().toString());
-  doc.location.replace(url.toString());
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'REQ_HARDRESET', ts: Date.now() }, '*');
+  }
 }
 document.getElementById("hardRefreshBtn").addEventListener("click", doHardRefresh);
 
