@@ -769,66 +769,62 @@ def handle_question(question_input):
         "</div>"
         """
         <style>
-        .example-guide-block {
-            margin: 10px 0 0 0;
-            font-size: 1.05em;
-        }
+        .example-guide-block { margin: 10px 0 0 0; font-size: 1.05em; }
         .example-guide-title { color: #226ed8; font-weight: 700; }
         .example-guide-emph  { color: #d32f2f; font-weight: 700; }
         .example-item {
-            margin-top: 9px;
-            margin-bottom: 2px;
-            padding-left: 10px;
-            line-height: 1.5;
-            border-left: 3px solid #e3e3e3;
-            background: #f9fafb;
-            border-radius: 5px;
-            font-size: 0.98em;
+            margin-top: 9px; margin-bottom: 2px; padding-left: 10px;
+            line-height: 1.5; border-left: 3px solid #e3e3e3;
+            background: #f9fafb; border-radius: 5px; font-size: 0.98em;
         }
         @media (prefers-color-scheme: dark) {
             .example-guide-title { color: #64b5f6; }
             .example-guide-emph  { color: #ffab91; }
-            .example-item {
-                background: #232c3a;
-                border-left: 3px solid #374151;
-                color: #eaeaea;
-            }
+            .example-item { background: #232c3a; border-left: 3px solid #374151; color: #eaeaea; }
         }
         </style>
         """
         """
         <script>
-        document.querySelectorAll('.example-ask-btn').forEach(btn=>{
-          btn.addEventListener('click', function(){
-            const q = this.getAttribute('data-q') || '';
+        (function(){
+          function setInputValueAndSubmit(q){
             const doc = window.parent.document;
 
-            // 1) 입력창에 값 세팅(+input 이벤트)
             const input = doc.querySelector('textarea, input[type="text"]');
-            if (input) {
-              const proto  = (input.tagName==='TEXTAREA')
-                           ? window.parent.HTMLTextAreaElement.prototype
-                           : window.parent.HTMLInputElement.prototype;
-              const setter = Object.getOwnPropertyDescriptor(proto,'value').set;
-              setter.call(input, q);
-              input.dispatchEvent(new Event('input', { bubbles:true }));
+            if (!input) return;
 
-              // 2) 폼 자동 제출
+            const proto  = (input.tagName==='TEXTAREA')
+                         ? window.parent.HTMLTextAreaElement.prototype
+                         : window.parent.HTMLInputElement.prototype;
+            const setter = Object.getOwnPropertyDescriptor(proto,'value').set;
+            setter.call(input, q);
+            input.dispatchEvent(new Event('input', { bubbles:true }));
+            input.focus();
+
+            setTimeout(function(){
               const form = input.closest('form');
-              if (form && typeof form.requestSubmit === 'function') {
-                form.requestSubmit(); return;
-              } else if (form) {
+              if (form && typeof form.requestSubmit === 'function') { form.requestSubmit(); return; }
+              if (form) {
                 const tmp = doc.createElement('button'); tmp.type='submit'; tmp.style.display='none';
                 form.appendChild(tmp); tmp.click(); form.removeChild(tmp); return;
               }
+              let btn = doc.querySelector('button[kind="secondaryFormSubmit"]')
+                     || doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]')
+                     || Array.from(doc.querySelectorAll('button')).find(b => /^\s*Enter\s*$/i.test(b.innerText || ''));
+              if (btn) { btn.click(); return; }
 
-              // 3) 폼이 없으면 Enter 키 이벤트
-              input.dispatchEvent(new KeyboardEvent('keydown', {
-                key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true
-              }));
-            }
+              input.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true}));
+              input.dispatchEvent(new KeyboardEvent('keyup',   {key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true}));
+            }, 150);
+          }
+
+          document.querySelectorAll('.example-ask-btn').forEach(function(btn){
+            btn.addEventListener('click', function(){
+              const q = this.getAttribute('data-q') || '';
+              setInputValueAndSubmit(q);
+            });
           });
-        });
+        })();
         </script>
         """
     ),
@@ -946,7 +942,7 @@ def display_chat_html_content():
             elif entry.get("display_type") == "pending":
                 chat_html_content += (
                     '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
-                    f"<p style='color:#ff914d;font-weight:600;'>{entry['content']}"
+                    f"<style='color:#ff914d;font-weight:600;'>{entry['content']}"
                     '</div></div>'
                 )
             elif entry.get("display_type") == "llm_answer":
