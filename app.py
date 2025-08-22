@@ -744,65 +744,98 @@ def handle_question(question_input):
             examples_html = "".join([
                 f"""
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
-                     <strong style="color:#003399;">질문) {q}</strong><br>
-                     
-                     <img src="{aesoon_icon}" width="22" style="vertical-align:middle; margin-right:6px; border-radius:6px;">  {a}
+                    <strong style="color:#003399;">질문) {q}</strong><br>
+                    <button class="example-ask-btn" data-q="{q.replace('"','&quot;')}"
+                      style="margin-top:8px; padding:6px 10px; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;">
+          이 질문으로 다시 물어보기
+                    </button>
+                    <br>
+                    <img src="{aesoon_icon}" width="22" style="vertical-align:middle; margin-right:6px; border-radius:6px;">  {a}
                 </div>
-                """
-                
-                for q, a in example_pairs
+                """ for q, a in example_pairs
             ])
 
 
             st.session_state.pending_keyword = user_input
             st.session_state.chat_log.append({
-                "role": "bot",
-                "content": (
-                    "<div class='example-guide-block'>"
-                    f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'>"
-                    f"<span class='example-guide-title'>사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요?</span>"
-                    " 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!<br>"
-                    "<span class='example-guide-emph'><b>아래처럼 다시 물어보시면 바로 답변드릴 수 있어요.</b></span><br>"
-                    f"{examples_html}"
-                    "</div>"
-                    """
-                    <style>
-                    .example-guide-block {
-                        margin: 10px 0 0 0;
-                        font-size: 1.05em;
-                    }
-                    .example-guide-title {
-                        color: #226ed8;
-                        font-weight: 700;
-                    }
-                    .example-guide-emph {
-                        color: #d32f2f;
-                        font-weight: 700;
-                    }
-                    .example-item {
-                        margin-top: 9px;
-                        margin-bottom: 2px;
-                        padding-left: 10px;
-                        line-height: 1.5;
-                        border-left: 3px solid #e3e3e3;
-                        background: #f9fafb;
-                        border-radius: 5px;
-                        font-size: 0.98em;
-                    }
-                    @media (prefers-color-scheme: dark) {
-                        .example-guide-title { color: #64b5f6; }
-                        .example-guide-emph { color: #ffab91; }
-                        .example-item {
-                            background: #232c3a;
-                            border-left: 3px solid #374151;
-                            color: #eaeaea;
-                        }
-                    }
-                    </style>
-                    """
-                ),
-                "display_type": "pending"
-            })
+    "role": "bot",
+    "content": (
+        "<div class='example-guide-block'>"
+        f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'>"
+        f"<span class='example-guide-title'>사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요?</span>"
+        " 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!<br>"
+        "<span class='example-guide-emph'><b>아래처럼 다시 물어보시면 바로 답변드릴 수 있어요.</b></span><br>"
+        f"{examples_html}"
+        "</div>"
+        """
+        <style>
+        .example-guide-block {
+            margin: 10px 0 0 0;
+            font-size: 1.05em;
+        }
+        .example-guide-title { color: #226ed8; font-weight: 700; }
+        .example-guide-emph  { color: #d32f2f; font-weight: 700; }
+        .example-item {
+            margin-top: 9px;
+            margin-bottom: 2px;
+            padding-left: 10px;
+            line-height: 1.5;
+            border-left: 3px solid #e3e3e3;
+            background: #f9fafb;
+            border-radius: 5px;
+            font-size: 0.98em;
+        }
+        @media (prefers-color-scheme: dark) {
+            .example-guide-title { color: #64b5f6; }
+            .example-guide-emph  { color: #ffab91; }
+            .example-item {
+                background: #232c3a;
+                border-left: 3px solid #374151;
+                color: #eaeaea;
+            }
+        }
+        </style>
+        """
+        """
+        <script>
+        document.querySelectorAll('.example-ask-btn').forEach(btn=>{
+          btn.addEventListener('click', function(){
+            const q = this.getAttribute('data-q') || '';
+            const doc = window.parent.document;
+
+            // 1) 입력창에 값 세팅(+input 이벤트)
+            const input = doc.querySelector('textarea, input[type="text"]');
+            if (input) {
+              const proto  = (input.tagName==='TEXTAREA')
+                           ? window.parent.HTMLTextAreaElement.prototype
+                           : window.parent.HTMLInputElement.prototype;
+              const setter = Object.getOwnPropertyDescriptor(proto,'value').set;
+              setter.call(input, q);
+              input.dispatchEvent(new Event('input', { bubbles:true }));
+
+              // 2) 폼 자동 제출
+              const form = input.closest('form');
+              if (form && typeof form.requestSubmit === 'function') {
+                form.requestSubmit(); return;
+              } else if (form) {
+                const tmp = doc.createElement('button'); tmp.type='submit'; tmp.style.display='none';
+                form.appendChild(tmp); tmp.click(); form.removeChild(tmp); return;
+              }
+
+              // 3) 폼이 없으면 Enter 키 이벤트
+              input.dispatchEvent(new KeyboardEvent('keydown', {
+                key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true
+              }));
+            }
+          });
+        });
+        </script>
+        """
+    ),
+    "display_type": "pending"
+})
+
+               
             st.session_state.scroll_to_bottom_flag = True
             return
 
@@ -913,7 +946,7 @@ def display_chat_html_content():
             elif entry.get("display_type") == "pending":
                 chat_html_content += (
                     '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
-                    f"<p style='color:#ff914d;font-weight:600;'>{entry['content']}</p>"
+                    f"<p style='color:#ff914d;font-weight:600;'>{entry['content']}"
                     '</div></div>'
                 )
             elif entry.get("display_type") == "llm_answer":
@@ -967,6 +1000,8 @@ function applyLight() {
 .message-row, .message-bubble, .bot-bubble, .intro-bubble,
 .message-bubble p, .message-bubble strong, .bot-bubble p, .intro-bubble h2, .intro-bubble p { color:#111 !important; }
 .user-bubble, .user-bubble p { color:#111 !important; }
+.message-bubble a, .bot-bubble a { color: #0645ad !important; text-decoration: underline; }
+.intro-bubble li, .bot-bubble li { color: #111 !important; }
 `;
 }
 function applyDark() {
@@ -977,6 +1012,8 @@ function applyDark() {
 /* 사용자 말풍선은 배경/글자색을 강제로 바꿔 가독성 확보 (inline 스타일 덮기 위해 !important) */
 .user-bubble { background:#2a2a2a !important; }
 .user-bubble, .user-bubble p { color:#eeeeee !important; }
+.message-bubble a, .bot-bubble a { color: #8ab4f8 !important; text-decoration: underline; }
+.intro-bubble li, .bot-bubble li { color: #eeeeee !important; }
 `;
 }
 function updateColorMode() {
