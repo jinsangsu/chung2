@@ -742,7 +742,7 @@ def handle_question(question_input):
                     if (q_input_norm in qnorm(r["질문"])) and any(k in qnorm(r["질문"]) for k in q_input_keywords)
                 ]
                 if not top_matches:
-                    top_matches = [r for score, r in filtered_matches[:6]]
+                    top_matches = [r for score, r in filtered_matches[:10]]
 
             # 공통 상한
             top_matches = top_matches[:10]
