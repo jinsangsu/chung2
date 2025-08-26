@@ -467,32 +467,36 @@ def normalize_text(text):
     text = re.sub(r"\b([가-힣]{2,10})(은|는|이|가|을|를|에|의|로|으로|도|만|께|에서|까지|보다|부터|한테|에게|하고|와|과)\b", r"\1", text)
     text = re.sub(r"(시|요|가요|인가요|하나요|할까요|할게요|하죠|할래요|습니까|나요|지요|죠|죠요|되나요|되었나요|되니)$", "", text)
     return re.sub(r"[^가-힣a-zA-Z0-9]", "", text)
+
 def extract_keywords(text):
     stopwords = [
-        
-        "이", "가", "은", "는", "을", "를", "에", "의", "로", "으로", "도", "만", "께", "에서", "부터", "까지", "보다", "와", "과", "하고", "한테", "에게",
-        "요", "해요", "했어요", "합니다", "해주세요", "해줘요", "하기", "할게요", "됐어요", "할래요",
-        "어떻게", "방법", "알려줘", "무엇", "뭐", "도와줘", "하나요", "되나요", "인가요", "되었나요", "하나", "진행하나요", "되니", "되냐", "하냐"
+        "이","가","은","는","을","를","에","의","로","으로","도","만","께","에서","부터","까지","보다","와","과","하고","한테","에게",
+        "요","해요","했어요","합니다","해주세요","해줘요","하기","할게요","됐어요","할래요",
+        "어떻게","방법","알려줘","무엇","뭐","도와줘","하나요","되나요","인가요","되었나요","하나","진행하나요","되니","되냐","하냐"
     ]
-    text = re.sub(r"\b([가-힣]{2,10})(은|는|이|가|을|를|에|의|로|으로|도|만|께|에서|까지|보다|부터|한테|에게|하고|와|과)\b", r"\1", text.lower())
-    text = re.sub(r"[^가-힣a-zA-Z0-9]", " ", text)
-    words = [w for w in text.split() if w not in stopwords and len(w) > 1]
-    # words = [normalize_text(w) for w in text.split() if w not in stopwords and len(w) > 1]
-    # words = [w for w in text.split() if w not in stopwords]
-    decomposed = set()
-    for word in words:
-        decomposed.add(word)
-        if len(word) >= 4:
-            for i in range(2, len(word)):
-                decomposed.add(word[:i])
-                decomposed.add(word[i:])
-    return list(decomposed)
-    # return words
+    # 조사 제거 + 비영숫자 공백화
+    clean = re.sub(r"\b([가-힣]{2,10})(은|는|이|가|을|를|에|의|로|으로|도|만|께|에서|까지|보다|부터|한테|에게|하고|와|과)\b", r"\1", text.lower())
+    clean = re.sub(r"[^가-힣a-zA-Z0-9]", " ", clean)
+    words = [w for w in clean.split() if w not in stopwords and len(w) > 1]
+
+    out = []
+    for w in words:
+        out.append(w)  # 한글은 원형만 보존
+        # ✅ 영문/숫자 토큰만 분해 허용(예: policyNumber → policy, number)
+        if re.fullmatch(r"[a-zA-Z0-9]+", w) and len(w) >= 4:
+            for i in range(2, len(w)):
+                out.append(w[:i])
+                out.append(w[i:])
+    # 중복 제거(순서 유지)
+    return list(dict.fromkeys(out))    # return words
 
 SYNONYM_MAP = {
     "자동차": ["차", "오토", "자차"],
     "자동이체": ["자동 결제", "계좌이체", "이체", "분납자동이체"],
-    "카드": ["신용카드", "체크카드", "카드등록"],
+    "카드": ["신용카드", "체크카드"],
+    # ✅ 특수 → 일반(방향성만) 추가
+    "카드등록": ["카드"],
+    "카드변경": ["카드"],
     "배서": ["특약변경", "담보추가", "해지", "권리양도"],
     "인수제한": ["심사", "인수", "심사요청"],
     "구비서류": ["서류", "제출서류"],
@@ -506,6 +510,15 @@ def expand_synonyms(kwords: list[str]) -> list[str]:
             for tok in extract_keywords(syn):
                 out.add(tok)
     return list(out)
+
+ACTION_TOKENS = ["등록","변경","해지","취소","결제","정지","해제","추가","삭제","수정"]
+
+def split_compound_korean(term: str):
+    # 예: "카드변경" -> ("카드","변경"), "자동이체" -> ("자동이체","")
+    for a in ACTION_TOKENS:
+        if term.endswith(a) and len(term) > len(a):
+            return term[:-len(a)], a
+    return term, ""
 
 
 def add_friendly_prefix(answer):
@@ -694,18 +707,36 @@ def handle_question(question_input):
 
         if q_input_keywords:
             qnorm = lambda s: normalize_text(s)
- 
+
             if single_kw_mode:
-        # 단일 키워드: 키워드 OR 전체질문 중 하나만 맞아도 채택
-                top_matches = [
-                    r for score, r in filtered_matches
-                    if (core_kw in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))
-                ]
-                if len(top_matches) < 3:
-            # 너무 적으면 상위 10개라도 먼저 제시
-                    top_matches = [r for score, r in filtered_matches[:10]]
+                # ✅ 합성어 우선: 예) "카드변경" → base="카드", action="변경"
+                base, action = split_compound_korean(core_kw)
+
+                if action:
+                    # 1순위: base와 action이 모두 포함된 질문
+                    strict = [r for score, r in filtered_matches
+                              if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
+                    if strict:
+                        top_matches = strict[:10]
+                    else:
+                        # 2순위: 전체 문자열(예: "카드변경") 완전 포함
+                        exact = [r for score, r in filtered_matches
+                                 if core_kw in qnorm(r["질문"])]
+                        if exact:
+                            top_matches = exact[:10]
+                        else:
+                            # 3순위: 일반어(예: "카드")만 포함된 항목
+                            fallback = [r for score, r in filtered_matches
+                                        if base in qnorm(r["질문"])]
+                            top_matches = fallback[:10]
+                else:
+                    # 일반 단일어(예: "카드")
+                    primary = [r for score, r in filtered_matches
+                               if (core_kw in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))]
+                    top_matches = primary[:10] if primary else [r for score, r in filtered_matches[:10]]
+
             else:
-        # 복합 키워드: 기존처럼 더 엄격하게 AND
+                # 복합 키워드: 더 엄격하게 AND
                 top_matches = [
                     r for score, r in filtered_matches
                     if (q_input_norm in qnorm(r["질문"])) and any(k in qnorm(r["질문"]) for k in q_input_keywords)
@@ -713,8 +744,9 @@ def handle_question(question_input):
                 if not top_matches:
                     top_matches = [r for score, r in filtered_matches[:6]]
 
-    # 공통 상한
+            # 공통 상한
             top_matches = top_matches[:10]
+
         else:
             top_matches = [r for score, r in filtered_matches[:4]]
         
