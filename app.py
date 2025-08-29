@@ -608,15 +608,13 @@ def handle_question(question_input):
     aesoon_icon = get_character_img_base64(config["image"])
     bot_name = config["bot_name"]
     user_txt = question_input.strip().replace(" ", "").lower()
-    
-# ✅ [1단계 추가] 이전에 남아있는 pending_keyword 강제 초기화 (질문 바뀐 경우)
+
     if st.session_state.pending_keyword:
         prev = normalize_text(st.session_state.pending_keyword)
         now = normalize_text(question_input)
         if prev != now:
             st.session_state.pending_keyword = None
 
-    # [1] 잡담/감정/상황 패턴(애순 없을 때도 무조건 반응)
     chit_chat_patterns = [
         (["사랑", "좋아해"], "사장님, 저도 사랑합니다! 💛 언제나 사장님 곁에 있을게요!"),
         (["잘지", "안녕"], "네! 안녕하세요!!😊 사장님~ 오늘은 기분 좋으시죠?"),
@@ -636,59 +634,44 @@ def handle_question(question_input):
     for keywords, reply in chit_chat_patterns:
         if any(kw in user_txt for kw in keywords):
             st.session_state.chat_log.append({
-                "role": "user",
-                "content": question_input,
-                "display_type": "question"
+                "role": "user", "content": question_input, "display_type": "question"
             })
             st.session_state.chat_log.append({
-                "role": "bot",
-                "content": reply,
-                "display_type": "single_answer"
+                "role": "bot", "content": reply, "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
             return
-# [2] "애순"이 들어간 인삿말 (기존 + return 추가)
+
     if "애순" in user_txt:
         st.session_state.chat_log.append({
-            "role": "user",
-            "content": question_input,
-            "display_type": "question"
+            "role": "user", "content": question_input, "display_type": "question"
         })
         if user_txt in ["애순", "애순아"]:
             reply = "안녕하세요, 사장님! 궁금하신 점 언제든 말씀해 주세요 😊"
         else:
             reply = "사장님! 애순이 항상 곁에 있어요 😊 궁금한 건 뭐든 말씀해 주세요!"
         st.session_state.chat_log.append({
-            "role": "bot",
-            "content": reply,
-            "display_type": "single_answer"
+            "role": "bot", "content": reply, "display_type": "single_answer"
         })
         st.session_state.scroll_to_bottom_flag = True
         return
 
-    # [3] 각 지점 캐릭터 이름(bot_name)도 반응하게 처리
     bot_names = [v["bot_name"] for k, v in BRANCH_CONFIG.items()]
     for name_candidate in bot_names:
         if name_candidate in user_txt:
             st.session_state.chat_log.append({
-                "role": "user",
-                "content": question_input,
-                "display_type": "question"
+                "role": "user", "content": question_input, "display_type": "question"
             })
             reply = f"안녕하세요, 사장님! 저는 항상 곁에 있는 {name_candidate}입니다 😊 궁금한 건 뭐든 말씀해 주세요!"
             st.session_state.chat_log.append({
-                "role": "bot",
-                "content": reply,
-                "display_type": "single_answer"
+                "role": "bot", "content": reply, "display_type": "single_answer"
             })
             st.session_state.scroll_to_bottom_flag = True
             return
 
-    # ↓↓↓ Q&A 챗봇 처리 ↓↓↓
-    core_kw = normalize_text(question_input)    # 예: "자동 이체" -> "자동이체"
-    single_kw_mode = 2 <= len(core_kw) <= 6     # 2~6자면 단일 핵심어 취급
+    core_kw = normalize_text(question_input)
+    single_kw_mode = 2 <= len(core_kw) <= 6
 
-# 2) 단일핵심어일 땐 pending_keyword를 결합하지 않음(세션 영향 차단)
     if st.session_state.pending_keyword and not single_kw_mode:
         user_input = st.session_state.pending_keyword + " " + question_input
         st.session_state.pending_keyword = None
@@ -698,31 +681,17 @@ def handle_question(question_input):
     try:
         records = get_sheet_records()
         indexed, inverted, idf = get_qa_index()
-
         q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
         q_input_keywords = expand_synonyms(q_input_keywords)
-        core_kw = normalize_text(question_input)
-        single_kw_mode = len(core_kw) <= 6 and len(core_kw) >= 2 
-
-        if not q_input_keywords or all(len(k) < 2 for k in q_input_keywords):
-            st.session_state.chat_log.append({
-                "role": "user",
-                "content": question_input,
-                "display_type": "question"
-            })
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": "사장님~ 궁금하신 키워드를 한두 단어라도 입력해 주세요! 예: '카드', '자동이체', '해지' 등 😊",
-                "display_type": "single_answer"
-            })
+        
+        if not q_input_keywords:
+            st.session_state.chat_log.append({"role": "user", "content": question_input, "display_type": "question"})
+            st.session_state.chat_log.append({"role": "bot", "content": "사장님~ 궁금하신 키워드를 한두 단어라도 입력해 주세요! 예: '카드', '자동이체', '해지' 등 😊", "display_type": "single_answer"})
             st.session_state.scroll_to_bottom_flag = True
             return
 
         matched = []
-        if st.session_state.pending_keyword:
-            st.session_state.pending_keyword = None
-
         candidate_idxs = set()
         for kw in q_input_keywords:
             if kw in inverted:
@@ -736,7 +705,6 @@ def handle_question(question_input):
             r = item["row"]
             sheet_q_norm = item["q_norm"]
             sheet_keywords = item["kwords"]
-
             match_weight = sum(idf.get(kw, 1.0) for kw in q_input_keywords if kw in sheet_keywords)
             sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
             total_score = match_weight + sim_score
@@ -750,32 +718,22 @@ def handle_question(question_input):
                 unique_matched.append((score, r))
                 seen_questions.add(r["질문"])
         matched = unique_matched
-
-        filtered_matches = [(score, r) for score, r in matched if score >= 1.6 or (len(q_input_keywords) == 1 and score >= 1.0)]
         
-        if not filtered_matches:
-            st.session_state.chat_log.append({
-                "role": "user",
-                "content": question_input,
-                "display_type": "question"
-            })
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~",
-                "display_type": "single_answer"
-            })
-            st.session_state.scroll_to_bottom_flag = True
-            return
+        # 새로운 매칭 로직: 키워드 가중치 기반으로 유연하게 매칭
+        # 최소 점수 1.6 또는 단일 키워드일 경우 최소 1.0 점수
+        filtered_matches = [(score, r) for score, r in matched if score >= 1.6 or (len(q_input_keywords) == 1 and score >= 1.0)]
         
         top_matches = [r for score, r in filtered_matches]
 
         st.session_state.chat_log.append({
-            "role": "user",
-            "content": question_input,
-            "display_type": "question"
+            "role": "user", "content": question_input, "display_type": "question"
         })
 
-        if len(top_matches) >= 5:
+        if not top_matches:
+            st.session_state.chat_log.append({
+                "role": "bot", "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~", "display_type": "single_answer"
+            })
+        elif len(top_matches) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
             COOLDOWN_SECONDS = 6
@@ -787,7 +745,7 @@ def handle_question(question_input):
                 return  
             st.session_state["last_pending_norm"] = curr_pending_norm
             st.session_state["last_pending_at"] = now_ts
-
+            
             example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in top_matches]
             examples_html = "".join([
                 f"""
@@ -867,52 +825,32 @@ def handle_question(question_input):
                 ),
                 "display_type": "pending"
             })
-            st.session_state.scroll_to_bottom_flag = True
-            return
-
-        if len(top_matches) == 1:
+        elif len(top_matches) == 1:
             r = top_matches[0]
             bot_answer_content = {
-                "q": r["질문"],
-                "a": add_friendly_prefix(r["답변"]),
-                "files": r.get("첨부_JSON", "")
+                "q": r["질문"], "a": add_friendly_prefix(r["답변"]), "files": r.get("첨부_JSON", "")
             }
-            bot_display_type = "single_answer"
-
+            st.session_state.chat_log.append({
+                "role": "bot", "content": bot_answer_content, "display_type": "single_answer"
+            })
         elif 2 <= len(top_matches) <= 4:
             bot_answer_content = []
             for r in top_matches:
                 bot_answer_content.append({
-                    "q": r["질문"],
-                    "a": add_friendly_prefix(r["답변"]),
-                    "files": r.get("첨부_JSON", "")
+                    "q": r["질문"], "a": add_friendly_prefix(r["답변"]), "files": r.get("첨부_JSON", "")
                 })
-            bot_display_type = "multi_answer"
-
-        else: # 매칭되는 질문이 없을 경우
             st.session_state.chat_log.append({
-                "role": "bot",
-                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~",
-                "display_type": "single_answer"
-            })
-            st.session_state.scroll_to_bottom_flag = True
-            return
-
-        if len(top_matches) > 0:
-            st.session_state.chat_log.append({
-                "role": "bot",
-                "content": bot_answer_content,
-                "display_type": bot_display_type
+                "role": "bot", "content": bot_answer_content, "display_type": "multi_answer"
             })
         st.session_state.scroll_to_bottom_flag = True
 
     except Exception as e:
         st.session_state.chat_log.append({
-            "role": "bot",
-            "content": f"❌ 오류 발생: {e}",
-            "display_type": "llm_answer"
+            "role": "bot", "content": f"❌ 오류 발생: {e}", "display_type": "llm_answer"
         })
         st.session_state.scroll_to_bottom_flag = True
+
+---
 
 
 def display_chat_html_content():
