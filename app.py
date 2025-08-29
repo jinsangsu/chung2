@@ -941,7 +941,7 @@ def handle_question(question_input):
                 "q": r["질문"],
                 "a": add_friendly_prefix(r["답변"]),
                 "files": r.get("첨부_JSON", ""),   # ✅ 첨부JSON 전달
-                "image_url": row.get("이미지url", "")  # ✅ 이미지URL 열 추가
+                "image_url": r.get("이미지url", "")  # ✅ 이미지URL 열 추가
             }
             bot_display_type = "single_answer"
 
@@ -952,7 +952,7 @@ def handle_question(question_input):
                     "q": r["질문"],
                     "a": add_friendly_prefix(r["답변"]),
                     "files": r.get("첨부_JSON", ""),   # ✅ 첨부JSON 전달
-                    "image_url": row.get("이미지url", "")  # ✅ 이미지URL 열 추가
+                    "image_url": r.get("이미지url", "")  # ✅ 이미지URL 열 추가
                 })
             bot_display_type = "multi_answer"
        
