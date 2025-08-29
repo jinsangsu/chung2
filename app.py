@@ -783,47 +783,47 @@ def handle_question(question_input):
             qnorm = lambda s: normalize_text(s)
 
             if single_kw_mode:
-    base, action = split_compound_korean(core_kw)
+                # ✅ 합성어 우선: 예) "카드변경" → base="카드", action="변경"
+                base, action = split_compound_korean(core_kw)
 
-    if action:
-        # 0순위: 질문 원문 그대로 먼저 매칭
-        exact_full = [r for score, r in filtered_matches
-                      if question_input.strip() in r["질문"]]
-        if exact_full:
-            top_matches = exact_full[:10]
-        else:
-            # 1순위: normalize된 core_kw 매칭
-            norm_full = [r for score, r in filtered_matches
-                         if core_kw in qnorm(r["질문"])]
-            if norm_full:
-                top_matches = norm_full[:10]
-            else:
-                # 2순위: base + action 모두 포함
-                strict = [r for score, r in filtered_matches
-                          if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
-                if strict:
-                    top_matches = strict[:10]
-                else:
-                    # 3순위: base만 포함
-                    fallback = [r for score, r in filtered_matches
-                                if base in qnorm(r["질문"])]
-                    if fallback:
-                        top_matches = fallback[:10]
+                if action:
+                    # 1순위: base와 action이 모두 포함된 질문
+                    exact_full = [r for score, r in filtered_matches
+                                     if question_input.strip() in r["질문"]]
+                    if exact_full:
+                       top_matches = exact_full[:10]
                     else:
-                        # 4순위: 전체 후보 상위 10개
-                        top_matches = [r for score, r in filtered_matches[:10]]
+        # 1순위: base와 action이 모두 포함된 질문
+                        norm_full = [r for score, r in filtered_matches
+                                        if core_kw in qnorm(r["질문"])]
+                        if norm_full:
+                            top_matches = norm_full[:10]
+                        else:
+            # 2순위: base(예: "카드")만 포함된 질문
+                            strict = [r for score, r in filtered_matches
+                                          if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
+                            if strict:
+                                top_matches = strict[:10]
 
-    else:
-        # 일반 단일어 (예: "카드")
-        primary = [r for score, r in filtered_matches
-                   if (core_kw in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))]
-        if primary:
-            top_matches = primary[:10]
-        else:
-            # fallback: 단어 포함된 모든 질문
-            fallback = [r for score, r in filtered_matches
-                        if core_kw in qnorm(r["질문"]) or q_input_norm in qnorm(r["질문"])]
-            top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
+                            else:
+                                  fallback = [r for score, r in filtered_matches
+                                                 if base in qnorm(r["질문"])]
+                                  if fallback:
+                                      top_matches = fallback[:10]
+                                  else:
+                                      top_matches = [r for score, r in filtered_matches[:10]]
+                else:
+                    # 일반 단일어(예: "카드")
+                    primary = [r for score, r in filtered_matches
+                                    if (core_kw in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))]
+
+                    if primary:
+                        top_matches = primary[:10]
+                    else:
+                       # ✅ fallback: 단일어가 포함된 모든 질문을 다시 후보로 반환
+                        fallback = [r for score, r in filtered_matches
+                                        if core_kw in qnorm(r["질문"]) or q_input_norm in qnorm(r["질문"])]
+                        top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
 
             else:
                 # 복합 키워드: 더 엄격하게 AND
