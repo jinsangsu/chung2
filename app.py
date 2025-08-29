@@ -493,7 +493,7 @@ def extract_keywords(text):
 SYNONYM_MAP = {
     "자동차": ["차", "오토", "자차"],
     "자동이체": ["자동 결제", "계좌이체", "이체", "분납자동이체"],
-    "카드": ["신용카드", "체크카드","카드변경", "카드등록"],
+    "카드": ["신용카드", "체크카드","카드변경", "카드변경방법","카드등록"],
     # ✅ 특수 → 일반(방향성만) 추가
     "카드등록": ["카드","카드변경"],
     "카드변경": ["카드","카드등록"],
@@ -794,15 +794,15 @@ def handle_question(question_input):
                         top_matches = strict[:10]
                     else:
                         # 2순위: 전체 문자열(예: "카드변경") 완전 포함
-                        exact = [r for score, r in filtered_matches
-                                 if core_kw in qnorm(r["질문"])]
-                        if exact:
-                            top_matches = exact[:10]
+                        exact_full = [r for score, r in filtered_matches
+                                          if core_kw in qnorm(r["질문"])]
+                        if exact_full:
+                            top_matches = exact_full[:10]
                         else:
                             # 3순위: 일반어(예: "카드")만 포함된 항목
                             fallback = [r for score, r in filtered_matches
                                         if base in qnorm(r["질문"])]
-                            top_matches = fallback[:10]
+                            top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
                 else:
                     # 일반 단일어(예: "카드")
                     primary = [r for score, r in filtered_matches
@@ -1420,7 +1420,6 @@ st.markdown("""
     box-shadow: 0 -2px 16px rgba(0,0,0,0.07);
     padding: 14px 8px 14px 8px;
 }
-@media (max-width: 600px) {
     .input-form-fixed { padding-bottom: 16px !important; }
 }
 
