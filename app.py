@@ -573,9 +573,14 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
     # ✅ 이미지 썸네일 (파일명은 캡션으로만 표시)
     img_html = "".join([
         f"""
-        <img src="{it['embed']}" 
-             style="max-width:200px; max-height:150px; border-radius:10px; margin-top:8px; margin-bottom:8px; display:block;" 
-             alt="첨부 이미지"/>
+        <div class="att-image-wrapper">
+            <a href="{it['view']}" target="_blank" rel="noreferrer noopener">
+                <img src="{it['embed']}" alt="화일" class="att-image"/>
+            </a>
+            <div class="att-caption">
+                <a href="{it['view']}" target="_blank" rel="noreferrer noopener">{it['name']}</a>
+            </div>
+        </div>
         """
         for it in imgs
     ])
