@@ -773,7 +773,9 @@ def handle_question(question_input):
             # 2. 합성어 매칭이 실패했거나, 일반 키워드 질문일 경우 키워드 유사도 기반으로 찾습니다.
             if not top_matches:
                 primary_matches = [r for score, r in filtered_matches 
-                   if core_kw in qnorm(r["질문"]) or qnorm(r["질문"]).startswith(core_kw)]
+                                            if core_kw in qnorm(r["질문"]) 
+                                            or qnorm(r["질문"]).startswith(core_kw) 
+                                            or qnorm(r["질문"]).find(core_kw) != -1]
                 if primary_matches:
                     top_matches = primary_matches[:10]
                 else:
