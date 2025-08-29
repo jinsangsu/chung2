@@ -789,7 +789,7 @@ def handle_question(question_input):
                 if action:
                     # 1순위: base와 action이 모두 포함된 질문
                     exact_full = [r for score, r in filtered_matches
-                                     if core_kw in qnorm(r["질문"])]
+                                     if question_input.strip() in r["질문"]]
                     if exact_full:
                        top_matches = exact_full[:10]
                     else:
