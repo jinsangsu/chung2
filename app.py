@@ -608,7 +608,7 @@ def handle_question(question_input):
     aesoon_icon = get_character_img_base64(config["image"])
     bot_name = config["bot_name"]
     user_txt = question_input.strip().replace(" ", "").lower()
-    
+
 # ✅ [1단계 추가] 이전에 남아있는 pending_keyword 강제 초기화 (질문 바뀐 경우)
     if st.session_state.pending_keyword:
         prev = normalize_text(st.session_state.pending_keyword)
@@ -720,21 +720,17 @@ def handle_question(question_input):
             return
 
         matched = []
-# ✅ [2단계 추가] 이전에 남은 keyword가 있고, 이번에 매칭이 충분하지 않으면 초기화
         if st.session_state.pending_keyword:
             st.session_state.pending_keyword = None
 
-# 1) 키워드로 후보 줄이기 (inverted index)
         candidate_idxs = set()
         for kw in q_input_keywords:
             if kw in inverted:
                 candidate_idxs.update(inverted[kw])
 
-# 키워드로 후보가 하나도 없으면 전체 탐색 fallback
         if not candidate_idxs:
             candidate_idxs = set(range(len(indexed)))
 
-# 2) 후보만 스코어링 (속도 향상)
         for i in candidate_idxs:
             item = indexed[i]
             r = item["row"]
@@ -767,18 +763,18 @@ def handle_question(question_input):
             if action:
                 strict_matches = [r for score, r in filtered_matches if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
                 if strict_matches:
-                    top_matches = strict_matches[:10]
+                    top_matches = strict_matches
             
             # 2. 합성어 매칭이 실패했거나, 일반 키워드 질문일 경우 키워드 유사도 기반으로 찾습니다.
             if not top_matches:
                 primary_matches = [r for score, r in filtered_matches if core_kw in qnorm(r["질문"])]
                 if primary_matches:
-                    top_matches = primary_matches[:10]
+                    top_matches = primary_matches
                 else:
-                    # 3. 마지막 대안: 매칭된 모든 후보 중에서 상위 10개를 선택합니다.
-                    top_matches = [r for score, r in filtered_matches[:10]]
+                    # 3. 마지막 대안: 매칭된 모든 후보 중에서 모든 질문을 반환합니다.
+                    top_matches = [r for score, r in filtered_matches]
         else:
-            top_matches = [r for score, r in filtered_matches[:4]]
+            top_matches = [r for score, r in filtered_matches]
         # 수정 끝.
 
         st.session_state.chat_log.append({
@@ -787,7 +783,7 @@ def handle_question(question_input):
             "display_type": "question"
         })
 
-        # 매칭 5개 이상시 유도질문
+        # 매칭 5개 이상일 경우 유도 질문
         if len(top_matches) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
@@ -926,7 +922,6 @@ def handle_question(question_input):
             "display_type": "llm_answer"
         })
         st.session_state.scroll_to_bottom_flag = True
-
 def display_chat_html_content():
     aesoon_icon = get_character_img_base64(config["image"])
     if not aesoon_icon:
