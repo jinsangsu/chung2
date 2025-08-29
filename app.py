@@ -786,7 +786,7 @@ def handle_question(question_input):
                 # ✅ 합성어 우선: 예) "카드변경" → base="카드", action="변경"
                 base, action = split_compound_korean(core_kw)
 
-                if action:
+               if action:
     # ✅ 0순위: 질문 원문 그대로 먼저 매칭 (normalize 무시)
     exact_full = [r for score, r in filtered_matches
                   if question_input.strip() in r["질문"]]
@@ -799,16 +799,20 @@ def handle_question(question_input):
         if norm_full:
             top_matches = norm_full[:10]
         else:
-            # 2순위: base+action
+            # ✅ 2순위: base와 action이 모두 포함된 질문
             strict = [r for score, r in filtered_matches
                       if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
             if strict:
                 top_matches = strict[:10]
             else:
-                # 3순위: base만
+                # ✅ 3순위: base(예: "카드")만 포함된 질문
                 fallback = [r for score, r in filtered_matches
                             if base in qnorm(r["질문"])]
-                top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
+                if fallback:
+                    top_matches = fallback[:10]
+                else:
+                    # ✅ 4순위: 전체 후보 중 상위 10개 (최후 안전망)
+                    top_matches = [r for score, r in filtered_matches[:10]]
                 else:
                     # 일반 단일어(예: "카드")
                     primary = [r for score, r in filtered_matches
