@@ -658,7 +658,14 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
       <div class="att-files">{file_html}</div>
     </div>
     """
-
+def render_answer_with_file(summary: str, link: str) -> str:
+    """파일요약/링크 카드 HTML 생성"""
+    html = ""
+    if summary:
+        html += f"<div class='file-summary-card'><h4>📄 파일 요약</h4><div>{summary}</div></div>"
+    if link:
+        html += f"<div style='margin-top:8px'><a class='file-link-btn' href='{link}' target='_blank' rel='noopener'>파일 열기</a></div>"
+    return html
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.7
     aesoon_icon = get_character_img_base64(config["image"])
@@ -1378,11 +1385,3 @@ window.addEventListener('focusin', function(e) {
 </script>
 """, unsafe_allow_html=True)
 
-def render_answer_with_file(summary: str, link: str) -> str:
-    """파일요약/링크 카드 HTML 생성"""
-    html = ""
-    if summary:
-        html += f"<div class='file-summary-card'><h4>📄 파일 요약</h4><div>{summary}</div></div>"
-    if link:
-        html += f"<div style='margin-top:8px'><a class='file-link-btn' href='{link}' target='_blank' rel='noopener'>파일 열기</a></div>"
-    return html
