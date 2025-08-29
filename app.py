@@ -575,7 +575,7 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
         f"""
         <div class="att-image-wrapper">
             <a href="{it['view']}" target="_blank" rel="noreferrer noopener">
-                <img src="{it['embed']}" alt="" class="att-image"/>
+                <img src="{it['embed']}" alt="첨부" class="att-image"/>
             </a>
             <div class="att-caption">
                 <a href="{it['view']}" target="_blank" rel="noreferrer noopener">{it['name']}</a>
@@ -1098,18 +1098,18 @@ def display_chat_html_content():
 
 .att-image-wrapper {
   display: inline-block;
-  margin: 8px;
-  text-align: center;
+  margin: 8px 0;
 }
 
 .att-image {
-  max-width: 220px;
-  max-height: 160px;
+  max-width: 240px;
+  max-height: 180px;
   border-radius: 10px;
   border: 1px solid #ddd;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
 
 .att-image:hover {
