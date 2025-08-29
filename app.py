@@ -529,6 +529,73 @@ def add_friendly_prefix(answer):
     else:
         return f"사장님, {answer} <br> <strong>❤️궁금한거 해결되셨나요?!😊</strong>"
 
+def _parse_attachments(cell_value):
+    if not cell_value:
+        return []
+    if isinstance(cell_value, list):
+        data = cell_value
+    else:
+        try:
+            data = json.loads(cell_value)
+        except Exception:
+            return []
+    if isinstance(data, dict):
+        data = [data]
+
+    out = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        mime = item.get("mime", "") or ""
+        is_img = item.get("is_image") or mime.startswith("image/")
+        out.append({
+            "name": item.get("name", ""),
+            "mime": mime,
+            "view": item.get("view_url") or item.get("embed_url"),
+            "embed": item.get("embed_url") or item.get("view_url"),
+            "is_image": bool(is_img),
+        })
+    return out
+
+
+def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> str:
+    """
+    limit: 표시할 이미지 썸네일 수(없으면 전부)
+    show_badge: 카드 상단에 '🖼 사진 N' 배지를 붙일 때 True
+    """
+    items = _parse_attachments(cell_value)
+    if not items:
+        return ""
+
+    imgs = [it for it in items if it["is_image"]]
+    files = [it for it in items if not it["is_image"]]
+    total_imgs = len(imgs)
+
+    if limit is not None:
+        imgs = imgs[:max(0, int(limit))]
+
+    img_html = "".join([
+        f"""<a href="{it['view']}" target="_blank" rel="noreferrer noopener" class="att-thumb">
+              <img src="{it['embed']}" alt="{it['name']}" loading="lazy"/>
+            </a>"""
+        for it in imgs
+    ])
+    file_html = "".join([
+        f"""<a class="att-chip" href="{it['view']}" target="_blank" rel="noreferrer noopener">📎 {it['name']}</a>"""
+        for it in files
+    ])
+
+    badge_html = f"""<span class="att-badge">🖼 사진 {total_imgs}</span>""" if (show_badge and total_imgs) else ""
+
+    return f"""
+    <div class="att-block">
+      {badge_html}
+      <div class="att-grid">{img_html}</div>
+      <div class="att-files">{file_html}</div>
+    </div>
+    """
+
+
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.7
     aesoon_icon = get_character_img_base64(config["image"])
@@ -869,20 +936,24 @@ def handle_question(question_input):
 
 
         if len(top_matches) == 1:
+            r = top_matches[0]
             bot_answer_content = {
-                "q": top_matches[0]["질문"],
-                "a": add_friendly_prefix(top_matches[0]["답변"])
+                "q": r["질문"],
+                "a": add_friendly_prefix(r["답변"]),
+                "files": r.get("첨부_JSON", "")   # ✅ 첨부JSON 전달
             }
             bot_display_type = "single_answer"
+
         elif 2 <= len(top_matches) <= 4:
             bot_answer_content = []
             for r in top_matches:
                 bot_answer_content.append({
                     "q": r["질문"],
-                    "a": add_friendly_prefix(r["답변"])
+                    "a": add_friendly_prefix(r["답변"]),
+                    "files": r.get("첨부_JSON", "")   # ✅ 첨부JSON 전달
                 })
             bot_display_type = "multi_answer"
-        elif len(top_matches) == 0:
+       
 
     # 키워드 자체가 부족했던 경우는 이미 위에서 안내했으므로, 이중 응답 막기
             if len(q_input_keywords) == 0 or all(len(k) < 2 for k in q_input_keywords):
@@ -935,10 +1006,12 @@ def display_chat_html_content():
                 if isinstance(entry["content"], dict):
                     q = entry["content"].get('q', '').replace('\n', '<br>')
                     a = entry["content"].get('a', '').replace('\n', '<br>')
+                    files_html = _render_attachments_block(entry["content"].get("files", ""), limit=6, show_badge=False)
                     chat_html_content += (
                         '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
                         f"<p style='margin-bottom: 8px;'><strong style='color:#003399;'>질문: {q}</strong></p>"
                         f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> <strong>{bot_name}:</strong><br>{a}</p>"
+                        f"{files_html}"
                         '</div></div>'
                     )
                 else:
@@ -955,10 +1028,13 @@ def display_chat_html_content():
                     for i, pair in enumerate(entry["content"]):
                         q = pair['q'].replace('\n', '<br>')
                         a = pair['a'].replace('\n', '<br>')
+                        files_html = _render_attachments_block(pair.get("files", ""), limit=1, show_badge=True)
                         chat_html_content += f"""
                         <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                             <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
                             <img src='{aesoon_icon}' width='22' style='vertical-align:middle; margin-right:6px; border-radius:6px;'> <strong>{bot_name}:</strong> {a}
+                             {files_html}
+                             
                         </div>
                         """
                 elif isinstance(entry["content"], dict):
@@ -996,6 +1072,26 @@ def display_chat_html_content():
     """
 # === 여기서부터 추가 ===
     chat_style = """
+<style id="attachments-style">
+  .att-block{ margin-top:10px; position:relative; }
+  .att-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+  .att-thumb{ display:block; width:120px; height:90px; overflow:hidden; border-radius:8px; border:1px solid #e5e7eb; background:#fff; }
+  .att-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .att-files{ margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+  .att-chip{ display:inline-block; padding:6px 10px; border:1px solid #e5e7eb; border-radius:8px; background:#f8fafc; text-decoration:none; }
+
+  .att-badge{
+    position:absolute; top:-8px; right:-4px; 
+    background:#111; color:#fff; font-size:12px; line-height:1;
+    padding:4px 8px; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+
+  @media(prefers-color-scheme:dark){
+    .att-thumb{ border-color:#374151; background:#111; }
+    .att-chip{ border-color:#374151; background:#222; color:#e5e7eb; }
+    .att-badge{ background:#444; color:#fff; }
+  }
+</style>
 <style id="layout-fix">
   /* 인사말(인트로)만 전체폭 사용 */
   #chat-content-scroll-area { 
