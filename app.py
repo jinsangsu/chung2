@@ -814,7 +814,7 @@ def handle_question(question_input):
                        # ✅ fallback: 단일어가 포함된 모든 질문을 다시 후보로 반환
                         fallback = [r for score, r in filtered_matches
                                         if core_kw in qnorm(r["질문"]) or q_input_norm in qnorm(r["질문"])]
-                        top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]]
+                        top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
 
             else:
                 # 복합 키워드: 더 엄격하게 AND
