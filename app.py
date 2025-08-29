@@ -91,7 +91,7 @@ def append_log_row_to_logs(row: list):
         ws = sh.add_worksheet(title="logs", rows=1000, cols=10)
         ws.append_row(["date", "time", "branch", "question", "answer_count"], value_input_option="USER_ENTERED")
 
-    # ✅ 헤더 보정(기존 4열 → 5열 확장)
+    # 헤더 보정(기존 4열 → 5열 확장)
     try:
         header = ws.row_values(1)
     except Exception:
@@ -103,7 +103,7 @@ def append_log_row_to_logs(row: list):
         header.append("answer_count")
         ws.update("1:1", [header])
 
-    # ✅ 안전 캡핑(0~10)
+    # 안전 캡핑(0~10)
     if len(row) >= 5:
         try:
             n = int(row[4])
@@ -113,8 +113,9 @@ def append_log_row_to_logs(row: list):
 
     ws.append_row(row, value_input_option="USER_ENTERED")
 
+
 def _log_answer_count(question_input: str, count: int):
-    """답변 개수를 0~10 사이로 캡핑해 logs 시트에 기록 (질문 원문 그대로 저장)"""
+    """질문 원문 그대로 + 답변개수(0~10) logs 시트에 기록"""
     try:
         kst = pytz.timezone("Asia/Seoul")
         now = datetime.now(kst)
@@ -123,16 +124,16 @@ def _log_answer_count(question_input: str, count: int):
         except Exception:
             n = 0
         n = max(0, min(n, 10))
-
         append_log_row_to_logs([
             now.strftime("%Y-%m-%d"),
             now.strftime("%H:%M:%S"),
             get_branch_param(),
-            question_input,   # ✅ 가공 없이 원문 그대로 기록
+            question_input,   # ← 원문 그대로
             n
         ])
     except Exception:
         pass
+
 def get_branch_param() -> str:
     # Streamlit 버전별로 안전하게 branch 파라미터 읽기
     try:
@@ -799,7 +800,7 @@ def handle_question(question_input):
             last_pending_at = st.session_state.get("last_pending_at", 0.0)
             if last_pending_norm == curr_pending_norm and (now_ts - last_pending_at) < COOLDOWN_SECONDS:
                 return
-            _log_answer_count(question_input, displayed_count)  # ✅ 새 카드 생성 시에만 기록
+            _log_answer_count(question_input, min(len(top_matches), 10))  # ✅ 새 카드 생성 시에만 기록
             st.session_state["last_pending_norm"] = curr_pending_norm
             st.session_state["last_pending_at"] = now_ts
             
