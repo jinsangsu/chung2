@@ -788,20 +788,20 @@ def handle_question(question_input):
 
                 if action:
                     # 1순위: base와 action이 모두 포함된 질문
-                    strict = [r for score, r in filtered_matches
-                              if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
-                    if strict:
-                        top_matches = strict[:10]
+                    exact_full = [r for score, r in filtered_matches
+                                     if core_kw in qnorm(r["질문"])]
+                    if exact_full:
+                       top_matches = exact_full[:10]
                     else:
-                        # 2순위: 전체 문자열(예: "카드변경") 완전 포함
-                        exact_full = [r for score, r in filtered_matches
-                                          if core_kw in qnorm(r["질문"])]
-                        if exact_full:
-                            top_matches = exact_full[:10]
+        # 1순위: base와 action이 모두 포함된 질문
+                        strict = [r for score, r in filtered_matches
+                                   if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
+                        if strict:
+                            top_matches = strict[:10]
                         else:
-                            # 3순위: 일반어(예: "카드")만 포함된 항목
+            # 2순위: base(예: "카드")만 포함된 질문
                             fallback = [r for score, r in filtered_matches
-                                        if base in qnorm(r["질문"])]
+                                           if base in qnorm(r["질문"])]
                             top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
                 else:
                     # 일반 단일어(예: "카드")
