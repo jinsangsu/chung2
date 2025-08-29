@@ -462,10 +462,10 @@ def get_similarity_score(a, b):
     return difflib.SequenceMatcher(None, a, b).ratio()
 
 def normalize_text(text):
-    text = text.lower()
-    
-    text = re.sub(r"\b([가-힣]{2,10})(은|는|이|가|을|를|에|의|로|으로|도|만|께|에서|까지|보다|부터|한테|에게|하고|와|과)\b", r"\1", text)
-    text = re.sub(r"(시|요|가요|인가요|하나요|할까요|할게요|하죠|할래요|습니까|나요|지요|죠|죠요|되나요|되었나요|되니)$", "", text)
+    text = text.lower().strip()
+    # 조사 제거하되 '변경' 같은 핵심 키워드는 유지되도록 조건 강화
+    text = re.sub(r"\b([가-힣]{2,10})(은|는|이|가|을|를|에|의|로|으로|도|만|께|에서|까지|보다|부터|한테|에게)\b", r"\1", text)
+    text = re.sub(r"(시|요|가요|인가요|하나요|할까요|하죠|할래요|습니까|나요|지요|죠|되나요|되었나요|되니)$", "", text)
     return re.sub(r"[^가-힣a-zA-Z0-9]", "", text)
 
 def extract_keywords(text):
@@ -493,7 +493,7 @@ def extract_keywords(text):
 SYNONYM_MAP = {
     "자동차": ["차", "오토", "자차"],
     "자동이체": ["자동 결제", "계좌이체", "이체", "분납자동이체"],
-    "카드": ["신용카드", "체크카드"],
+    "카드": ["신용카드", "체크카드","카드변경", "카드등록"],
     # ✅ 특수 → 일반(방향성만) 추가
     "카드등록": ["카드"],
     "카드변경": ["카드"],
@@ -806,8 +806,15 @@ def handle_question(question_input):
                 else:
                     # 일반 단일어(예: "카드")
                     primary = [r for score, r in filtered_matches
-                               if (core_kw in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))]
-                    top_matches = primary[:10] if primary else [r for score, r in filtered_matches[:10]]
+                                    if (core_kw in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))]
+
+                    if primary:
+                        top_matches = primary[:10]
+                    else:
+                       # ✅ fallback: 단일어가 포함된 모든 질문을 다시 후보로 반환
+                        fallback = [r for score, r in filtered_matches
+                                        if any(core_kw in qnorm(r["질문"]) or q_input_norm in qnorm(r["질문"]) for kw in q_input_keywords)]
+                        top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
 
             else:
                 # 복합 키워드: 더 엄격하게 AND
