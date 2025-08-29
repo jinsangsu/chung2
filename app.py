@@ -1,5 +1,3 @@
-inject_file_button_css()
-
 def get_auto_faq_list():
     try:
         rows = get_sheet_records()  # ✅ 캐시 사용
@@ -53,7 +51,7 @@ def inject_file_button_css():
         """,
         unsafe_allow_html=True,
     )
-
+inject_file_button_css()
 
 GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
