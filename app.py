@@ -941,6 +941,7 @@ def handle_question(question_input):
                 "q": r["질문"],
                 "a": add_friendly_prefix(r["답변"]),
                 "files": r.get("첨부_JSON", "")   # ✅ 첨부JSON 전달
+                "image_url": row.get("이미지url", "")  # ✅ 이미지URL 열 추가
             }
             bot_display_type = "single_answer"
 
@@ -951,6 +952,7 @@ def handle_question(question_input):
                     "q": r["질문"],
                     "a": add_friendly_prefix(r["답변"]),
                     "files": r.get("첨부_JSON", "")   # ✅ 첨부JSON 전달
+                    "image_url": row.get("이미지url", "")  # ✅ 이미지URL 열 추가
                 })
             bot_display_type = "multi_answer"
        
@@ -1007,6 +1009,10 @@ def display_chat_html_content():
                     q = entry["content"].get('q', '').replace('\n', '<br>')
                     a = entry["content"].get('a', '').replace('\n', '<br>')
                     files_html = _render_attachments_block(entry["content"].get("files", ""), limit=6, show_badge=False)
+                    # ✅ 이미지url 열도 있으면 표시
+                    img_url = entry["content"].get("image_url", "")
+                    if img_url:
+                        files_html += f'<div class="att-block"><img src="{img_url}" style="max-width:220px; border-radius:8px; margin-top:8px;"></div>'
                     chat_html_content += (
                         '<div class="message-row bot-message-row"><div class="message-bubble bot-bubble">'
                         f"<p style='margin-bottom: 8px;'><strong style='color:#003399;'>질문: {q}</strong></p>"
@@ -1029,6 +1035,10 @@ def display_chat_html_content():
                         q = pair['q'].replace('\n', '<br>')
                         a = pair['a'].replace('\n', '<br>')
                         files_html = _render_attachments_block(pair.get("files", ""), limit=1, show_badge=True)
+                        img_url = entry["content"].get("image_url", "")
+                        if img_url:
+                            files_html += f'<div class="att-block"><img src="{img_url}" style="max-width:220px; border-radius:8px; margin-top:8px;"></div>'
+
                         chat_html_content += f"""
                         <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                             <strong style="color:#003399;">{i+1}. 질문: {q}</strong><br>
