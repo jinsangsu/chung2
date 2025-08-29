@@ -608,7 +608,7 @@ def handle_question(question_input):
     aesoon_icon = get_character_img_base64(config["image"])
     bot_name = config["bot_name"]
     user_txt = question_input.strip().replace(" ", "").lower()
-
+    
 # ✅ [1단계 추가] 이전에 남아있는 pending_keyword 강제 초기화 (질문 바뀐 경우)
     if st.session_state.pending_keyword:
         prev = normalize_text(st.session_state.pending_keyword)
@@ -751,31 +751,23 @@ def handle_question(question_input):
                 seen_questions.add(r["질문"])
         matched = unique_matched
 
-        filtered_matches = [(score, r) for score, r in matched if score >= 1.6]
+        filtered_matches = [(score, r) for score, r in matched if score >= 1.6 or (len(q_input_keywords) == 1 and score >= 1.0)]
         
-        # 수정 시작: 이전의 복잡한 로직을 아래의 견고한 로직으로 대체합니다.
-        top_matches = []
-        if q_input_keywords:
-            qnorm = lambda s: normalize_text(s)
-            
-            # 1. '카드변경'처럼 합성어 질문을 우선적으로 찾습니다.
-            base, action = split_compound_korean(core_kw)
-            if action:
-                strict_matches = [r for score, r in filtered_matches if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
-                if strict_matches:
-                    top_matches = strict_matches
-            
-            # 2. 합성어 매칭이 실패했거나, 일반 키워드 질문일 경우 키워드 유사도 기반으로 찾습니다.
-            if not top_matches:
-                primary_matches = [r for score, r in filtered_matches if core_kw in qnorm(r["질문"])]
-                if primary_matches:
-                    top_matches = primary_matches
-                else:
-                    # 3. 마지막 대안: 매칭된 모든 후보 중에서 모든 질문을 반환합니다.
-                    top_matches = [r for score, r in filtered_matches]
-        else:
-            top_matches = [r for score, r in filtered_matches]
-        # 수정 끝.
+        if not filtered_matches:
+            st.session_state.chat_log.append({
+                "role": "user",
+                "content": question_input,
+                "display_type": "question"
+            })
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~",
+                "display_type": "single_answer"
+            })
+            st.session_state.scroll_to_bottom_flag = True
+            return
+        
+        top_matches = [r for score, r in filtered_matches]
 
         st.session_state.chat_log.append({
             "role": "user",
@@ -783,7 +775,6 @@ def handle_question(question_input):
             "display_type": "question"
         })
 
-        # 매칭 5개 이상일 경우 유도 질문
         if len(top_matches) >= 5:
             main_word = question_input.strip()
             main_word = re.sub(r"[^가-힣a-zA-Z0-9]", "", main_word)
@@ -793,7 +784,7 @@ def handle_question(question_input):
             last_pending_norm = st.session_state.get("last_pending_norm")
             last_pending_at = st.session_state.get("last_pending_at", 0.0)
             if last_pending_norm == curr_pending_norm and (now_ts - last_pending_at) < COOLDOWN_SECONDS:
-                return  # 이번엔 유도질문 카드 생성하지 않음
+                return  
             st.session_state["last_pending_norm"] = curr_pending_norm
             st.session_state["last_pending_at"] = now_ts
 
@@ -922,6 +913,8 @@ def handle_question(question_input):
             "display_type": "llm_answer"
         })
         st.session_state.scroll_to_bottom_flag = True
+
+
 def display_chat_html_content():
     aesoon_icon = get_character_img_base64(config["image"])
     if not aesoon_icon:
