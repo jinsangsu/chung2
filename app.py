@@ -575,7 +575,7 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
         f"""
         <div class="att-image-wrapper">
             <a href="{it['view']}" target="_blank" rel="noreferrer noopener">
-                <img class="att-image" src="{it['embed']}" alt=""/>
+                <img src="{it['embed']}" alt="" class="att-image"/>
             </a>
             <div class="att-caption">
                 <a href="{it['view']}" target="_blank" rel="noreferrer noopener">{it['name']}</a>
@@ -1098,7 +1098,7 @@ def display_chat_html_content():
 
 .att-image-wrapper {
   display: inline-block;
-  margin: 6px;
+  margin: 8px;
   text-align: center;
 }
 
