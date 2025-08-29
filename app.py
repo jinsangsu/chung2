@@ -787,22 +787,28 @@ def handle_question(question_input):
                 base, action = split_compound_korean(core_kw)
 
                 if action:
-                    # 1순위: base와 action이 모두 포함된 질문
-                    exact_full = [r for score, r in filtered_matches
-                                     if question_input.strip() in r["질문"]]
-                    if exact_full:
-                       top_matches = exact_full[:10]
-                    else:
-        # 1순위: base와 action이 모두 포함된 질문
-                        strict = [r for score, r in filtered_matches
-                                   if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
-                        if strict:
-                            top_matches = strict[:10]
-                        else:
-            # 2순위: base(예: "카드")만 포함된 질문
-                            fallback = [r for score, r in filtered_matches
-                                           if base in qnorm(r["질문"])]
-                            top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
+    # ✅ 0순위: 질문 원문 그대로 먼저 매칭 (normalize 무시)
+    exact_full = [r for score, r in filtered_matches
+                  if question_input.strip() in r["질문"]]
+    if exact_full:
+        top_matches = exact_full[:10]
+    else:
+        # ✅ 1순위: normalize된 core_kw로 매칭
+        norm_full = [r for score, r in filtered_matches
+                     if core_kw in qnorm(r["질문"])]
+        if norm_full:
+            top_matches = norm_full[:10]
+        else:
+            # 2순위: base+action
+            strict = [r for score, r in filtered_matches
+                      if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
+            if strict:
+                top_matches = strict[:10]
+            else:
+                # 3순위: base만
+                fallback = [r for score, r in filtered_matches
+                            if base in qnorm(r["질문"])]
+                top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
                 else:
                     # 일반 단일어(예: "카드")
                     primary = [r for score, r in filtered_matches
