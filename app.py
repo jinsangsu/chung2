@@ -559,10 +559,6 @@ def _parse_attachments(cell_value):
 
 
 def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> str:
-    """
-    limit: 표시할 이미지 썸네일 수(없으면 전부)
-    show_badge: 카드 상단에 '🖼 사진 N' 배지를 붙일 때 True
-    """
     items = _parse_attachments(cell_value)
     if not items:
         return ""
@@ -574,11 +570,12 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
     if limit is not None:
         imgs = imgs[:max(0, int(limit))]
 
+    # ✅ 이미지 썸네일 (파일명은 캡션으로만 표시)
     img_html = "".join([
         f"""
         <div class="att-image-wrapper">
             <a href="{it['view']}" target="_blank" rel="noreferrer noopener">
-                <img src="{it['embed']}" alt="{it['name']}" class="att-image"/>
+                <img class="att-image" src="{it['embed']}" alt="첨부 이미지"/>
             </a>
             <div class="att-caption">{it['name']}</div>
         </div>
@@ -586,6 +583,7 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
         for it in imgs
     ])
 
+    # ✅ 일반 파일은 텍스트 칩 형태
     file_html = "".join([
         f"""<a class="att-chip" href="{it['view']}" target="_blank" rel="noreferrer noopener">📎 {it['name']}</a>"""
         for it in files
@@ -600,7 +598,6 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
       <div class="att-files">{file_html}</div>
     </div>
     """
-
 
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.7
