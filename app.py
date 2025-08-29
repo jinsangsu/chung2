@@ -608,7 +608,7 @@ def handle_question(question_input):
     aesoon_icon = get_character_img_base64(config["image"])
     bot_name = config["bot_name"]
     user_txt = question_input.strip().replace(" ", "").lower()
-
+    
 # ✅ [1단계 추가] 이전에 남아있는 pending_keyword 강제 초기화 (질문 바뀐 경우)
     if st.session_state.pending_keyword:
         prev = normalize_text(st.session_state.pending_keyword)
@@ -621,7 +621,7 @@ def handle_question(question_input):
         (["사랑", "좋아해"], "사장님, 저도 사랑합니다! 💛 언제나 사장님 곁에 있을게요!"),
         (["잘지", "안녕"], "네! 안녕하세요!!😊 사장님~ 오늘은 기분 좋으시죠?"),
         (["보고"], "저도 사장님 보고 싶었어요! 곁에서 항상 응원하고 있습니다💛"),
-        (["고마워", "감사"], "항상 사장님께 감사드립니다! 도움이 되어드릴 수 있어 행복해요😊"),
+        (["고마워", "감사], "항상 사장님께 감사드립니다! 도움이 되어드릴 수 있어 행복해요😊"),
         (["힘들", "지쳤", "속상"], "많이 힘드셨죠? 언제든 제가 사장님 곁을 지키고 있습니다. 파이팅입니다!"),
         (["피곤"], "많이 피곤하셨죠? 푹 쉬시고, 에너지 충전해서 내일도 힘내세요!"),
         (["졸려"], "졸릴 땐 잠깐 스트레칭! 건강도 꼭 챙기시고, 화이팅입니다~"),
@@ -685,8 +685,8 @@ def handle_question(question_input):
             return
 
     # ↓↓↓ Q&A 챗봇 처리 ↓↓↓
-    core_kw = normalize_text(question_input)   # 예: "자동 이체" -> "자동이체"
-    single_kw_mode = 2 <= len(core_kw) <= 6    # 2~6자면 단일 핵심어 취급
+    core_kw = normalize_text(question_input)    # 예: "자동 이체" -> "자동이체"
+    single_kw_mode = 2 <= len(core_kw) <= 6     # 2~6자면 단일 핵심어 취급
 
 # 2) 단일핵심어일 땐 pending_keyword를 결합하지 않음(세션 영향 차단)
     if st.session_state.pending_keyword and not single_kw_mode:
@@ -696,8 +696,8 @@ def handle_question(question_input):
         user_input = question_input
 
     try:
-        records = get_sheet_records()  # ✅ 캐시 사용(60초)
-        indexed, inverted, idf = get_qa_index()  # ✅ 추가: 전처리 인덱스 사용
+        records = get_sheet_records()
+        indexed, inverted, idf = get_qa_index()
 
         q_input_norm = normalize_text(user_input)
         q_input_keywords = extract_keywords(user_input)
@@ -706,19 +706,18 @@ def handle_question(question_input):
         single_kw_mode = len(core_kw) <= 6 and len(core_kw) >= 2 
 
         if not q_input_keywords or all(len(k) < 2 for k in q_input_keywords):
-           st.session_state.chat_log.append({
-               "role": "user",
-               "content": question_input,
-               "display_type": "question"
-           })
-           st.session_state.chat_log.append({
+            st.session_state.chat_log.append({
+                "role": "user",
+                "content": question_input,
+                "display_type": "question"
+            })
+            st.session_state.chat_log.append({
                 "role": "bot",
                 "content": "사장님~ 궁금하신 키워드를 한두 단어라도 입력해 주세요! 예: '카드', '자동이체', '해지' 등 😊",
                 "display_type": "single_answer"
-           })
-           st.session_state.scroll_to_bottom_flag = True
-           return
-
+            })
+            st.session_state.scroll_to_bottom_flag = True
+            return
 
         matched = []
 # ✅ [2단계 추가] 이전에 남은 keyword가 있고, 이번에 매칭이 충분하지 않으면 초기화
@@ -728,10 +727,6 @@ def handle_question(question_input):
 # 1) 키워드로 후보 줄이기 (inverted index)
         candidate_idxs = set()
         for kw in q_input_keywords:
-            if single_kw_mode:
-                for idx, item in enumerate(indexed):
-                    if core_kw and (core_kw in item["q_norm"]):
-                        candidate_idxs.add(idx)
             if kw in inverted:
                 candidate_idxs.update(inverted[kw])
 
@@ -747,22 +742,9 @@ def handle_question(question_input):
             sheet_keywords = item["kwords"]
 
             match_weight = sum(idf.get(kw, 1.0) for kw in q_input_keywords if kw in sheet_keywords)
-
-            sim_score = 0.0
-            if match_weight == 0.0:
-                sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
-
+            sim_score = get_similarity_score(q_input_norm, sheet_q_norm)
             total_score = match_weight + sim_score
-
-            if len(q_input_keywords) == 1:
-                kw0 = q_input_keywords[0]
-        # 단일 키워드는 부분일치도 허용
-                if any(kw0 in sk or sk in kw0 for sk in sheet_keywords):
-                    matched.append((total_score, r))
-            else:
-        # 복합키워드: 가중치(≥1.8) 또는 유사도(≥0.58) 중 하나만 충족해도 채택
-                if match_weight >= 1.8 or sim_score >= 0.58:
-                    matched.append((total_score, r))
+            matched.append((total_score, r))
 
         matched.sort(key=lambda x: x[0], reverse=True)
         seen_questions = set()
@@ -773,73 +755,32 @@ def handle_question(question_input):
                 seen_questions.add(r["질문"])
         matched = unique_matched
 
-
-        if single_kw_mode:
-            filtered_matches = matched
-        else:
-            filtered_matches = [(score, r) for score, r in matched if score >= 1.6]
-
+        filtered_matches = [(score, r) for score, r in matched if score >= 1.6]
+        
+        # 수정 시작: 이전의 복잡한 로직을 아래의 견고한 로직으로 대체합니다.
+        top_matches = []
         if q_input_keywords:
             qnorm = lambda s: normalize_text(s)
-
-            if single_kw_mode:
-                # ✅ 합성어 우선: 예) "카드변경" → base="카드", action="변경"
-                base, action = split_compound_korean(core_kw)
-
-                if action:
-                    # 1순위: base와 action이 모두 포함된 질문
-                    exact_full = [r for score, r in filtered_matches
-                                     if question_input.strip() in r["질문"]]
-                    if exact_full:
-                       top_matches = exact_full[:10]
-                    else:
-        # 1순위: base와 action이 모두 포함된 질문
-                        norm_full = [r for score, r in filtered_matches
-                                        if core_kw in qnorm(r["질문"])]
-                        if norm_full:
-                            top_matches = norm_full[:10]
-                        else:
-            # 2순위: base(예: "카드")만 포함된 질문
-                            strict = [r for score, r in filtered_matches
-                                          if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
-                            if strict:
-                                top_matches = strict[:10]
-
-                            else:
-                                  fallback = [r for score, r in filtered_matches
-                                                 if base in qnorm(r["질문"])]
-                                  if fallback:
-                                      top_matches = fallback[:10]
-                                  else:
-                                      top_matches = [r for score, r in filtered_matches[:10]]
+            
+            # 1. '카드변경'처럼 합성어 질문을 우선적으로 찾습니다.
+            base, action = split_compound_korean(core_kw)
+            if action:
+                strict_matches = [r for score, r in filtered_matches if (base in qnorm(r["질문"])) and (action in qnorm(r["질문"]))]
+                if strict_matches:
+                    top_matches = strict_matches[:10]
+            
+            # 2. 합성어 매칭이 실패했거나, 일반 키워드 질문일 경우 키워드 유사도 기반으로 찾습니다.
+            if not top_matches:
+                primary_matches = [r for score, r in filtered_matches if core_kw in qnorm(r["질문"])]
+                if primary_matches:
+                    top_matches = primary_matches[:10]
                 else:
-                    # 일반 단일어(예: "카드")
-                    primary = [r for score, r in filtered_matches
-                                    if (core_kw in qnorm(r["질문"])) or (q_input_norm in qnorm(r["질문"]))]
-
-                    if primary:
-                        top_matches = primary[:10]
-                    else:
-                       # ✅ fallback: 단일어가 포함된 모든 질문을 다시 후보로 반환
-                        fallback = [r for score, r in filtered_matches
-                                        if core_kw in qnorm(r["질문"]) or q_input_norm in qnorm(r["질문"])]
-                        top_matches = fallback[:10] if fallback else [r for score, r in filtered_matches[:10]]
-
-            else:
-                # 복합 키워드: 더 엄격하게 AND
-                top_matches = [
-                    r for score, r in filtered_matches
-                    if (q_input_norm in qnorm(r["질문"])) and any(k in qnorm(r["질문"]) for k in q_input_keywords)
-                ]
-                if not top_matches:
+                    # 3. 마지막 대안: 매칭된 모든 후보 중에서 상위 10개를 선택합니다.
                     top_matches = [r for score, r in filtered_matches[:10]]
-
-            # 공통 상한
-            top_matches = top_matches[:10]
-
         else:
             top_matches = [r for score, r in filtered_matches[:4]]
-        
+        # 수정 끝.
+
         st.session_state.chat_log.append({
             "role": "user",
             "content": question_input,
@@ -854,117 +795,100 @@ def handle_question(question_input):
             now_ts = time.time()
             curr_pending_norm = normalize_text(main_word)
             last_pending_norm = st.session_state.get("last_pending_norm")
-            last_pending_at   = st.session_state.get("last_pending_at", 0.0)
+            last_pending_at = st.session_state.get("last_pending_at", 0.0)
             if last_pending_norm == curr_pending_norm and (now_ts - last_pending_at) < COOLDOWN_SECONDS:
                 return  # 이번엔 유도질문 카드 생성하지 않음
-            # 다음 비교를 위해 최신값 저장
             st.session_state["last_pending_norm"] = curr_pending_norm
-            st.session_state["last_pending_at"]   = now_ts
+            st.session_state["last_pending_at"] = now_ts
 
-            
             example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in top_matches[:5]]
             examples_html = "".join([
                 f"""
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
                     <strong style="color:#003399;">질문) {q}</strong><br>
                     <button class="example-ask-btn" data-q="{q.replace('"','&quot;')}"
-                      style="margin-top:8px; padding:6px 10px; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;">
-          이 질문으로 다시 물어보기
+                        style="margin-top:8px; padding:6px 10px; border-radius:8px; border:1px solid #cbd5e1; cursor:pointer;">
+                    이 질문으로 다시 물어보기
                     </button>
                     <br>
                     <img src="{aesoon_icon}" width="22" style="vertical-align:middle; margin-right:6px; border-radius:6px;">  {a}
                 </div>
                 """ for q, a in example_pairs
             ])
-
-
             st.session_state.pending_keyword = user_input
             st.session_state.chat_log.append({
-    "role": "bot",
-    "content": (
-        "<div class='example-guide-block'>"
-        f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'>"
-        f"<span class='example-guide-title'>사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요?</span>"
-        " 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!<br>"
-        "<span class='example-guide-emph'><b>아래처럼 다시 물어보시면 바로 답변드릴 수 있어요.</b></span><br>"
-        f"{examples_html}"
-        "</div>"
-        """
-        <style>
-        .example-guide-block { margin: 10px 0 0 0; font-size: 1.05em; }
-        .example-guide-title { color: #226ed8; font-weight: 700; }
-        .example-guide-emph  { color: #d32f2f; font-weight: 700; }
-        .example-item {
-            margin-top: 9px; margin-bottom: 2px; padding-left: 10px;
-            line-height: 1.5; border-left: 3px solid #e3e3e3;
-            background: #f9fafb; border-radius: 5px; font-size: 0.98em;
-        }
-        @media (prefers-color-scheme: dark) {
-            .example-guide-title { color: #64b5f6; }
-            .example-guide-emph  { color: #ffab91; }
-            .example-item { background: #232c3a; border-left: 3px solid #374151; color: #eaeaea; }
-        }
-        </style>
-        """
-        """
-        <script>
-        (function(){
-          function setInputValueAndSubmit(q){
-            const doc = window.parent.document;
-
-            const input = doc.querySelector('textarea, input[type="text"]');
-            if (!input) return;
-
-            const proto  = (input.tagName==='TEXTAREA')
-                         ? window.parent.HTMLTextAreaElement.prototype
-                         : window.parent.HTMLInputElement.prototype;
-            const setter = Object.getOwnPropertyDescriptor(proto,'value').set;
-            setter.call(input, q);
-            input.dispatchEvent(new Event('input', { bubbles:true }));
-            input.focus();
-
-            setTimeout(function(){
-              const form = input.closest('form');
-              if (form && typeof form.requestSubmit === 'function') { form.requestSubmit(); return; }
-              if (form) {
-                const tmp = doc.createElement('button'); tmp.type='submit'; tmp.style.display='none';
-                form.appendChild(tmp); tmp.click(); form.removeChild(tmp); return;
-              }
-              let btn = doc.querySelector('button[kind="secondaryFormSubmit"]')
-                     || doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]')
-                     || Array.from(doc.querySelectorAll('button')).find(b => /^\s*Enter\s*$/i.test(b.innerText || ''));
-              if (btn) { btn.click(); return; }
-
-              input.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true}));
-              input.dispatchEvent(new KeyboardEvent('keyup',   {key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true}));
-            }, 150);
-          }
-
-          document.querySelectorAll('.example-ask-btn').forEach(function(btn){
-            btn.addEventListener('click', function(){
-              const q = this.getAttribute('data-q') || '';
-              setInputValueAndSubmit(q);
-            });
-          });
-        })();
-        </script>
-        """
-    ),
-    "display_type": "pending"
-})
-
-               
+                "role": "bot",
+                "content": (
+                    "<div class='example-guide-block'>"
+                    f"<p><img src='{aesoon_icon}' width='26' style='vertical-align:middle; margin-right:6px; border-radius:6px;'>"
+                    f"<span class='example-guide-title'>사장님, <b>{main_word}</b>의 어떤 부분이 궁금하신가요?</span>"
+                    " 유사한 질문이 너무 많아요~ 궁금한 점을 좀 더 구체적으로 입력해 주세요!<br>"
+                    "<span class='example-guide-emph'><b>아래처럼 다시 물어보시면 바로 답변드릴 수 있어요.</b></span><br>"
+                    f"{examples_html}"
+                    "</div>"
+                    """
+                    <style>
+                    .example-guide-block { margin: 10px 0 0 0; font-size: 1.05em; }
+                    .example-guide-title { color: #226ed8; font-weight: 700; }
+                    .example-guide-emph  { color: #d32f2f; font-weight: 700; }
+                    .example-item {
+                        margin-top: 9px; margin-bottom: 2px; padding-left: 10px;
+                        line-height: 1.5; border-left: 3px solid #e3e3e3;
+                        background: #f9fafb; border-radius: 5px; font-size: 0.98em;
+                    }
+                    @media (prefers-color-scheme: dark) {
+                        .example-guide-title { color: #64b5f6; }
+                        .example-guide-emph  { color: #ffab91; }
+                        .example-item { background: #232c3a; border-left: 3px solid #374151; color: #eaeaea; }
+                    }
+                    </style>
+                    """
+                    """
+                    <script>
+                    (function(){
+                      function setInputValueAndSubmit(q){
+                        const doc = window.parent.document;
+                        const input = doc.querySelector('textarea, input[type="text"]');
+                        if (!input) return;
+                        const proto  = (input.tagName==='TEXTAREA') ? window.parent.HTMLTextAreaElement.prototype : window.parent.HTMLInputElement.prototype;
+                        const setter = Object.getOwnPropertyDescriptor(proto,'value').set;
+                        setter.call(input, q);
+                        input.dispatchEvent(new Event('input', { bubbles:true }));
+                        input.focus();
+                        setTimeout(function(){
+                          const form = input.closest('form');
+                          if (form && typeof form.requestSubmit === 'function') { form.requestSubmit(); return; }
+                          if (form) {
+                            const tmp = doc.createElement('button'); tmp.type='submit'; tmp.style.display='none';
+                            form.appendChild(tmp); tmp.click(); form.removeChild(tmp); return;
+                          }
+                          let btn = doc.querySelector('button[kind="secondaryFormSubmit"]') || doc.querySelector('button[data-testid="baseButton-secondaryFormSubmit"]') || Array.from(doc.querySelectorAll('button')).find(b => /^\s*Enter\s*$/i.test(b.innerText || ''));
+                          if (btn) { btn.click(); return; }
+                          input.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true}));
+                          input.dispatchEvent(new KeyboardEvent('keyup',   {key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true}));
+                        }, 150);
+                      }
+                      document.querySelectorAll('.example-ask-btn').forEach(function(btn){
+                        btn.addEventListener('click', function(){
+                          const q = this.getAttribute('data-q') || '';
+                          setInputValueAndSubmit(q);
+                        });
+                      });
+                    })();
+                    </script>
+                    """
+                ),
+                "display_type": "pending"
+            })
             st.session_state.scroll_to_bottom_flag = True
             return
-
 
         if len(top_matches) == 1:
             r = top_matches[0]
             bot_answer_content = {
                 "q": r["질문"],
                 "a": add_friendly_prefix(r["답변"]),
-                "files": r.get("첨부_JSON", "")   # ✅ 첨부JSON 전달
-                
+                "files": r.get("첨부_JSON", "")
             }
             bot_display_type = "single_answer"
 
@@ -974,23 +898,19 @@ def handle_question(question_input):
                 bot_answer_content.append({
                     "q": r["질문"],
                     "a": add_friendly_prefix(r["답변"]),
-                    "files": r.get("첨부_JSON", "")  # ✅ 첨부JSON 전달
-                    
+                    "files": r.get("첨부_JSON", "")
                 })
             bot_display_type = "multi_answer"
-       
 
-    # 키워드 자체가 부족했던 경우는 이미 위에서 안내했으므로, 이중 응답 막기
-            if len(q_input_keywords) == 0 or all(len(k) < 2 for k in q_input_keywords):
-                return  # 이미 위에서 안내 멘트 출력됨
-            else:
-                st.session_state.chat_log.append({
-                    "role": "bot",
-                    "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~",
-                    "display_type": "single_answer"
-                })
+        else: # 매칭되는 질문이 없을 경우
+            st.session_state.chat_log.append({
+                "role": "bot",
+                "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~",
+                "display_type": "single_answer"
+            })
             st.session_state.scroll_to_bottom_flag = True
             return
+
         if len(top_matches) > 0:
             st.session_state.chat_log.append({
                 "role": "bot",
@@ -998,6 +918,7 @@ def handle_question(question_input):
                 "display_type": bot_display_type
             })
         st.session_state.scroll_to_bottom_flag = True
+
     except Exception as e:
         st.session_state.chat_log.append({
             "role": "bot",
