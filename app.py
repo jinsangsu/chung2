@@ -581,9 +581,7 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
                   📷 {it['name']} 열기
                 <img src="{it['embed']}" alt="화일" class="att-image"/>
             </a>
-            <div class="att-caption">
-                <a href="{it['view']}" target="_blank" rel="noreferrer noopener">{it['name']}</a>
-            </div>
+            
         </div>
         """
         for it in imgs
