@@ -578,7 +578,7 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
                   style="display:inline-block; margin:6px 0; padding:8px 14px; 
                   border-radius:8px; background:#ff914d; color:#fff; 
                   font-weight:bold; text-decoration:none;">
-                  📷 {it['name']} 열기
+                  📷 화일열어보기
                 
             </a>
             
