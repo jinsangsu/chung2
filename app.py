@@ -80,7 +80,8 @@ def is_duplicate_submit(text: str, branch: str) -> bool:
 
 def append_log_row_to_logs(row: list):
     """
-    row 예시: [date, time, branch, question]
+    row 예시: [date, time, branch, question, answer_count]
+    - answer_count는 0~10 사이로 저장
     """
     gc = _get_gsheet_client()
     sh = gc.open_by_key(st.secrets["LOG_SHEET_KEY"])
@@ -88,9 +89,50 @@ def append_log_row_to_logs(row: list):
         ws = sh.worksheet("logs")
     except gspread.exceptions.WorksheetNotFound:
         ws = sh.add_worksheet(title="logs", rows=1000, cols=10)
-        ws.append_row(["date", "time", "branch", "question"], value_input_option="USER_ENTERED")
+        ws.append_row(["date", "time", "branch", "question", "answer_count"], value_input_option="USER_ENTERED")
+
+    # ✅ 헤더 보정(기존 4열 → 5열 확장)
+    try:
+        header = ws.row_values(1)
+    except Exception:
+        header = []
+    if not header:
+        header = ["date", "time", "branch", "question", "answer_count"]
+        ws.update("1:1", [header])
+    elif "answer_count" not in header:
+        header.append("answer_count")
+        ws.update("1:1", [header])
+
+    # ✅ 안전 캡핑(0~10)
+    if len(row) >= 5:
+        try:
+            n = int(row[4])
+        except Exception:
+            n = 0
+        row[4] = max(0, min(n, 10))
+
     ws.append_row(row, value_input_option="USER_ENTERED")
 
+def _log_answer_count(question_input: str, count: int):
+    """답변 개수를 0~10 사이로 캡핑해 logs 시트에 기록 (질문 원문 그대로 저장)"""
+    try:
+        kst = pytz.timezone("Asia/Seoul")
+        now = datetime.now(kst)
+        try:
+            n = int(count)
+        except Exception:
+            n = 0
+        n = max(0, min(n, 10))
+
+        append_log_row_to_logs([
+            now.strftime("%Y-%m-%d"),
+            now.strftime("%H:%M:%S"),
+            get_branch_param(),
+            question_input,   # ✅ 가공 없이 원문 그대로 기록
+            n
+        ])
+    except Exception:
+        pass
 def get_branch_param() -> str:
     # Streamlit 버전별로 안전하게 branch 파라미터 읽기
     try:
@@ -688,6 +730,7 @@ def handle_question(question_input):
             st.session_state.chat_log.append({"role": "user", "content": question_input, "display_type": "question"})
             st.session_state.chat_log.append({"role": "bot", "content": "사장님~ 궁금하신 키워드를 한두 단어라도 입력해 주세요! 예: '카드', '자동이체', '해지' 등 😊", "display_type": "single_answer"})
             st.session_state.scroll_to_bottom_flag = True
+            _log_answer_count(question_input, 0)
             return
 
         matched = []
@@ -742,6 +785,7 @@ def handle_question(question_input):
         })
 
         if not top_matches:
+            _log_answer_count(question_input, 0)
             st.session_state.chat_log.append({
                 "role": "bot", "content": "사장님~~죄송해요.. 아직 준비가 안된 질문이에요. 이 부분은 매니저에게 개별 문의 부탁드려요^*^~", "display_type": "single_answer"
             })
@@ -755,6 +799,7 @@ def handle_question(question_input):
             last_pending_at = st.session_state.get("last_pending_at", 0.0)
             if last_pending_norm == curr_pending_norm and (now_ts - last_pending_at) < COOLDOWN_SECONDS:
                 return
+            _log_answer_count(question_input, displayed_count)  # ✅ 새 카드 생성 시에만 기록
             st.session_state["last_pending_norm"] = curr_pending_norm
             st.session_state["last_pending_at"] = now_ts
             
@@ -838,6 +883,7 @@ def handle_question(question_input):
                 "display_type": "pending"
             })
         elif 2 <= len(top_matches) <= 4:
+            _log_answer_count(question_input, len(top_matches))
             bot_answer_content = []
             for r in top_matches:
                 bot_answer_content.append({
@@ -847,6 +893,7 @@ def handle_question(question_input):
                 "role": "bot", "content": bot_answer_content, "display_type": "multi_answer"
             })
         elif len(top_matches) == 1:
+             _log_answer_count(question_input, 1)
              r = top_matches[0]
              bot_answer_content = {
                 "q": r["질문"], "a": add_friendly_prefix(r["답변"]), "files": r.get("첨부_JSON", "")
@@ -1260,14 +1307,7 @@ with st.form("input_form", clear_on_submit=True):
             st.stop()
 
         # 3) 로그 기록 후 처리
-        kst = pytz.timezone("Asia/Seoul")
-        now = datetime.now(kst)
-        append_log_row_to_logs([
-            now.strftime("%Y-%m-%d"),
-            now.strftime("%H:%M:%S"),
-            _branch,
-            question_input.strip()
-        ])
+        
         handle_question(question_input)
         st.rerun()
 
