@@ -579,7 +579,7 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
                   style="display:inline-block; margin:6px 0; padding:8px 14px; 
                   border-radius:8px; background:#ff914d; color:#fff; 
                   font-weight:bold; text-decoration:none;">
-                  📎 화일열기
+                  📎 파일열기
                 
             </a>
             
@@ -760,7 +760,7 @@ def handle_question(question_input):
             st.session_state["last_pending_norm"] = curr_pending_norm
             st.session_state["last_pending_at"] = now_ts
             
-            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in top_matches]
+            example_pairs = [(m["질문"], add_friendly_prefix(m["답변"])) for m in top_matches[:10]]
             examples_html = "".join([
                 f"""
                 <div class='chat-multi-item' style="margin-bottom: 22px; padding: 14px 18px; border-radius: 14px; border: 1.5px solid #e3e3e3; background: #fcfcfd;">
