@@ -575,11 +575,17 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
         imgs = imgs[:max(0, int(limit))]
 
     img_html = "".join([
-        f"""<a href="{it['view']}" target="_blank" rel="noreferrer noopener" class="att-thumb">
-              <img src="{it['embed']}" alt="{it['name']}" loading="lazy"/>
-            </a>"""
+        f"""
+        <div class="att-image-wrapper">
+            <a href="{it['view']}" target="_blank" rel="noreferrer noopener">
+                <img src="{it['embed']}" alt="{it['name']}" class="att-image"/>
+            </a>
+            <div class="att-caption">{it['name']}</div>
+        </div>
+        """
         for it in imgs
     ])
+
     file_html = "".join([
         f"""<a class="att-chip" href="{it['view']}" target="_blank" rel="noreferrer noopener">📎 {it['name']}</a>"""
         for it in files
@@ -1090,6 +1096,32 @@ def display_chat_html_content():
     background:#111; color:#fff; font-size:12px; line-height:1;
     padding:4px 8px; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,.15);
   }
+
+.att-image-wrapper {
+  display: inline-block;
+  margin: 6px;
+  text-align: center;
+}
+
+.att-image {
+  max-width: 220px;
+  max-height: 160px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.att-image:hover {
+  transform: scale(1.05);
+}
+
+.att-caption {
+  margin-top: 4px;
+  font-size: 0.8em;
+  color: #555;
+  word-break: break-all;
+}
 
   @media(prefers-color-scheme:dark){
     .att-thumb{ border-color:#374151; background:#111; }
