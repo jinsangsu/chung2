@@ -39,6 +39,20 @@ import re
 import json
 import hashlib  # ✅ 중복 방지용 시그니처 생성
 
+def inject_file_button_css():
+    st.markdown(
+        """
+        <style>
+        .file-link-btn{display:inline-block;padding:10px 16px;border-radius:10px;background:#ff8a3d;color:#fff;text-decoration:none;font-weight:700}
+        .file-link-btn:hover{opacity:.92}
+        .file-summary-card{margin-top:10px;padding:12px 14px;border-radius:12px;background:#fff7f0;border:1px solid #ffd5b6}
+        .file-summary-card h4{margin:0 0 6px 0}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+inject_file_button_css()
+
 GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
@@ -644,7 +658,14 @@ def _render_attachments_block(cell_value, *, limit=None, show_badge=False) -> st
       <div class="att-files">{file_html}</div>
     </div>
     """
-
+def render_answer_with_file(summary: str, link: str) -> str:
+    """파일요약/링크 카드 HTML 생성"""
+    html = ""
+    if summary:
+        html += f"<div class='file-summary-card'><h4>📄 파일 요약</h4><div>{summary}</div></div>"
+    if link:
+        html += f"<div style='margin-top:8px'><a class='file-link-btn' href='{link}' target='_blank' rel='noopener'>파일 열기</a></div>"
+    return html
 def handle_question(question_input):
     SIMILARITY_THRESHOLD = 0.7
     aesoon_icon = get_character_img_base64(config["image"])
@@ -899,6 +920,13 @@ def handle_question(question_input):
              bot_answer_content = {
                 "q": r["질문"], "a": add_friendly_prefix(r["답변"]), "files": r.get("첨부_JSON", "")
             }
+             file_html = render_answer_with_file(
+                 summary=r.get("파일요약"),
+                 link=r.get("첨부링크")
+             )
+             if file_html:
+                 bot_answer_content["a"] += file_html
+             
              st.session_state.chat_log.append({
                 "role": "bot", "content": bot_answer_content, "display_type": "single_answer"
             })
@@ -1356,3 +1384,4 @@ window.addEventListener('focusin', function(e) {
 });
 </script>
 """, unsafe_allow_html=True)
+
