@@ -211,11 +211,18 @@ with st.sidebar:
             client = _get_openai_client()
             model = st.secrets.get("OPENAI_MODEL", "gpt-4o-mini")
 
-            # 모델 리스트 호출까지 해보면 진짜 연동 검증 완료
-            _ = client.models.list()
+            # ✅ 실제 요약 호출까지 테스트(짧게)
+            r = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "테스트"},
+                    {"role": "user", "content": "한 줄로 'OK'라고만 답해줘."}
+                ],
+                temperature=0.0,
+                max_tokens=10
+            )
 
-            st.success(f"OpenAI API 호출까지 정상 (models.list OK)\n사용 모델: {model}")
-
+            st.success(f"OpenAI API 호출까지 정상 (사용 모델: {model})")
         except Exception as e:
             st.error(f"OpenAI 연결 실패: {e}")
 
