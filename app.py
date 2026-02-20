@@ -1001,48 +1001,69 @@ def handle_question(question_input):
                 "display_type": "pending"
             })
         elif 2 <= len(top_matches) <= 4:
-    _log_answer_count(question_input, len(top_matches))
+            _log_answer_count(question_input, len(top_matches))
 
     # 1) 시트 답변들을 모아서
-    answers = []
-    for r in top_matches:
-        a = str(r.get("답변", "")).strip()
-        if a:
-            answers.append(a)
+            answers = []
+            for r in top_matches:
+                a = str(r.get("답변", "")).strip()
+                if a:
+                    answers.append(a)
 
-    # 2) OpenAI로 종합 요약 (실패하면 기존 방식으로 fallback)
-    try:
-        ai_summary = generate_ai_summary(question_input, answers)
-        ai_summary = add_friendly_prefix(ai_summary)
+    # 답변이 아예 없으면(예외 케이스) 기존 방식으로
+            if not answers:
+                bot_answer_content = []
+                for r in top_matches:
+                    bot_answer_content.append({
+                        "q": r.get("질문", ""),
+                        "a": add_friendly_prefix(str(r.get("답변", ""))),
+                        "files": r.get("첨부_JSON", "")
+                    })
+                st.session_state.chat_log.append({
+                    "role": "bot",
+                    "content": bot_answer_content,
+                    "display_type": "multi_answer"
+                })
+            else:
+        # 2) OpenAI로 종합 요약 (OpenAI 호출만 try)
+                ai_summary = None
+                try:
+                    ai_summary = generate_ai_summary(question_input, answers)
+                except Exception:
+                    ai_summary = None
 
-        # 3) (기본값) 첨부는 첫 번째 매칭만 보여주기
-        r0 = top_matches[0]
-        bot_answer_content = {
-            "q": "여러 답변을 종합한 결과입니다",
-            "a": ai_summary,
-            "files": r0.get("첨부_JSON", "")
-        }
+        # 3) 성공 시: single_answer로 종합본 제공
+                if ai_summary and str(ai_summary).strip() and not str(ai_summary).startswith("(AI 요약 실패"):
+                    ai_summary = add_friendly_prefix(ai_summary)
 
-        st.session_state.chat_log.append({
-            "role": "bot",
-            "content": bot_answer_content,
-            "display_type": "single_answer"
-        })
+            # (기본값) 첨부는 첫 번째 매칭만 보여주기
+                    r0 = top_matches[0]
+                    bot_answer_content = {
+                        "q": "여러 답변을 종합한 결과입니다",
+                        "a": ai_summary,
+                        "files": r0.get("첨부_JSON", "")
+                    }
 
-    except Exception as e:
-        # OpenAI 오류 시: 기존 multi_answer로 안전하게 내려보내기
-        bot_answer_content = []
-        for r in top_matches:
-            bot_answer_content.append({
-                "q": r["질문"],
-                "a": add_friendly_prefix(r["답변"]),
-                "files": r.get("첨부_JSON", "")
-            })
-        st.session_state.chat_log.append({
-            "role": "bot",
-            "content": bot_answer_content,
-            "display_type": "multi_answer"
-        })
+                    st.session_state.chat_log.append({
+                        "role": "bot",
+                        "content": bot_answer_content,
+                        "display_type": "single_answer"
+                    })
+
+        # 4) 실패 시: 기존 multi_answer로 안전하게 폴백
+                else:
+                    bot_answer_content = []
+                    for r in top_matches:
+                        bot_answer_content.append({
+                            "q": r.get("질문", ""),
+                            "a": add_friendly_prefix(str(r.get("답변", ""))),
+                            "files": r.get("첨부_JSON", "")
+                        })
+                    st.session_state.chat_log.append({
+                        "role": "bot",
+                        "content": bot_answer_content,
+                        "display_type": "multi_answer"
+                    })
         elif len(top_matches) == 1:
              _log_answer_count(question_input, 1)
              r = top_matches[0]
