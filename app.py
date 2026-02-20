@@ -975,15 +975,30 @@ def handle_question(question_input):
                 "display_type": "pending"
             })
         elif 2 <= len(top_matches) <= 4:
-            _log_answer_count(question_input, len(top_matches))
-            bot_answer_content = []
-            for r in top_matches:
-                bot_answer_content.append({
-                    "q": r["질문"], "a": add_friendly_prefix(r["답변"]), "files": r.get("첨부_JSON", "")
+             _log_answer_count(question_input, len(top_matches))
+
+    # 1) 시트 답변들을 모아서
+              answers = []
+              for r in top_matches:
+                   a = str(r.get("답변", "")).strip()
+                   if a:
+                      answers.append(a)
+
+    # 2) OpenAI로 종합 요약
+              ai_summary = generate_ai_summary(question_input, answers)
+              ai_summary = add_friendly_prefix(ai_summary)
+
+    # 3) (선택) 첨부는 "첫번째 매칭"만 보여주기 (기본값)
+               r0 = top_matches[0]
+               bot_answer_content = {
+                    "q": "여러 답변을 종합한 결과입니다",
+                    "a": ai_summary,
+                    "files": r0.get("첨부_JSON", "")
+                }
+
+                st.session_state.chat_log.append({
+                     "role": "bot", "content": bot_answer_content, "display_type": "single_answer"
                 })
-            st.session_state.chat_log.append({
-                "role": "bot", "content": bot_answer_content, "display_type": "multi_answer"
-            })
         elif len(top_matches) == 1:
              _log_answer_count(question_input, 1)
              r = top_matches[0]
