@@ -81,39 +81,65 @@ def _get_openai_client():
 def generate_ai_summary(question: str, answers: list[str]) -> str:
     """
     구글시트에서 찾은 여러 답변을 OpenAI가 정리하도록 하는 함수
+    - 답변 후보 안에서만 종합(추측 금지)
+    - 충돌 시 '확인 필요' 표시
+    - 빈 입력 방어
     """
-    try:
-        client = _get_openai_client()
-        model = st.secrets.get("OPENAI_MODEL", "gpt-4o-mini")
+    client = _get_openai_client()
+    model = st.secrets.get("OPENAI_MODEL", "gpt-4o-mini")
 
-        combined_text = "\n\n".join(answers)
+    # 1) 방어: 빈/공백 제거
+    answers = [str(a).strip() for a in (answers or []) if str(a).strip()]
+    if not answers:
+        return "사장님, 관련 답변이 충분하지 않아 정리하기 어렵습니다. 질문을 조금 더 구체적으로 입력해 주세요!"
 
-        prompt = f"""
-사용자의 질문:
+    # 2) 너무 길어질 때 대비(선택): 상위 4개까지만
+    answers = answers[:4]
+
+    combined_text = "\n\n---\n\n".join([f"[답변{i+1}]\n{a}" for i, a in enumerate(answers)])
+
+    system_msg = (
+        "당신은 보험 업무 매뉴얼을 정리하는 전문가입니다. "
+        "반드시 제공된 '답변 후보' 내용 안에서만 종합하세요. "
+        "새 정보를 추측/생성하지 마세요. "
+        "답변 후보들끼리 내용이 충돌하면 '확인 필요'로 표시하세요. "
+        "출력은 짧은 문단 또는 번호 목록으로, 절차/준비물/유의사항 중심으로 정리하세요."
+    )
+
+    user_msg = f"""
+[사용자 질문]
 {question}
 
-아래는 내부 매뉴얼 답변들입니다:
+[답변 후보]
 {combined_text}
 
-위 내용을 기반으로,
-중복은 제거하고,
-핵심만 정리해서,
-친절한 말투로 하나의 최종 답변으로 작성해주세요.
+[요청]
+- 중복 제거
+- 핵심만 정리
+- 친절한 말투
+- 실행 순서가 있으면 순서대로
 """
 
+    try:
         response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "당신은 보험 업무 매뉴얼을 정리해주는 전문가입니다."},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": system_msg},
+                {"role": "user", "content": user_msg}
             ],
-            temperature=0.3
+            temperature=0.2
         )
+        out = response.choices[0].message.content.strip()
 
-        return response.choices[0].message.content.strip()
+        # 3) 방어: 빈 응답
+        if not out:
+            return "사장님, 답변을 정리하는 과정에서 내용이 비어있습니다. 질문을 조금만 더 구체적으로 부탁드려요!"
 
-    except Exception as e:
-        return f"(AI 요약 실패: {e})"
+        return out
+
+    except Exception:
+        # 실패 메시지를 사용자에게 그대로 노출하지 않고, 상위 1개 답변으로 안전하게 대체
+        return answers[0]
 
 DEDUPE_WINDOW_SEC = 6  # 같은 입력이 N초 안에 또 오면 중복으로 간주
 
@@ -975,30 +1001,48 @@ def handle_question(question_input):
                 "display_type": "pending"
             })
         elif 2 <= len(top_matches) <= 4:
-             _log_answer_count(question_input, len(top_matches))
+    _log_answer_count(question_input, len(top_matches))
 
     # 1) 시트 답변들을 모아서
-              answers = []
-              for r in top_matches:
-                   a = str(r.get("답변", "")).strip()
-                   if a:
-                      answers.append(a)
+    answers = []
+    for r in top_matches:
+        a = str(r.get("답변", "")).strip()
+        if a:
+            answers.append(a)
 
-    # 2) OpenAI로 종합 요약
-              ai_summary = generate_ai_summary(question_input, answers)
-              ai_summary = add_friendly_prefix(ai_summary)
+    # 2) OpenAI로 종합 요약 (실패하면 기존 방식으로 fallback)
+    try:
+        ai_summary = generate_ai_summary(question_input, answers)
+        ai_summary = add_friendly_prefix(ai_summary)
 
-    # 3) (선택) 첨부는 "첫번째 매칭"만 보여주기 (기본값)
-               r0 = top_matches[0]
-               bot_answer_content = {
-                    "q": "여러 답변을 종합한 결과입니다",
-                    "a": ai_summary,
-                    "files": r0.get("첨부_JSON", "")
-                }
+        # 3) (기본값) 첨부는 첫 번째 매칭만 보여주기
+        r0 = top_matches[0]
+        bot_answer_content = {
+            "q": "여러 답변을 종합한 결과입니다",
+            "a": ai_summary,
+            "files": r0.get("첨부_JSON", "")
+        }
 
-                st.session_state.chat_log.append({
-                     "role": "bot", "content": bot_answer_content, "display_type": "single_answer"
-                })
+        st.session_state.chat_log.append({
+            "role": "bot",
+            "content": bot_answer_content,
+            "display_type": "single_answer"
+        })
+
+    except Exception as e:
+        # OpenAI 오류 시: 기존 multi_answer로 안전하게 내려보내기
+        bot_answer_content = []
+        for r in top_matches:
+            bot_answer_content.append({
+                "q": r["질문"],
+                "a": add_friendly_prefix(r["답변"]),
+                "files": r.get("첨부_JSON", "")
+            })
+        st.session_state.chat_log.append({
+            "role": "bot",
+            "content": bot_answer_content,
+            "display_type": "multi_answer"
+        })
         elif len(top_matches) == 1:
              _log_answer_count(question_input, 1)
              r = top_matches[0]
