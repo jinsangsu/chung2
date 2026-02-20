@@ -172,14 +172,15 @@ with st.sidebar:
     if st.button("✅ OpenAI 연결 테스트"):
         try:
             client = _get_openai_client()
+            model = st.secrets.get("OPENAI_MODEL", "gpt-4o-mini")
 
-            # ✅ 진짜 연동 확인: 가벼운 API 1회 호출
+            # 모델 리스트 호출까지 해보면 진짜 연동 검증 완료
             _ = client.models.list()
 
-            st.success("✅ OpenAI API 호출까지 정상 (models.list OK)")
-        except Exception as e:
-            st.error(f"❌ OpenAI 연동 실패: {e}")
+            st.success(f"OpenAI API 호출까지 정상 (models.list OK)\n사용 모델: {model}")
 
+        except Exception as e:
+            st.error(f"OpenAI 연결 실패: {e}")
 
 # === URL 하드리셋(hardreset=1) 감지: 세션 초기화 후 첫 화면으로 ===
 # === 세션 하드 리셋 ===
