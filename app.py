@@ -1028,7 +1028,11 @@ def handle_question(question_input):
         # 2) OpenAI로 종합 요약 (OpenAI 호출만 try)
                 ai_summary = None
                 try:
+                    st.sidebar.success("🔥 2~4개 매칭 분기 진입")          # ✅ 추가
+                    st.sidebar.write("answers_count =", len(answers))     # ✅ 추가
+
                     ai_summary = generate_ai_summary(question_input, answers)
+                    st.sidebar.write("AI_SUMMARY_RAW =", str(ai_summary)[:200])  # ✅ 추가
                 except Exception:
                     ai_summary = None
 
@@ -1052,6 +1056,7 @@ def handle_question(question_input):
 
         # 4) 실패 시: 기존 multi_answer로 안전하게 폴백
                 else:
+                    st.sidebar.error(f"⚠️ AI 요약 fallback: {e}")  # ✅ 추가(왜 폴백 됐는지)
                     bot_answer_content = []
                     for r in top_matches:
                         bot_answer_content.append({
