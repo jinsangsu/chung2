@@ -31,6 +31,7 @@ import pytz
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
+from openai import OpenAI
 import streamlit.components.v1 as components
 import difflib
 import base64
@@ -69,6 +70,13 @@ def _get_gsheet_client():
     sa_info = _load_sa_info()
     creds = Credentials.from_service_account_info(sa_info, scopes=GOOGLE_SCOPES)
     return gspread.authorize(creds)
+
+@st.cache_resource(show_spinner=False)
+def _get_openai_client():
+    api_key = st.secrets.get("OPENAI_API_KEY", None)
+    if not api_key:
+        raise RuntimeError("st.secrets['OPENAI_API_KEY'] 가 없습니다. (Streamlit Secrets 확인)")
+    return OpenAI(api_key=api_key)
 
 DEDUPE_WINDOW_SEC = 6  # 같은 입력이 N초 안에 또 오면 중복으로 간주
 
@@ -347,25 +355,25 @@ hr {
 """, unsafe_allow_html=True)
 # 1. [지점 설정 테이블]
 BRANCH_CONFIG = {
-    "gj":    {"bot_name": "은주",    "intro": "광주지점 이쁜이 ‘은주’입니다.❤️",    "image": "eunju_character.webp"},
-    "dj":    {"bot_name": "소원",    "intro": "대전지점 이쁜이 ‘소원’입니다.❤️",    "image": "sowon_character.webp"},
-    "cb":   {"bot_name": "현의",    "intro": "음성의 희망 ‘현의’입니다.❤️",    "image": "hyuni_character.webp"},
+    "gj":    {"bot_name": "여교",    "intro": "광주지점 이쁜이 ‘여교’입니다.❤️",    "image": "eunju_character.webp"},
+    "dj":    {"bot_name": "소원",    "intro": "대전 한울 지점 이쁜이 ‘소원’입니다.❤️",    "image": "sowon_character.webp"},
+    "cb":   {"bot_name": "서현",    "intro": "음성의 희망 ‘서현’입니다.❤️",    "image": "hyuni_character.webp"},
     "cb1":   {"bot_name": "보라",    "intro": "제천의 희망 ‘보라’입니다.❤️",    "image": "bora_character.webp"},
     "sc":   {"bot_name": "주희",    "intro": "순천지점 이쁜이 ‘주희’입니다❤️.",    "image": "juhee_character.webp"},
-    "jj":     {"bot_name": "삼숙",    "intro": "전주지점의 희망 ‘삼숙’입니다.❤️",    "image": "samsook_character.webp"},
-    "is":      {"bot_name": "수빈",    "intro": "익산지점 이쁜이 ‘수빈’입니다.❤️",    "image": "subin_character.webp"},
+    "is":      {"bot_name": "진남",    "intro": "익산지점의  ‘진남’입니다.❤️",     "image": "jinnam_character.webp"},  
     "ca":    {"bot_name": "연지",    "intro": "천안지점의 꽃 ‘연지’입니다.❤️",    "image": "yeonji_character.webp"},
-    "yd":     {"bot_name": "상민",    "intro": "예당지점 이쁜이 ‘상민’입니다.❤️",    "image": "sangmin_character.webp"},
-    "dt2": {"bot_name": "영경",    "intro": "대전TC2지점 이쁜이 ‘영경’입니다.❤️", "image": "youngkyung_character.webp"},
-    "ctc": {"bot_name": "유림",    "intro": "청주TC지점 이쁜이 ‘유림’입니다.❤️", "image": "youlim_character.webp"},
-    "scj": {"bot_name": "혜련",    "intro": "서청주지점 꽃 ‘혜련’이에요❤️", "image": "heryun_character.webp"},
-    "yst": {"bot_name": "영주",    "intro": "유성TC지점 이쁜이 ‘영주’에요❤️", "image": "youngju_character.webp"},
-    "gs": {"bot_name": "혜진",    "intro": "군산지점 이쁜이 혜진이에요❤️", "image": "hejin_character.webp"},
-    "ds": {"bot_name": "소정",    "intro": "둔산지점 이쁜이 소정이에요❤️", "image": "sojung_character.webp"},
+    "cnt":     {"bot_name": "수연",    "intro": "충남TC지점 이쁜이 ‘수연’입니다.❤️",   "image": "suyun_character.webp"},
+    "dt2": {"bot_name": "영주",    "intro": "대전TC2지점 이쁜이 ‘영주’입니다.❤️", "image": "youngju_character.webp"},
+    "ctc2": {"bot_name": "유림",    "intro": "청주TC2지점 이쁜이 ‘유림’입니다.❤️", "image": "youlim_character.webp"},
+    "ctc": {"bot_name": "혜련",    "intro": "청주TC1지점 꽃 ‘혜련’이에요❤️", "image": "heryun_character.webp"},
+    "scj": {"bot_name": "하나",    "intro": "서청주지점 꽃 ‘하나’에요❤️", "image": "heryun_character.webp"},
+    "yst": {"bot_name": "성춘",    "intro": "유성TC지점 이쁜이 ‘성춘’에요❤️", "image": "youngju_character.webp"},
+    "jbt": {"bot_name": "혜진",    "intro": "전북TC지점 이쁜이 혜진이에요❤️", "image": "hejin_character.webp"},
+    "djp": {"bot_name": "은채",    "intro": "대전프라임지점 이쁜이 은채 에요❤️", "image": "sojung_character.webp"},
     "scjj": {"bot_name": "지영",    "intro": "순천중앙지점 이쁜이 지영이에요❤️", "image": "jiyoung_character.webp"},
     "smj": {"bot_name": "서희",    "intro": "상무지점 이쁜이 서희이에요❤️", "image": "seohi_character.webp"},
-    "cjj": {"bot_name": "윤희",    "intro": "충주지점 이쁜이 윤희에요❤️", "image": "yunhi_character.webp"},
-    "ns": {"bot_name": "세정",    "intro": "논산지점 이쁜이 세정이에요❤️", "image": "sejung_character.webp"},
+    "cjj":   {"bot_name": "희정",    "intro": "충주지점의 꽃 ‘희정’이예요.❤️",  "image": "hijung_character.webp"},
+     "ns": {"bot_name": "세정",    "intro": "논산지점 이쁜이 세정이에요❤️", "image": "sejung_character.webp"},
     "sjj": {"bot_name": "효인",    "intro": "세종TC지점 이쁜 효인이에요❤️", "image": "hyoin_character.webp"},
     "mpj": {"bot_name": "아름",    "intro": "목포지점 이쁜이 아름이에요❤️", "image": "arum_character.webp"},
     "gjj": {"bot_name": "상아",    "intro": "광주중앙의 이쁜이 상아에요❤️", "image": "sanga_character.webp"},
@@ -374,10 +382,10 @@ BRANCH_CONFIG = {
     "gr": {"bot_name": "혜진",    "intro": "계룡지점의 꽃 혜진에요❤️", "image": "hyejin_character.webp"},
     "as": {"bot_name": "규희",    "intro": "아산지점의 꽃 규희에요❤️", "image": "kyuhi_character.webp"},
     "dst": {"bot_name": "나라",    "intro": "둔산TC지점의 꽃 나라에요❤️", "image": "nara_character.webp"},
-    "na": {"bot_name": "진선",    "intro": "남악지점의 꽃 진선이에요❤️", "image": "jinsun_character.webp"},
-    "ssj": {"bot_name": "은정",    "intro": "서산지점의 꽃 은정이에요❤️", "image": "eunjung_character.webp"},
-    "ssj1": {"bot_name": "수연",    "intro": "홍성의 꽃 수연에요❤️", "image": "suyun_character.webp"},
-    "dh":   {"bot_name": "태연",    "intro": "대흥지점의 꽃 ‘태연’이예요.❤️",  "image": "taeyeon_character.webp"},
+    "na": {"bot_name": "서희",    "intro": "남악지점의 꽃 서희에요❤️", "image": "seohi_character.webp"},
+    "ssj": {"bot_name": "혜진",    "intro": "서산지점의 꽃 혜진이에요❤️", "image": "eunjung_character.webp"},
+    "ssj1": {"bot_name": "수연",    "intro": "홍성을 사랑하는 수연에요❤️", "image": "suyun_character.webp"},
+    
     "jnj":   {"bot_name": "민경",    "intro": "고흥의 꽃 ‘민경’이예요.❤️",  "image": "minkung_character.webp"},
     "jnj1":   {"bot_name": "호정",    "intro": "여수의 꽃 ‘호정’이예요.❤️",  "image": "hojung_character.webp"},
     "isj":   {"bot_name": "지혜",    "intro": "익산중앙지점의 꽃 ‘지혜’랍니다.❤️",  "image": "jihye_character.webp"},
@@ -385,13 +393,16 @@ BRANCH_CONFIG = {
     "caj":   {"bot_name": "지원",    "intro": "천안제일의 꽃 ‘지원’이예요.❤️",  "image": "jiwon_character.webp"},
     "dmj":   {"bot_name": "은채",    "intro": "미래지점의 꽃 ‘은채’예요.❤️",  "image": "enchae_character.webp"},
     "cat":   {"bot_name": "지현",    "intro": "천안TC지점의 꽃 ‘지현’이예요.❤️",  "image": "jiheon_character.webp"},
-    "mpt2":   {"bot_name": "정옥",    "intro": "목포 TC2 지점의 꽃 ‘정옥’이예요.❤️",  "image": "jungok_character.webp"},
-    "ma":   {"bot_name": "진남",    "intro": "모악지점의 꽃 ‘진남’이예요.❤️",  "image": "jinnam_character.webp"},
-    "sgs":   {"bot_name": "은선",    "intro": "새군산지점의 꽃 ‘은선’이예요.❤️",  "image": "ensun_character.webp"},
+    "mpt2":   {"bot_name": "지영",    "intro": "목포 TC2 지점의 꽃 ‘지영’이예요.❤️",  "image": "jungok_character.webp"},
+    
+    "ma":   {"bot_name": "삼숙",    "intro": "모악지점의 꽃 ‘삼숙’이예요.❤️",  "image": "samsook_character.webp"},
+    
+    "gs":   {"bot_name": "은선",    "intro": "군산지점의 꽃 ‘은선’이예요.❤️",  "image": "ensun_character.webp"},
     "jb":   {"bot_name": "현숙",    "intro": "전북지점의 꽃 ‘현숙’이예요.❤️",  "image": "hunsuk_character.webp"},
     "gst":   {"bot_name": "그라미",    "intro": "광주TC지점의 꽃 ‘그라미’ 예요.❤️",  "image": "grami_character.webp"},
+    "sjt": {"bot_name": "영경",    "intro": "세종TC 지점 이쁜이 ‘영경’입니다.❤️", "image": "youngkyung_character.webp"},
     "dt1":   {"bot_name": "태연",    "intro": "대전TC1지점의 꽃 ‘태연’이예요.❤️",  "image": "taeyeon1_character.webp"},
-    "mpt1":   {"bot_name": "지영",    "intro": "목포TC1지점의 꽃 ‘지영’이예요.❤️",  "image": "jiyoung1_character.webp"},
+    "mpt1":   {"bot_name": "지혜",    "intro": "목포TC1지점의 꽃 ‘지혜’이예요.❤️", "image": "jihye_character.webp"},
     "cjjj":   {"bot_name": "희정",    "intro": "청주제일지점의 꽃 ‘희정’이예요.❤️",  "image": "hijung_character.webp"},
     "chj":   {"bot_name": "소영",    "intro": "청주지점의 꽃 ‘소영’이예요.❤️",  "image": "soyoung_character.webp"},
     "default":    {"bot_name": "애순이",  "intro": "충청호남본부 도우미 ‘애순이’에요.❤️", "image": "managerbot_character.webp"}
