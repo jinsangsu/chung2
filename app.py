@@ -166,7 +166,15 @@ def get_branch_param() -> str:
         except:
             return ""
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", initial_sidebar_state="expanded")
+
+with st.sidebar:
+    if st.button("✅ OpenAI 연결 테스트"):
+        try:
+            _ = _get_openai_client()
+            st.success("OpenAI 클라이언트 생성 OK")
+        except Exception as e:
+            st.error(f"OpenAI 연결 실패: {e}")
 # === URL 하드리셋(hardreset=1) 감지: 세션 초기화 후 첫 화면으로 ===
 # === 세션 하드 리셋 ===
 def _hard_reset():
