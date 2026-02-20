@@ -78,6 +78,43 @@ def _get_openai_client():
         raise RuntimeError("st.secrets['OPENAI_API_KEY'] 가 없습니다. (Streamlit Secrets 확인)")
     return OpenAI(api_key=api_key)
 
+def generate_ai_summary(question: str, answers: list[str]) -> str:
+    """
+    구글시트에서 찾은 여러 답변을 OpenAI가 정리하도록 하는 함수
+    """
+    try:
+        client = _get_openai_client()
+        model = st.secrets.get("OPENAI_MODEL", "gpt-4o-mini")
+
+        combined_text = "\n\n".join(answers)
+
+        prompt = f"""
+사용자의 질문:
+{question}
+
+아래는 내부 매뉴얼 답변들입니다:
+{combined_text}
+
+위 내용을 기반으로,
+중복은 제거하고,
+핵심만 정리해서,
+친절한 말투로 하나의 최종 답변으로 작성해주세요.
+"""
+
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "당신은 보험 업무 매뉴얼을 정리해주는 전문가입니다."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
+        )
+
+        return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        return f"(AI 요약 실패: {e})"
+
 DEDUPE_WINDOW_SEC = 6  # 같은 입력이 N초 안에 또 오면 중복으로 간주
 
 def _make_submit_sig(text: str, branch: str) -> str:
